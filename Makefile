@@ -12,18 +12,18 @@ ICEPROG = iceprog
 
 VERILATOR_LINT = verilator --lint-only --timing
 
-# Configuration
-BITS_PER_PIXEL = 23
+all: registers-register_file registers-program_counter
 
+registers-register_file: registers.v registers_tb.v
+	$(VERILATOR_LINT) --top-module register_file_tb $^
+	$(IVERILOG) -s register_file_tb -o $@ $^
+registers-program_counter: registers.v registers_tb.v
+	$(VERILATOR_LINT) --top-module program_counter_tb $^
+	$(IVERILOG) -s program_counter_tb -o $@ $^
 
-all: registers
-
-registers: registers.v registers_tb.v
-	$(VERILATOR_LINT) $^
-	$(IVERILOG) -o $@ $^
-
-registers-tests: registers
-	$(VVP) registers
+registers-tests: registers-register_file registers-program_counter
+	$(VVP) registers-register_file
+	$(VVP) registers-program_counter
 
 tests: registers-tests
 
@@ -37,4 +37,4 @@ maxicore32.bin: maxicore32.asc
 	$(ICEPACK) $^ $@
 
 clean:
-	rm -vf registers *.vcd *.json *.asc *.bin
+	rm -vf registers-register_file registers-program_counter *.vcd *.json *.asc *.bin
