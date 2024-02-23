@@ -12,7 +12,7 @@ ICEPROG = iceprog
 
 VERILATOR_LINT = verilator --lint-only --timing
 
-all: registers-register_file registers-program_counter
+all: registers-register_file registers-program_counter alu
 
 registers-register_file: registers.v registers_tb.v
 	$(VERILATOR_LINT) --top-module register_file_tb $^
@@ -20,10 +20,14 @@ registers-register_file: registers.v registers_tb.v
 registers-program_counter: registers.v registers_tb.v
 	$(VERILATOR_LINT) --top-module program_counter_tb $^
 	$(IVERILOG) -s program_counter_tb -o $@ $^
+alu: alu.v alu_tb.v
+	$(VERILATOR_LINT) $^
+	$(IVERILOG) -o $@ $^
 
-registers-tests: registers-register_file registers-program_counter
+registers-tests: registers-register_file registers-program_counter alu
 	$(VVP) registers-register_file
 	$(VVP) registers-program_counter
+	$(VVP) alu
 
 tests: registers-tests
 
@@ -37,4 +41,4 @@ maxicore32.bin: maxicore32.asc
 	$(ICEPACK) $^ $@
 
 clean:
-	rm -vf registers-register_file registers-program_counter *.vcd *.json *.asc *.bin
+	rm -vf registers-register_file registers-program_counter alu *.vcd *.json *.asc *.bin

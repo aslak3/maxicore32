@@ -1,12 +1,6 @@
-`define assert(test, message) \
-        if (!(test)) begin \
-            $display("ASSERTION FAILED in %m: test (%s)", message); \
-            $fatal; \
-        end else begin \
-            $display("ASSERTION PASS in %m: test (%s)", message); \
-        end
-
 module register_file_tb;
+    `include "tests.vh"
+
     reg reset;
     reg clock;
     reg clear, write, inc, dec;
@@ -14,8 +8,6 @@ module register_file_tb;
     t_reg write_data;
     t_reg_index read_reg1_index, read_reg2_index, read_reg3_index;
     t_reg read_reg1_data, read_reg2_data, read_reg3_data;
-
-    localparam period = 1;
 
     register_file dut (
         .reset(reset),
@@ -59,11 +51,8 @@ module register_file_tb;
 
         inc = 1;
         incdec_index = 4'h1;
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+    
+        pulse_clock;
 
         `assert(read_reg1_data == 32'h0, "Reg inc by 4 (r1) r0 still 0");
         `assert(read_reg2_data == 32'h4, "Reg inc by 4 (r1) r1 now 4");
@@ -73,11 +62,7 @@ module register_file_tb;
         write_index = 4'h2;
         write_data = 32'hdeadbeef;
 
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+        pulse_clock;
 
         `assert(read_reg1_data == 32'h0, "Reg write (r2) and Inc by 4 (r1) r0 still 0");
         `assert(read_reg2_data == 32'h8, "Reg write (r2) and Inc by 4 (r1) r1 now 8");
@@ -86,11 +71,7 @@ module register_file_tb;
         write = 0;
         clear = 1;
 
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+        pulse_clock;
 
         `assert(read_reg1_data == 32'h0, "Reg clear (r2) and Inc by 4 (r1) r0 still 0");
         `assert(read_reg2_data == 32'hc, "Reg clear (r2) and Inc by 4 (r1) r1 now c");
@@ -100,11 +81,7 @@ module register_file_tb;
         inc = 0;
         dec = 1;
 
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+        pulse_clock;
 
         `assert(read_reg1_data == 32'h0, "Reg dec by 4 (r1) r0 still 0");
         `assert(read_reg2_data == 32'h8, "Reg dec by 4 (r1) r1 now 8");
@@ -113,13 +90,13 @@ module register_file_tb;
 endmodule
 
 module program_counter_tb;
+    `include "tests.vh"
+
     reg reset;
     reg clock;
     reg write, inc;
     t_reg write_data;
     t_reg read_data;
-
-    localparam period = 1;
 
     program_counter dut (
         .reset(reset),
@@ -146,22 +123,13 @@ module program_counter_tb;
         #period;
 
         inc = 1;
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+        pulse_clock;
 
         `assert(read_data == 32'h4, "PC Inc by 4");
 
         write = 1;
         write_data = 32'hdeadbeef;
-
-        clock = 1;
-        #period;
-
-        clock = 0;
-        #period;
+        pulse_clock;
 
         `assert(read_data == 32'hdeadbeef, "PC write");
     end
