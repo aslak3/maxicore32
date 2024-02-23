@@ -1,3 +1,5 @@
+`include "registers.vh"
+
 module register_file_tb;
     `include "tests.vh"
 
@@ -51,7 +53,7 @@ module register_file_tb;
 
         inc = 1;
         incdec_index = 4'h1;
-    
+
         pulse_clock;
 
         `assert(read_reg1_data == 32'h0, "Reg inc by 4 (r1) r0 still 0");

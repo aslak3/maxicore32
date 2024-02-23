@@ -8,6 +8,7 @@
 
 localparam period = 1;
 
+`ifndef TB_NO_CLOCK
 task pulse_clock;
     begin
         clock = 1;
@@ -17,3 +18,4 @@ task pulse_clock;
         #period;
     end
 endtask
+`endif

@@ -21,8 +21,8 @@ registers-program_counter: registers.v registers_tb.v
 	$(VERILATOR_LINT) --top-module program_counter_tb $^
 	$(IVERILOG) -s program_counter_tb -o $@ $^
 alu: alu.v alu_tb.v
-	$(VERILATOR_LINT) $^
-	$(IVERILOG) -o $@ $^
+	$(VERILATOR_LINT) --top alu_tb $^
+	$(IVERILOG) -s alu_tb -o $@ $^
 
 registers-tests: registers-register_file registers-program_counter alu
 	$(VVP) registers-register_file
