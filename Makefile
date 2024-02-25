@@ -12,7 +12,7 @@ ICEPROG = iceprog
 
 VERILATOR_LINT = verilator --lint-only --timing
 
-all: registers-register_file registers-program_counter alu
+all: registers-register_file registers-program_counter alu businterface
 
 registers-register_file: registers.v registers_tb.v
 	$(VERILATOR_LINT) --top-module register_file_tb $^
@@ -23,13 +23,12 @@ registers-program_counter: registers.v registers_tb.v
 alu: alu.v alu_tb.v
 	$(VERILATOR_LINT) --top alu_tb $^
 	$(IVERILOG) -s alu_tb -o $@ $^
+businterface: businterface.v businterface_tb.v
+	$(VERILATOR_LINT) --top businterface_tb $^
+	$(IVERILOG) -s businterface_tb -o $@ $^
 
-registers-tests: registers-register_file registers-program_counter alu
-	$(VVP) registers-register_file
-	$(VVP) registers-program_counter
-	$(VVP) alu
-
-tests: registers-tests
+tests: registers-register_file registers-program_counter alu businterface
+	for T in $^; do $(VVP) $$T; done
 
 maxicore32.json: registers.v
 	$(YOSYS) -p 'synth_ice40 -top maxicore32 -json $@' -p 'read_verilog $^'
@@ -41,4 +40,4 @@ maxicore32.bin: maxicore32.asc
 	$(ICEPACK) $^ $@
 
 clean:
-	rm -vf registers-register_file registers-program_counter alu *.vcd *.json *.asc *.bin
+	rm -vf registers-register_file registers-program_counter alu businterface *.vcd *.json *.asc *.bin
