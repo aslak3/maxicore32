@@ -12,22 +12,24 @@ ICEPROG = iceprog
 
 VERILATOR_LINT = verilator --lint-only --timing
 
-all: registers-register_file registers-program_counter alu businterface
+ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb businterface_tb
 
-registers-register_file: registers.v registers_tb.v
+all: $(ALL_TESTBENCHES)
+
+registers-register_file_tb: registers.v tb/registers_tb.v
 	$(VERILATOR_LINT) --top-module register_file_tb $^
 	$(IVERILOG) -s register_file_tb -o $@ $^
-registers-program_counter: registers.v registers_tb.v
+registers-program_counter_tb: registers.v tb/registers_tb.v
 	$(VERILATOR_LINT) --top-module program_counter_tb $^
 	$(IVERILOG) -s program_counter_tb -o $@ $^
-alu: alu.v alu_tb.v
+alu_tb: alu.v tb/alu_tb.v
 	$(VERILATOR_LINT) --top alu_tb $^
 	$(IVERILOG) -s alu_tb -o $@ $^
-businterface: businterface.v businterface_tb.v
+businterface_tb: businterface.v tb/businterface_tb.v
 	$(VERILATOR_LINT) --top businterface_tb $^
 	$(IVERILOG) -s businterface_tb -o $@ $^
 
-tests: registers-register_file registers-program_counter alu businterface
+tests: $(ALL_TESTBENCHES)
 	for T in $^; do $(VVP) $$T; done
 
 maxicore32.json: registers.v
@@ -40,4 +42,4 @@ maxicore32.bin: maxicore32.asc
 	$(ICEPACK) $^ $@
 
 clean:
-	rm -vf registers-register_file registers-program_counter alu businterface *.vcd *.json *.asc *.bin
+	rm -vf $(ALL_TESTBENCHES) businterface_tb *.vcd *.json *.asc *.bin
