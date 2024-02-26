@@ -28,24 +28,24 @@ module businterface
                 businterface_error = 1'b0;
                 case (cpu_address[1:0])
                     2'b00: begin
-        				businterface_data_strobes = 4'b1000;
-						businterface_data_out = { cpu_data_out[7:0], 8'hff, 8'hff, 8'hff };
-						cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[31:24] };
+                        businterface_data_strobes = 4'b1000;
+                        businterface_data_out = { cpu_data_out[7:0], 8'hff, 8'hff, 8'hff };
+                        cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[31:24] };
                     end
                     2'b01: begin
-        				businterface_data_strobes = 4'b0100;
-						businterface_data_out = { 8'hff, cpu_data_out[7:0], 8'hff, 8'hff };
-						cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[23:16] };
+                        businterface_data_strobes = 4'b0100;
+                        businterface_data_out = { 8'hff, cpu_data_out[7:0], 8'hff, 8'hff };
+                        cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[23:16] };
                     end
                     2'b10: begin
-        				businterface_data_strobes = 4'b0010;
-						businterface_data_out = { 8'hff, 8'hff, cpu_data_out[7:0], 8'hff };
-						cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[15:8] };
+                        businterface_data_strobes = 4'b0010;
+                        businterface_data_out = { 8'hff, 8'hff, cpu_data_out[7:0], 8'hff };
+                        cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[15:8] };
                     end
                     2'b11: begin
-        				businterface_data_strobes = 4'b0001;
-						businterface_data_out = { 8'hff, 8'hff, 8'hff, cpu_data_out[7:0] };
-						cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[7:0] };
+                        businterface_data_strobes = 4'b0001;
+                        businterface_data_out = { 8'hff, 8'hff, 8'hff, cpu_data_out[7:0] };
+                        cpu_data_in = { 8'hff, 8'hff, 8'hff,  businterface_data_in[7:0] };
                     end
                 endcase
             end
@@ -53,17 +53,17 @@ module businterface
                 case (cpu_address[1:0])
                     2'b00: begin
                         businterface_error = 1'b0;
-        				businterface_data_strobes = 4'b1100;
-						businterface_data_out = { cpu_data_out[15:0], 16'hffff };
-						cpu_data_in = { 16'hffff,  businterface_data_in[31:16] };
+                        businterface_data_strobes = 4'b1100;
+                        businterface_data_out = { cpu_data_out[15:0], 16'hffff };
+                        cpu_data_in = { 16'hffff,  businterface_data_in[31:16] };
                     end
                     2'b01: begin
                     end
                     2'b10: begin
                         businterface_error = 1'b0;
-        				businterface_data_strobes = 4'b0011;
-						businterface_data_out = { 16'hffff, cpu_data_out[15:0] };
-						cpu_data_in = { 16'hffff, businterface_data_in[15:0] };
+                        businterface_data_strobes = 4'b0011;
+                        businterface_data_out = { 16'hffff, cpu_data_out[15:0] };
+                        cpu_data_in = { 16'hffff, businterface_data_in[15:0] };
                     end
                     2'b11: begin
                     end

@@ -90,32 +90,32 @@ module businterface_tb;
     endtask
 
     initial begin
-		run_test(32'h00000000, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
-			32'hffffff12, 32'h00000000, 32'habffffff, 4'b1000, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000000, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
+            32'hffffff12, 32'h00000000, 32'habffffff, 4'b1000, 1'b0, 1'b1, 1'b0);
         run_test(32'h00000001, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
-			32'hffffff34, 32'h00000000, 32'hffabffff, 4'b0100, 1'b0, 1'b1, 1'b0);
-		run_test(32'h00000002, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
-			32'hffffff56, 32'h00000000, 32'hffffabff, 4'b0010, 1'b0, 1'b1, 1'b0);
-		run_test(32'h00000003, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
-			32'hffffff78, 32'h00000000, 32'hffffffab, 4'b0001, 1'b0, 1'b1, 1'b0);
+            32'hffffff34, 32'h00000000, 32'hffabffff, 4'b0100, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000002, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
+            32'hffffff56, 32'h00000000, 32'hffffabff, 4'b0010, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000003, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
+            32'hffffff78, 32'h00000000, 32'hffffffab, 4'b0001, 1'b0, 1'b1, 1'b0);
 
-		run_test(32'h00000000, CW_WORD, 32'h0000abcd, 1'b1, 1'b0, 32'h12345678,
-			32'hffff1234, 32'h00000000, 32'habcdffff, 4'b1100, 1'b0, 1'b1, 1'b0);
-		run_test(32'h00000002, CW_WORD, 32'h0000abcd, 1'b1, 1'b0, 32'h12345678,
-			32'hffff5678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000000, CW_WORD, 32'h0000abcd, 1'b1, 1'b0, 32'h12345678,
+            32'hffff1234, 32'h00000000, 32'habcdffff, 4'b1100, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000002, CW_WORD, 32'h0000abcd, 1'b1, 1'b0, 32'h12345678,
+            32'hffff5678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b0, 1'b1, 1'b0);
 
-		run_test(32'h00000000, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b0, 1'b1, 1'b0);
+        run_test(32'h00000000, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b0, 1'b1, 1'b0);
 
-		run_test(32'h00000001, CW_WORD, 32'h12345678, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b1, 1'b1, 1'b0);
-		run_test(32'h00000003, CW_WORD, 32'h12345678, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b1, 1'b1, 1'b0);
-		run_test(32'h00000001, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
-		run_test(32'h00000002, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
-		run_test(32'h00000003, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
-			32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
+        run_test(32'h00000001, CW_WORD, 32'h12345678, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b1, 1'b1, 1'b0);
+        run_test(32'h00000003, CW_WORD, 32'h12345678, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'hffffabcd, 4'b0011, 1'b1, 1'b1, 1'b0);
+        run_test(32'h00000001, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
+        run_test(32'h00000002, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
+        run_test(32'h00000003, CW_LONG, 32'habcdef12, 1'b1, 1'b0, 32'h12345678,
+            32'h12345678, 32'h00000000, 32'habcdef12, 4'b1111, 1'b1, 1'b1, 1'b0);
     end
 endmodule

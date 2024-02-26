@@ -102,32 +102,32 @@ module alu
 
         neg_out = temp_result[31];
 
-	    // When adding then if sign of result is different to the sign of both the
-		// operands then it is an overflow condition
+        // When adding then if sign of result is different to the sign of both the
+        // operands then it is an overflow condition
         if (op == OP_ADD || op == OP_ADDC) begin
-        	if (temp_reg3[31] != temp_result[31] && temp_reg2 [31] != temp_result[31]) begin
-				over_out = 1'b1;
+            if (temp_reg3[31] != temp_result[31] && temp_reg2 [31] != temp_result[31]) begin
+                over_out = 1'b1;
             end else begin
-				over_out = 1'b0;
+                over_out = 1'b0;
             end
         end
         // Likewise for sub, but invert the reg3 sign for test as its a subtract
-		else if (op == OP_SUB || op == OP_SUBC) begin
-			if (temp_reg3[31] == temp_result[31] && temp_reg2[31] != temp_result[31]) begin
-				over_out = 1'b1;
+        else if (op == OP_SUB || op == OP_SUBC) begin
+            if (temp_reg3[31] == temp_result[31] && temp_reg2[31] != temp_result[31]) begin
+                over_out = 1'b1;
             end else begin
-				over_out = 1'b0;
-			end
+                over_out = 1'b0;
+            end
         end
-		// For arith shift reg3, if the sign changed then it is an overflow
-		else if (op == OP_ARITH_LEFT) begin
-			if (temp_reg2[31] != temp_result[31]) begin
-				over_out = 1'b1;
+        // For arith shift reg3, if the sign changed then it is an overflow
+        else if (op == OP_ARITH_LEFT) begin
+            if (temp_reg2[31] != temp_result[31]) begin
+                over_out = 1'b1;
             end else begin
-				over_out = 1'b0;
+                over_out = 1'b0;
             end
         end else begin
-			over_out = 1'b0;
+            over_out = 1'b0;
         end
     end
 

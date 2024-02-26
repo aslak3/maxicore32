@@ -7,10 +7,10 @@ module alu_tb;
     t_alu_op op;
     t_reg reg2, reg3;
     reg carry_in;
-    t_reg result;
-    reg carry_out, zero_out, neg_out, over_out;
+    wire t_reg result;
+    wire carry_out, zero_out, neg_out, over_out;
 
-    alu tb (
+    alu dut (
         .op(op),
         .reg2(reg2), .reg3(reg3),
         .carry_in(carry_in),

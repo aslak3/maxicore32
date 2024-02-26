@@ -9,7 +9,7 @@ module register_file_tb;
     t_reg_index write_index, incdec_index;
     t_reg write_data;
     t_reg_index read_reg1_index, read_reg2_index, read_reg3_index;
-    t_reg read_reg1_data, read_reg2_data, read_reg3_data;
+    wire t_reg read_reg1_data, read_reg2_data, read_reg3_data;
 
     register_file dut (
         .reset(reset),
