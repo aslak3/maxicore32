@@ -96,24 +96,28 @@ module program_counter_tb;
 
     reg reset;
     reg clock;
-    reg write, inc;
-    t_reg write_data;
+    reg jump, inc, branch;
+    t_reg jump_data;
+    reg [15:0] branch_data;
     t_reg read_data;
 
     program_counter dut (
         .reset(reset),
         .clock(clock),
-        .write(write), .inc(inc),
-        .write_data(write_data),
+        .jump(jump), .inc(inc), .branch(branch),
+        .jump_data(jump_data),
+        .branch_data(branch_data),
         .read_data(read_data)
     );
 
     initial begin
         reset = 0;
         clock = 0;
-        write = 0;
+        jump = 0;
         inc = 0;
-        write_data = 32'h0;
+        branch = 0;
+        jump_data = 32'h0;
+        branch_data = 16'h0;
         #period;
 
         reset = 1;
@@ -129,11 +133,19 @@ module program_counter_tb;
 
         `assert(read_data == 32'h4, "PC Inc by 4");
 
-        write = 1;
-        write_data = 32'hdeadbeef;
+        inc = 0;
+        jump = 1;
+        jump_data = 32'hdeadbeef;
         pulse_clock;
 
-        `assert(read_data == 32'hdeadbeef, "PC write");
+        `assert(read_data == 32'hdeadbeef, "PC jump");
+
+        jump = 0;
+        branch = 1;
+        branch_data = -16'd1;
+        pulse_clock;
+
+        `assert(read_data == 32'hdeadbeee, "PC branch");
     end
 
 endmodule

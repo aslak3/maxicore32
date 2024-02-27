@@ -30,7 +30,7 @@ businterface_tb: businterface.v tb/businterface_tb.v
 	$(IVERILOG) -s businterface_tb -o $@ $^
 
 tests: $(ALL_TESTBENCHES)
-	for T in $^; do $(VVP) $$T; done
+	set -e; for T in $^; do $(VVP) $$T; done
 
 maxicore32.json: registers.v
 	$(YOSYS) -p 'synth_ice40 -top maxicore32 -json $@' -p 'read_verilog $^'

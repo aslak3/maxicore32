@@ -41,9 +41,11 @@ module program_counter
     (
         input   reset,
         input   clock,
-		input   write,
+        input   jump,
         input   inc,
-		input   t_reg write_data,
+        input   branch,
+        input   t_reg jump_data,
+        input   [15:0] branch_data,
         output  t_reg read_data
     );
 
@@ -55,10 +57,12 @@ module program_counter
         if (reset) begin
             program_counter <= 32'h0;
         end else if (clock) begin
-            if (write) begin
-                program_counter <= write_data;
+            if (jump) begin
+                program_counter <= jump_data;
             end else if (inc) begin
                 program_counter <= program_counter + 4;
+            end else if (branch) begin
+                program_counter <= program_counter + { {16{branch_data[15]}}, branch_data[15:0]};
             end
         end
     end
