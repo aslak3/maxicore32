@@ -12,83 +12,93 @@
 
 ## Example code
 
+```
 loadi r0,#0x1234
 swap r0
 loadi r0 #0x5678
+```
 
 (r0 is now 0x12345678)
 
+```
 loadi r1,#0x21
 store.b (r0+666),r1
+```
 
 (memory 0x12345678+666 is now 0x21)
 
+```
 push.b (r0+666),r1
+```
 
 (Same as above but r0 is now decreased by 4. In reality displacements with push would never be used)
 
+```
 callbranch.z -123,r2
 push.l (r3),r2
+```
 
 (If zero, Old PC is copied into r2 and PC decremented by 123. r2 is then pushed onto stack at r3)
 
+```
 pull.l r2,(r3)
 jump r2
+```
 
 (Old PC is then restored into r2, and jumped to (return))
 
 ## Encoding for load immediate
 
-31:27 - opcode (5)
-23:20 - reg to use for data (4)
-15:0 - data (16)
+- 31:27 - opcode (5)
+- 23:20 - reg to use for data (4)
+- 15:0 - data (16)
 
 ### Stages
 
-0: fetch
-1: empty
-2: write value into reg rD
-3: empty
+0. fetch
+1. empty
+2. write value into reg rD
+3. empty
 
 ## Encoding for load/store/push/pop
 
-31:29 - main op type (3)
-28:27 - load/store/push/pop sub op type (2)
-26:24 - transfer size (3)
-23:20 - reg to use for data (4)
-19:16 - reg to use for address (4)
-15:0 - offset (16)
+- 31:29 - main op type (3)
+- 28:27 - load/store/push/pop sub op type (2)
+- 26:24 - transfer size (3)
+- 23:20 - reg to use for data (4)
+- 19:16 - reg to use for address (4)
+- 15:0 - offset (16)
 
 ### Stages
 
-0: fetch
-1: read or write memory rA with displacement
-2: optional: write value into rD and adjust rA based on stacking
-3: empty
+0. fetch
+1. read or write memory rA with displacement
+2. optional: write value into rD and adjust rA based on stacking
+3. empty
 
 ## Encoding for ALU
 
-31:27 - opcode
-23:20 - reg for destination data
-19:16 - reg for operand 1
-15:12 - reg for operation (low 4 bits)
-11:8 - reg for operand 2
+- 31:27 - opcode
+- 23:20 - reg for destination data
+- 19:16 - reg for operand 1
+- 15:12 - reg for operation (low 4 bits)
+- 11:8 - reg for operand 2
 
 ### Stages
 
-0: fetch
-1: setup ALU
-2: write result into rD
-3: empty
+0. fetch
+1. setup ALU
+2. write result into rD
+3. empty
 
 ## Encoding for ALUI
 
-31:27 - opcode
-26:24 - top 3 bits of immediate
-23:20 - reg for destination data
-19:16 - reg for operand 1
-15:12 - reg for operation (low 4 bits)
-11:0 - low 12 bits of immediate
+- 31:27 - opcode
+- 26:24 - top 3 bits of immediate
+- 23:20 - reg for destination data
+- 19:16 - reg for operand 1
+- 15:12 - reg for operation (low 4 bits)
+- 11:0 - low 12 bits of immediate
 
 ### Stages
 
@@ -96,31 +106,31 @@ Same as above
 
 ## Branch/CallBranch
 
-31:27 - opcode
-23:20 - reg for old pc
-19:16 - top 4 bits of offset
-15:12 - condition
-11:0 - bottom 12 bits of offset
+- 31:27 - opcode
+- 23:20 - reg for old pc
+- 19:16 - top 4 bits of offset
+- 15:12 - condition
+- 11:0 - bottom 12 bits of offset
 
 ### Stages
 
-0: fetch
-1: empty
-2: write old PC to rPC if condition met
-3: branch to new PC if condition met
+0. fetch
+1. empty
+2. write old PC to rPC if condition met
+3. branch to new PC if condition met
 
 ## Jump
 
-31:27 - opcode
-19:16 - reg to use for new PC
-15:12 - condition
+- 31:27 - opcode
+- 19:16 - reg to use for new PC
+- 15:12 - condition
 
 ### Stages
 
-0: fetch
-1: empty
-2: empty
-3: jump to new PC is condition met
+0. fetch
+1. empty
+2. empty
+3. jump to new PC is condition met
 
 # Next iteration
 
