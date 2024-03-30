@@ -1,6 +1,6 @@
-# Random scribblings
+# Random scribblings, for now
 
-This is a dumping ground, nothing more.
+This is a dumping ground, nothing more. Eventually it will become the core's main documentation.
 
 # ISA design
 
@@ -10,7 +10,7 @@ This is a dumping ground, nothing more.
 * All instructions are one 32 bit word
 * NOP (0x00000000)
 * Halt
-* Load immediate 16 bit quantity into low half, typically followed by swap and another load
+* Load immediate 16 bit quantity into bottom half or top half
 * Load/Store from/to register rD from/to rM with 16 bit displacement, 3 bit transfer type, optional
   adjustment of rM (for push and pop)
 * ALU: r1<-r2,r3 or r1<-r2 or r1<-r2,imm
@@ -35,13 +35,29 @@ This is a dumping ground, nothing more.
 
 ## Example code
 
+Generally, r15 is the stack pointer and r14 is the return address.
+
 ```
-loadi r0,#0x1234
-swap r0
-loadi r0 #0x5678
+loadit r0,#0x1234
+loadib r0 #0x5678
 ```
 
 (r0 is now 0x12345678)
+
+```
+loadilt r0,0x12345678
+loadilb r0,0x12345678
+```
+
+(This is identical to the above, but the assembler will provide these extra mnemonics for
+loading labels etc)
+
+```
+loadil r0,0x12345678
+```
+
+(This is identical to the above, but the assembler will provide this extra mnemonic for
+loading a long in two instructions)
 
 ```
 loadi r1,#0x21
@@ -70,9 +86,40 @@ jump r2
 
 (Old PC is then restored (r3 inc'd by 4) into r2, and jumped to (return))
 
-Obviously if this is the inner most sub the stacking can be skipped. Some register will be nominated as the usual return address.
+If this is the inner most sub the stacking can be skipped. Some register will be nominated as the usual return address such that return == jump rN
 
-## Encoding for load immediate
+## strlen example (convoluted)
+
+```
+main:         loadil r15,#stack
+              loadil r1,#string
+
+              callbranch strlen,r14
+              halt
+
+string:       #d "Hello, world\0"
+stack:        #res 100
+
+; strlen: r1 is string, returns length in r2, r1 not preserved
+strlen:       push.l (r15),r14            ; save our return address as we callbranch
+              push.b (r15),r3             ; save the temp
+              clear r2                    ; clear the length counter
+.l1:          load.b r3,(r1)              ; get this byte
+              callbranch checkfornull,r14 ; do the null check
+              branch.z .out               ; on zero we are done
+              inc r1                      ; inc pointer
+              inc r2                      ; inc counter
+              branch .l1                  ; back for more
+.out:         pull.b r3.(r15)             ; restore temp
+              pull.l r14,(r15)            ; restore return address
+              jump r14                    ; return
+
+; check for null - just does a test of r3
+checkfornull: test r3                     ; comparing with zero
+              jump r14
+```
+
+## Encoding for load immediate, top and bottom
 
 - 31:27 - opcode (5)
 - 23:20 - reg to use for data (4)
@@ -85,9 +132,9 @@ Obviously if this is the inner most sub the stacking can be skipped. Some regist
 2. write value into reg rD
 3. empty
 
-## Encoding for clear/load/store/push/pop
+## Encoding for load/store/push/pop
 
-- 31:27 - opcode (clear/load/store/pop/push)
+- 31:27 - opcode (load/store/pop/push)
 - 26:24 - transfer size (3)
 - 23:20 - reg to use for data (4)
 - 19:16 - reg to use for address (4)
@@ -166,22 +213,22 @@ Same as above
 ### register_File
 
 input   clear
-    stage 2 on OPCODE_CLEAR
+* stage 2 on OPCODE_CLEAR
 input   write
-    stage 2 on OPCODE_LOADI, OPCODE_LOAD, OPCODE_POP)
+* stage 2 on OPCODE_LOADI, OPCODE_LOAD, OPCODE_POP)
 input   inc
-    stage 2 on OPCODE_PUSH
+* stage 2 on OPCODE_PUSH
 input   dec
-    stage 2 on OPCODE_POP
+* stage 2 on OPCODE_POP
 input   t_reg_index write_index
-    fixed at [23:20] from instruction (reg rD)
+* fixed at [23:20] from instruction (reg rD)
 input   t_reg_index incdec_index
-    fixed at [19:16] from instruction (reg rA)
+* fixed at [19:16] from instruction (reg rA)
 input   t_reg write_data
-    Needs to be one of: (Selector set in stage 2)
-            [15:0] from instruction for OPCODE_LOADI
-            ALU result (OPCODE_ALU*)
-            PC (OPCODE_CALLBRANCH)
+* Needs to be one of: (Selector set in stage 2)
+  * [15:0] from instruction for OPCODE_LOADI
+  * ALU result (OPCODE_ALU*)
+  * PC (OPCODE_CALLBRANCH)
 input   t_reg_index read_reg1_index, read_reg2_index, read_reg3_index
-    Come from
+  * Come from
 output  t_reg read_reg1_data, read_reg2_data, read_reg3_data
