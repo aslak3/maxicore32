@@ -14,7 +14,7 @@ module businterface_tb;
     reg [31:0] businterface_data_in;
     wire [31:0] businterface_data_out;
     wire [3:0] businterface_data_strobes;
-    wire businterface_error;
+    wire businterface_bus_error;
     wire businterface_read, businterface_write;
 
     businterface dut (
@@ -28,7 +28,7 @@ module businterface_tb;
         .businterface_data_in(businterface_data_in),
         .businterface_data_out(businterface_data_out),
         .businterface_data_strobes(businterface_data_strobes),
-        .businterface_error(businterface_error),
+        .businterface_bus_error(businterface_bus_error),
         .businterface_read(businterface_read), .businterface_write(businterface_write)
     );
 
@@ -44,7 +44,7 @@ module businterface_tb;
             input [31:0] exp_businterface_address,
             input [31:0] exp_businterface_data_out,
             input [3:0] exp_businterface_data_strobes,
-            input exp_businterface_error,
+            input exp_businterface_bus_error,
             input exp_businterface_read, exp_businterface_write
         );
         begin
@@ -60,10 +60,10 @@ module businterface_tb;
             $display("CPU address: %08x CPU cycle width: %02b CPU data out: %08x CPU read: %d CPU write: %d BusInterface data in: %08x",
                 test_cpu_address, test_cpu_cycle_width, test_cpu_data_out, test_cpu_read, test_cpu_write, test_businterface_data_in);
 
-            if (businterface_error !== exp_businterface_error) begin
-                $display("BusInterface error got %d, expected %d", businterface_error, exp_businterface_error); $fatal;
+            if (businterface_bus_error !== exp_businterface_bus_error) begin
+                $display("BusInterface error got %d, expected %d", businterface_bus_error, exp_businterface_bus_error); $fatal;
             end
-            if (businterface_error === 1'b0) begin
+            if (businterface_bus_error === 1'b0) begin
                 if (cpu_data_in !== exp_cpu_data_in) begin
                     $display("CPU data in got %08x, expected %08x", cpu_data_in, exp_cpu_data_in); $fatal;
                 end

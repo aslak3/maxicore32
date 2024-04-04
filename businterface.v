@@ -12,12 +12,12 @@ module businterface
         input [31:0] businterface_data_in,
         output reg [31:0] businterface_data_out,
         output reg [3:0] businterface_data_strobes,
-        output reg businterface_error,
+        output reg businterface_bus_error,
         output reg businterface_read, businterface_write
     );
 
     always @ (*) begin
-        businterface_error = 1'b1;
+        businterface_bus_error = 1'b1;
         businterface_address = cpu_address[31:2];
         businterface_data_strobes = 4'b0000;
         cpu_data_in = 32'hffffffff;
@@ -25,7 +25,7 @@ module businterface
 
         case (cpu_cycle_width)
             CW_BYTE: begin
-                businterface_error = 1'b0;
+                businterface_bus_error = 1'b0;
                 case (cpu_address[1:0])
                     2'b00: begin
                         businterface_data_strobes = 4'b1000;
@@ -52,7 +52,7 @@ module businterface
             CW_WORD: begin
                 case (cpu_address[1:0])
                     2'b00: begin
-                        businterface_error = 1'b0;
+                        businterface_bus_error = 1'b0;
                         businterface_data_strobes = 4'b1100;
                         businterface_data_out = { cpu_data_out[15:0], 16'hffff };
                         cpu_data_in = { 16'hffff,  businterface_data_in[31:16] };
@@ -60,7 +60,7 @@ module businterface
                     2'b01: begin
                     end
                     2'b10: begin
-                        businterface_error = 1'b0;
+                        businterface_bus_error = 1'b0;
                         businterface_data_strobes = 4'b0011;
                         businterface_data_out = { 16'hffff, cpu_data_out[15:0] };
                         cpu_data_in = { 16'hffff, businterface_data_in[15:0] };
@@ -72,7 +72,7 @@ module businterface
             CW_LONG: begin
                 case (cpu_address[1:0])
                     2'b00: begin
-                        businterface_error = 1'b0;
+                        businterface_bus_error = 1'b0;
                         businterface_data_strobes = 4'b1111;
                         businterface_data_out = cpu_data_out;
                         cpu_data_in = businterface_data_in;
