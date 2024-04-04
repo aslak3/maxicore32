@@ -11,8 +11,8 @@ This is a dumping ground, nothing more. Eventually it will become the core's mai
 * NOP (0x00000000)
 * Halt
 * Load immediate 16 bit quantity into bottom half or top half
-* Load/Store from/to register rD from/to rM with 16 bit displacement, 3 bit transfer type, optional
-  adjustment of rM (for push and pop)
+* Load/Store from/to register rD from/to rM with 16 bit displacement, 3 bit transfer type
+* No stacking opcodes
 * ALU: r1<-r2,r3 or r1<-r2 or r1<-r2,imm
   * imm is 12+3 bits
   * Condition codes modified only by ALU
@@ -22,20 +22,30 @@ This is a dumping ground, nothing more. Eventually it will become the core's mai
 
 # Random open questions
 
-* IO access: Will likely be via a top of table register with offsets. Is this adequate?
-* Should the stack pointer adjustments cater for anything other then 4 byte wide quantities?
-  * Since internally non long reads will always be extended, it seems reasonable to always put
-    4 byte quantities on the stack since the stack is just a means to an end copy of registers
-  * But on the other hand, this is inconsistent with the other load/store operations
+* IO access: Will likely be via a top of table register with offsets. Seems adequate.
 * Use cases for r0 = 0
   * Branch is just saving PC to r0
   * Compare, though imm=0 will be the same
   * Clear is AND 0, but see above
 * Need a mechanism for moving condition codes in and out of a register, as this was missing from both of the previous designs
+* Should duplicate opcodes be gutted? Eg inc vs add rD,1
 
 ## Example code
 
 Generally, r15 is the stack pointer and r14 is the return address.
+
+```
+loadiwu r0,0x123
+```
+
+(r0 is now 0x00000123)
+
+```
+loadiws r0,-1
+```
+
+(r0 is now 0xffffffff)
+
 
 ```
 loadit r0,#0x1234
@@ -43,14 +53,6 @@ loadib r0 #0x5678
 ```
 
 (r0 is now 0x12345678)
-
-```
-loadilt r0,0x12345678
-loadilb r0,0x12345678
-```
-
-(This is identical to the above, but the assembler will provide these extra mnemonics for
-loading labels etc)
 
 ```
 loadil r0,0x12345678
@@ -61,32 +63,10 @@ loading a long in two instructions)
 
 ```
 loadi r1,#0x21
-store.b (r0+666),r1
+store.b 666(r0),r1
 ```
 
 (memory 0x12345678+666 is now 0x21)
-
-```
-push.b (r0+666),r1
-```
-
-(Same as above but r0 is now decreased by 1 [or 4?] In reality displacements with push would never be used. push.b being an alias for store.b with a -1 post write change on rM)
-
-```
-callbranch.z -123,r2
-push.l (r3),r2
-```
-
-(If zero, old PC is copied into r2 and PC decremented by 123. r2 is then stored at (r3) with r3 dec'd by 4)
-
-```
-pull.l r2,(r3)
-jump r2
-```
-
-(Old PC is then restored (r3 inc'd by 4) into r2, and jumped to (return))
-
-If this is the inner most sub the stacking can be skipped. Some register will be nominated as the usual return address such that return == jump rN
 
 ## strlen example (convoluted)
 
@@ -101,17 +81,22 @@ string:       #d "Hello, world\0"
 stack:        #res 100
 
 ; strlen: r1 is string, returns length in r2, r1 not preserved
-strlen:       push.l (r15),r14            ; save our return address as we callbranch
-              push.b (r15),r3             ; save the temp
-              clear r2                    ; clear the length counter
+strlen:       sub r15,8                   ; make room on stack for two longs
+              ; hazard
+              store.l 0(r15),r14          ; save our return address as we callbranch
+              store.l 4(r15),r3           ; save the temp
+              copy r3,r1                  ; save original pointer
 .l1:          load.b r3,(r1)              ; get this byte
               callbranch checkfornull,r14 ; do the null check
+              ; branch hazard
               branch.z .out               ; on zero we are done
               inc r1                      ; inc pointer
-              inc r2                      ; inc counter
+              ; branch hazard
               branch .l1                  ; back for more
-.out:         pull.b r3.(r15)             ; restore temp
-              pull.l r14,(r15)            ; restore return address
+.out:         sub r2,r3,r1                ; calculate length
+              load.l r14.0(r15)           ; restore temp
+              load.l r3,4(r15)            ; restore return address
+              add r15,8                   ; shrink stack back
               jump r14                    ; return
 
 ; check for null - just does a test of r3
@@ -119,7 +104,26 @@ checkfornull: test r3                     ; comparing with zero
               jump r14
 ```
 
-## Encoding for load immediate, top and bottom
+## Overview of stages
+
+0. Fetch
+
+Current PC is placed on memory bus and instruction is latched into Instruction Register-Stage 0. IR-S0 is clocked into IR-S1.
+
+1. Read/Write memory rA with rD
+
+.............
+
+## Common layout positions
+
+- 31:27 - opcode
+- 23:20 - reg for destination data (rD)
+- 19:16 - reg for operand 1 (rA)
+- 11:8 - reg for operand 2 (rO)
+
+## load immediate, top and bottom
+
+### Encoding
 
 - 31:27 - opcode (5)
 - 23:20 - reg to use for data (4)
@@ -132,9 +136,11 @@ checkfornull: test r3                     ; comparing with zero
 2. write value into reg rD
 3. empty
 
-## Encoding for load/store/push/pop
+## load/store
 
-- 31:27 - opcode (load/store/pop/push)
+### Encoding
+
+- 31:27 - opcode (load/store)
 - 26:24 - transfer size (3)
 - 23:20 - reg to use for data (4)
 - 19:16 - reg to use for address (4)
@@ -144,10 +150,12 @@ checkfornull: test r3                     ; comparing with zero
 
 0. fetch
 1. read or write memory rA with displacement
-2. optional: write value into rD and adjust rA based on stacking
+2. optional: write value into rD
 3. empty
 
-## Encoding for ALU
+## ALU
+
+### Encoding
 
 - 31:27 - opcode
 - 23:20 - reg for destination data (rD)
