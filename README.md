@@ -82,7 +82,7 @@ stack:        #res 100
 
 ; strlen: r1 is string, returns length in r2, r1 not preserved
 strlen:       sub r15,8                   ; make room on stack for two longs
-              ; hazard
+              ; data hazard
               store.l 0(r15),r14          ; save our return address as we callbranch
               store.l 4(r15),r3           ; save the temp
               copy r3,r1                  ; save original pointer
@@ -108,11 +108,26 @@ checkfornull: test r3                     ; comparing with zero
 
 0. Fetch
 
-Current PC is placed on memory bus and instruction is latched into Instruction Register-Stage 0. IR-S0 is clocked into IR-S1.
+Current PC is placed on memory bus and instruction is latched into Instruction Register-Stage 0. PC is inc'd by 4. IR-S0 is clocked into IR-S1.
+
+May be delayed (turned into NOP with no increment) by stage 1.
 
 1. Read/Write memory rA with rD
 
-.............
+For opcode==LOAD rA is placed on the memory bus and the data latched into rD.
+
+For opcode==STORE rA is placed on the memory bus along with the data from rD.
+
+IR-S1 is clocked into IR-S2.
+
+Structural hazard: if this stage is needed, then the fetch that will happen on the same clock needs to be replaced with a NOP, and the PC increment suppressed.
+
+2. Register update
+
+For opcode==LOAD* or ALU* the data from either the external data bus or the ALU data output or the instruction immediate slice will be written into rD. Write may be: long, top half, bottom half, word zero extended or word sign extended.
+
+IR-S2 is clocked into IR-S3.
+
 
 ## Common layout positions
 
@@ -142,8 +157,8 @@ Current PC is placed on memory bus and instruction is latched into Instruction R
 
 - 31:27 - opcode (load/store)
 - 26:24 - transfer size (3)
-- 23:20 - reg to use for data (4)
-- 19:16 - reg to use for address (4)
+- 23:20 - reg to use for data (4) [write or read]
+- 19:16 - reg to use for address (4) [read]
 - 15:0 - offset (16)
 
 ### Stages
@@ -158,10 +173,10 @@ Current PC is placed on memory bus and instruction is latched into Instruction R
 ### Encoding
 
 - 31:27 - opcode
-- 23:20 - reg for destination data (rD)
-- 19:16 - reg for operand 1 (rA)
+- 23:20 - reg for destination data (rD) [write]
+- 19:16 - reg for operand 1 (rA) [read]
 - 15:12 - operation (low 4 bits)
-- 11:8 - reg for operand 2 (rO)
+- 11:8 - reg for operand 2 (rO) [read]
 
 ### Stages
 
@@ -174,8 +189,8 @@ Current PC is placed on memory bus and instruction is latched into Instruction R
 
 - 31:27 - opcode
 - 26:24 - top 3 bits of immediate
-- 23:20 - reg for destination data (rD)
-- 19:16 - reg for operand 1 (rA)
+- 23:20 - reg for destination data (rD) [write]
+- 19:16 - reg for operand 1 (rA) [read]
 - 15:12 - operation (low 4 bits)
 - 11:0 - low 12 bits of immediate
 
@@ -186,7 +201,7 @@ Same as above
 ## Branch/CallBranch
 
 - 31:27 - opcode
-- 23:20 - reg for old pc (rD)
+- 23:20 - reg for old pc (rD) [write]
 - 19:16 - top 4 bits of offset
 - 15:12 - condition
 - 11:0 - bottom 12 bits of offset
@@ -211,32 +226,38 @@ Same as above
 2. empty
 3. jump to new PC is condition met
 
-# Next iteration
-
-* Load/Store from/to register rD from/to PC with 16 of 12 bit displacement, 3 bit transfer type
-* Branch on 4 bit test, source rD with 16 or 12 bit displacement, saving PC in rPC
-
 ## Wiring
 
 ### register_File
 
-input   clear
-* stage 2 on OPCODE_CLEAR
-input   write
-* stage 2 on OPCODE_LOADI, OPCODE_LOAD, OPCODE_POP)
-input   inc
-* stage 2 on OPCODE_PUSH
-input   dec
-* stage 2 on OPCODE_POP
-input   t_reg_index write_index
-* fixed at [23:20] from instruction (reg rD)
-input   t_reg_index incdec_index
-* fixed at [19:16] from instruction (reg rA)
-input   t_reg write_data
-* Needs to be one of: (Selector set in stage 2)
-  * [15:0] from instruction for OPCODE_LOADI
-  * ALU result (OPCODE_ALU*)
-  * PC (OPCODE_CALLBRANCH)
-input   t_reg_index read_reg1_index, read_reg2_index, read_reg3_index
-  * Come from
-output  t_reg read_reg1_data, read_reg2_data, read_reg3_data
+* input   clear
+  * unused
+* input   write
+  * stage 2 on OPCODE_LOADI*
+* input   inc
+  * unused
+* input   dec
+  * unused
+* input   t_reg_index write_index
+  * fixed at [23:20] from IR-S2 (reg rD)
+* input   t_reg_index incdec_index
+  * unused
+* input   t_reg write_data
+  * Switched via mux between: IR-S2
+    * [15:0] from instruction for OPCODE_LOADI
+    * ALU result (OPCODE_ALU*)
+    * PC (OPCODE_CALLBRANCH)
+* input   t_reg_index read_reg1_index, read_reg2_index, read_reg3_index
+  * fixed at [...] from IR-S1
+    * 23:20 (rD)
+    * 19:16 (rA)
+    * 11:8 (rO)
+* output  t_reg read_reg1_data IR-S1
+  * Switched via mux between:
+    * ALU rD input
+* output  t_reg read_reg2_data
+  * Switched via mux between: IR-S1
+    * Processor address bus
+    * ALU rA input
+* output  t_reg read_reg3_data IR-S1
+  * fixed at rO input
