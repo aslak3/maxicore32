@@ -19,7 +19,7 @@ module maxicore32
     wire t_cycle_width cpu_cycle_width;
     reg [31:0] cpu_data_out = 32'h0;
     wire [31:0] cpu_data_in;
-    reg cpu_read = 1'b0, cpu_write = 1'b0;
+    wire cpu_read, cpu_write;
 
     businterface businterface (
         .cpu_address(cpu_address),
@@ -55,17 +55,38 @@ module maxicore32
         .read_data(program_counter_read_data)
     );
 
-    reg fetchstage0_insert_nop = 1'b0;
+    wire fetchstage0_block_fetch;
     wire [31:0] fetchstage0_outbound_instruction;
 
     fetchstage0 fetchstage0 (
         .reset(reset),
         .clock(clock),
 
-        .insert_nop(fetchstage0_insert_nop),
+        .block_fetch(fetchstage0_block_fetch),
         .mem_data(cpu_data_in),
         .inc_pc(program_counter_inc),
         .outbound_instruction(fetchstage0_outbound_instruction)
+    );
+
+    wire [31:0] memorystage1_outbound_instruction;
+
+    memorystage1 memorystage1 (
+        .reset(reset),
+        .clock(clock),
+
+        .inbound_instruction(fetchstage0_outbound_instruction),
+        .outbound_instruction(memorystage1_outbound_instruction),
+        .block_fetch(fetchstage0_block_fetch)
+    );
+
+    wire [31:0] registersstage2_outbound_instruction;
+
+    registersstage2 registersstage2 (
+        .reset(reset),
+        .clock(clock),
+
+        .inbound_instruction(memorystage1_outbound_instruction),
+        .outbound_instruction(registersstage2_outbound_instruction)
     );
 
     always @ (posedge reset, posedge clock) begin
@@ -77,4 +98,6 @@ module maxicore32
     // TODO: Muxes
     assign cpu_address = program_counter_read_data;
     assign cpu_cycle_width = CW_LONG;
+    assign cpu_read = ~fetchstage0_block_fetch;
+    assign cpu_write = 1'b0;
 endmodule

@@ -32,8 +32,16 @@ businterface_tb: businterface.v tb/businterface_tb.v
 fetchstage0_tb: fetchstage0.v tb/fetchstage0_tb.v
 	$(VERILATOR_LINT) --top fetchstage0_tb $^
 	$(IVERILOG) -s fetchstage0_tb -o $@ $^
+memorystage1_tb: memorystage1.v.v tb/memorystage1_tb.v
+	$(VERILATOR_LINT) --top memorystage1_tb $^
+	$(IVERILOG) -s memorystage1_tb -o $@ $^
+registersstage2_tb: registersstage2.v.v tb/registersstage2_tb.v
+	$(VERILATOR_LINT) --top registersstage2_tb $^
+	$(IVERILOG) -s registersstage2_tb -o $@ $^
 
-maxicore32_tb: maxicore32.v registers.v businterface.v fetchstage0.v tb/maxicore32_tb.v
+maxicore32_tb: maxicore32.v registers.v businterface.v \
+	fetchstage0.v memorystage1.v registersstage2.v \
+	memory.v tb/maxicore32_tb.v
 	$(VERILATOR_LINT) --top maxicore32_tb $^
 	$(IVERILOG) -s maxicore32_tb -o $@ $^
 
