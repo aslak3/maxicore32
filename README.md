@@ -132,15 +132,16 @@ IR-S2 is clocked into IR-S3.
 ## Common layout positions
 
 - 31:27 - opcode
-- 23:20 - reg for destination data (rD)
-- 19:16 - reg for operand 1 (rA)
-- 11:8 - reg for operand 2 (rO)
+- 23:20 - reg for destination data (rD) (1)
+- 19:16 - reg for operand 1 (rA) (2)
+- 11:8 - reg for operand 2 (rO) (3)
 
 ## load immediate, top and bottom
 
 ### Encoding
 
 - 31:27 - opcode (5)
+- 25:24 - immediate type (2)
 - 23:20 - reg to use for data (4)
 - 15:0 - data (16)
 

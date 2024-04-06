@@ -17,7 +17,7 @@ module maxicore32
 
     wire [31:0] cpu_address;
     wire t_cycle_width cpu_cycle_width;
-    reg [31:0] cpu_data_out = 32'h0;
+    wire [31:0] cpu_data_out;
     wire [31:0] cpu_data_in;
     wire cpu_read, cpu_write;
 
@@ -55,9 +55,12 @@ module maxicore32
         .read_data(program_counter_read_data)
     );
 
-    reg register_file_write;
     wire t_reg_index register_file_write_index;
+    wire register_file_write;
     t_reg register_file_write_data;
+    wire register_file_write_immediate;
+    wire [15:0] register_file_write_immediate_data;
+    t_immediate_type register_file_write_immediate_type;
     t_reg_index register_file_read_reg1_index, register_file_read_reg2_index, register_file_read_reg3_index;
     wire t_reg register_file_read_reg1_data, register_file_read_reg2_data, register_file_read_reg3_data;
 
@@ -65,10 +68,12 @@ module maxicore32
         .reset(reset),
         .clock(clock),
 
-        .clear(1'b0), .write(register_file_write), .inc(1'b0), .dec(1'b0),
         .write_index(register_file_write_index),
-        .incdec_index(4'h0),
+        .write(register_file_write),
         .write_data(register_file_write_data),
+        .write_immediate(register_file_write_immediate),
+        .write_immediate_data(register_file_write_immediate_data),
+        .write_immediate_type(register_file_write_immediate_type),
         .read_reg1_index(register_file_read_reg1_index),
         .read_reg2_index(register_file_read_reg2_index),
         .read_reg3_index(register_file_read_reg3_index),
@@ -77,20 +82,20 @@ module maxicore32
         .read_reg3_data(register_file_read_reg3_data)
     );
 
-    wire fetchstage0_block_fetch;
+    wire fetchstage0_memory_access_cycle;
     wire [31:0] fetchstage0_outbound_instruction;
 
     fetchstage0 fetchstage0 (
         .reset(reset),
         .clock(clock),
 
-        .block_fetch(fetchstage0_block_fetch),
+        .block_fetch(fetchstage0_memory_access_cycle),
         .mem_data(cpu_data_in),
-        .inc_pc(program_counter_inc),
         .outbound_instruction(fetchstage0_outbound_instruction)
     );
 
     wire [31:0] memorystage1_outbound_instruction;
+    wire memory_read, memory_write;
 
     memorystage1 memorystage1 (
         .reset(reset),
@@ -98,7 +103,11 @@ module maxicore32
 
         .inbound_instruction(fetchstage0_outbound_instruction),
         .outbound_instruction(memorystage1_outbound_instruction),
-        .block_fetch(fetchstage0_block_fetch)
+        .memory_access_cycle(fetchstage0_memory_access_cycle),
+        .memory_read(memory_read),
+        .memory_write(memory_write),
+        .reg_address_index(register_file_read_reg2_index),
+        .reg_data_index(register_file_read_reg1_index)
     );
 
     wire [31:0] registersstage2_outbound_instruction;
@@ -108,9 +117,13 @@ module maxicore32
         .clock(clock),
 
         .inbound_instruction(memorystage1_outbound_instruction),
+        .data_in(cpu_data_in),
         .write_index(register_file_write_index),
-        .write_data(register_file_write_data),
         .write(register_file_write),
+        .write_data(register_file_write_data),
+        .write_immediate(register_file_write_immediate),
+        .write_immediate_data(register_file_write_immediate_data),
+        .write_immediate_type(register_file_write_immediate_type),
         .outbound_instruction(registersstage2_outbound_instruction)
     );
 
@@ -120,9 +133,20 @@ module maxicore32
         end
     end
 
-    // TODO: Muxes
-    assign cpu_address = program_counter_read_data;
+    assign cpu_address = fetchstage0_memory_access_cycle == 1'b0 ?
+        program_counter_read_data :
+        register_file_read_reg2_data;
+    assign cpu_data_out = fetchstage0_memory_access_cycle == 1'b0 ?
+        32'h0 :
+        register_file_read_reg1_data;
     assign cpu_cycle_width = CW_LONG;
-    assign cpu_read = ~fetchstage0_block_fetch;
-    assign cpu_write = 1'b0;
+    assign cpu_read = fetchstage0_memory_access_cycle == 1'b0 ?
+        1'b1 :
+        memory_read;
+    assign cpu_write = fetchstage0_memory_access_cycle == 1'b0 ?
+        1'b0 :
+        memory_write;
+
+    assign program_counter_inc = ~fetchstage0_memory_access_cycle;
+
 endmodule
