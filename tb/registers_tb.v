@@ -5,19 +5,24 @@ module register_file_tb;
 
     reg reset;
     reg clock;
-    reg clear, write, inc, dec;
-    t_reg_index write_index, incdec_index;
+    t_reg_index write_index;
+    reg write;
     t_reg write_data;
+    reg write_immediate;
+    reg [15:0] write_immediate_data;
+    t_immediate_type write_immediate_type;
     t_reg_index read_reg1_index, read_reg2_index, read_reg3_index;
     wire t_reg read_reg1_data, read_reg2_data, read_reg3_data;
 
     register_file dut (
         .reset(reset),
         .clock(clock),
-        .clear(clear), .write(write), .inc(inc), .dec(dec),
         .write_index(write_index),
-        .incdec_index(incdec_index),
+        .write(write),
         .write_data(write_data),
+        .write_immediate(write_immediate),
+        .write_immediate_data(write_immediate_data),
+        .write_immediate_type(write_immediate_type),
         .read_reg1_index(read_reg1_index),
         .read_reg2_index(read_reg2_index),
         .read_reg3_index(read_reg3_index),
@@ -27,15 +32,14 @@ module register_file_tb;
     );
 
     initial begin
-        reset = 0;
-        clock = 0;
-        write = 0;
-        clear = 0;
-        inc = 0;
-        dec = 0;
+        reset = 1'b0;
+        clock = 1'b0;
         write_index = 4'h0;
-        incdec_index = 4'h0;
+        write = 1'b0;
         write_data = 32'h0;
+        write_immediate = 1'b0;
+        write_immediate_data = 16'h0;
+        write_immediate_type = IT_BOTTOM;
         read_reg1_index = 4'h0;
         read_reg2_index = 4'h1;
         read_reg3_index = 4'h2;
@@ -51,43 +55,44 @@ module register_file_tb;
         reset = 0;
         #period;
 
-        inc = 1;
-        incdec_index = 4'h1;
-
-        pulse_clock;
-
-        `assert(read_reg1_data == 32'h0, "Reg inc by 4 (r1) r0 still 0");
-        `assert(read_reg2_data == 32'h4, "Reg inc by 4 (r1) r1 now 4");
-        `assert(read_reg3_data == 32'h0, "Reg inc by 4 (r1) r2 still 0");
-
-        write = 1;
+        write = 1'b1;
         write_index = 4'h2;
         write_data = 32'hdeadbeef;
 
         pulse_clock;
 
-        `assert(read_reg1_data == 32'h0, "Reg write (r2) and Inc by 4 (r1) r0 still 0");
-        `assert(read_reg2_data == 32'h8, "Reg write (r2) and Inc by 4 (r1) r1 now 8");
-        `assert(read_reg3_data == 32'hdeadbeef, "Reg write (r2) and Inc by 4 (r1) r2 now deadbeef");
+        `assert(read_reg1_data == 32'h0, "Reg write (r2) and r0 still 0");
+        `assert(read_reg2_data == 32'h0, "Reg write (r2) and r1 still 0");
+        `assert(read_reg3_data == 32'hdeadbeef, "Reg write (r2) r2 now deadbeef");
 
-        write = 0;
-        clear = 1;
-
-        pulse_clock;
-
-        `assert(read_reg1_data == 32'h0, "Reg clear (r2) and Inc by 4 (r1) r0 still 0");
-        `assert(read_reg2_data == 32'hc, "Reg clear (r2) and Inc by 4 (r1) r1 now c");
-        `assert(read_reg3_data == 32'h0, "Reg clear (r2) and Inc by 4 (r1) r2 now 0");
-
-        clear = 0;
-        inc = 0;
-        dec = 1;
+        write = 1'b0;
+        write_immediate = 1'b1;
+        write_immediate_data = 16'hdead;
 
         pulse_clock;
 
-        `assert(read_reg1_data == 32'h0, "Reg dec by 4 (r1) r0 still 0");
-        `assert(read_reg2_data == 32'h8, "Reg dec by 4 (r1) r1 now 8");
-        `assert(read_reg3_data == 32'h0, "Reg dec by 4 (r1) r2 still 0");
+        `assert(read_reg3_data == 32'hdeaddead, "Reg write_immediate BOTTOM (r2) r2 now deaddead");
+
+        write_immediate_type = IT_TOP;
+        write_immediate_data = 16'hbeef;
+
+        pulse_clock;
+
+        `assert(read_reg3_data == 32'hbeefdead, "Reg write_immediate TOP (r2) r2 now beefdead");
+
+        write_immediate_type = IT_UNSIGNED;
+        write_immediate_data = 16'h1234;
+
+        pulse_clock;
+
+        `assert(read_reg3_data == 32'h00001234, "Reg write_immediate UNSIGNED (r2) r2 now 00001234");
+
+        write_immediate_type = IT_SIGNED;
+        write_immediate_data = 16'hffff;
+
+        pulse_clock;
+
+        `assert(read_reg3_data == 32'hffffffff, "Reg write_immediate SIGNED (r2) r2 now ffffffff")
     end
 endmodule
 
