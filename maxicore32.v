@@ -55,6 +55,28 @@ module maxicore32
         .read_data(program_counter_read_data)
     );
 
+    reg register_file_write;
+    wire t_reg_index register_file_write_index;
+    t_reg register_file_write_data;
+    t_reg_index register_file_read_reg1_index, register_file_read_reg2_index, register_file_read_reg3_index;
+    wire t_reg register_file_read_reg1_data, register_file_read_reg2_data, register_file_read_reg3_data;
+
+    register_file register_file (
+        .reset(reset),
+        .clock(clock),
+
+        .clear(1'b0), .write(register_file_write), .inc(1'b0), .dec(1'b0),
+        .write_index(register_file_write_index),
+        .incdec_index(4'h0),
+        .write_data(register_file_write_data),
+        .read_reg1_index(register_file_read_reg1_index),
+        .read_reg2_index(register_file_read_reg2_index),
+        .read_reg3_index(register_file_read_reg3_index),
+        .read_reg1_data(register_file_read_reg1_data),
+        .read_reg2_data(register_file_read_reg2_data),
+        .read_reg3_data(register_file_read_reg3_data)
+    );
+
     wire fetchstage0_block_fetch;
     wire [31:0] fetchstage0_outbound_instruction;
 
@@ -86,6 +108,9 @@ module maxicore32
         .clock(clock),
 
         .inbound_instruction(memorystage1_outbound_instruction),
+        .write_index(register_file_write_index),
+        .write_data(register_file_write_data),
+        .write(register_file_write),
         .outbound_instruction(registersstage2_outbound_instruction)
     );
 

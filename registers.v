@@ -26,6 +26,7 @@ module register_file
             if (clear) begin
                 register_file[write_index] <= 32'h0;
             end else if (write) begin
+                $display("Writing %08x into reg %01x", write_data, write_index);
                 register_file[write_index] <= write_data;
             end
             if (inc) begin
