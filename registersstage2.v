@@ -19,8 +19,7 @@ module registersstage2
         output t_immediate_type write_immediate_type,
         output reg alu_cycle,
         input t_reg alu_result,
-        output t_reg alu_result_latched,
-        input halting
+        output t_reg alu_result_latched
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
@@ -93,11 +92,6 @@ module registersstage2
 
             $display("STAGE2: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
-
-            if (halting) begin
-                $display("STAGE2: Halting");
-                $fatal;
-            end
         end
     end
 endmodule

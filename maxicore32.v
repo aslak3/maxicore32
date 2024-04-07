@@ -98,9 +98,6 @@ module maxicore32
         .neg_out(alu_neg_out), .over_out(alu_over_out)
     );
 
-    assign alu_reg2 = register_file_read_reg2_data;
-    assign alu_reg3 = register_file_read_reg3_data;
-
     wire fetchstage0_memory_access_cycle;
     wire fetchstage0_halting;
     wire [31:0] fetchstage0_outbound_instruction;
@@ -118,6 +115,7 @@ module maxicore32
     wire [31:0] memorystage1_outbound_instruction;
     wire memory_read, memory_write;
     wire t_cycle_width memory_cycle_width;
+    wire [15:0] memory_offset;
 
     memorystage1 memorystage1 (
         .reset(reset),
@@ -129,6 +127,7 @@ module maxicore32
         .memory_read(memory_read),
         .memory_write(memory_write),
         .memory_cycle_width(memory_cycle_width),
+        .memory_offset(memory_offset),
         .reg_data_index(register_file_read_reg1_index),
         .reg_address_index(register_file_read_reg2_index),
         .reg_operand_index(register_file_read_reg3_index),
@@ -155,19 +154,29 @@ module maxicore32
         .write_immediate_type(register_file_write_immediate_type),
         .alu_cycle(registerstage2_alu_cycle),
         .alu_result(alu_result),
-        .alu_result_latched(registerstage2_alu_result_latched),
-        .halting(fetchstage0_halting)
+        .alu_result_latched(registerstage2_alu_result_latched)
     );
+
+    reg [1:0] halting_counter;
 
     always @ (posedge reset, posedge clock) begin
         if (reset) begin
+            halting_counter <= 2'b00;
         end else begin
+            if (fetchstage0_halting) begin
+                halting_counter <= halting_counter + 2'b01;
+
+                if (halting_counter == 2'b11) begin
+                    $display("End HALT state reached");
+                    $fatal;
+                end
+            end
         end
     end
 
     assign cpu_address = fetchstage0_memory_access_cycle == 1'b0 ?
         program_counter_read_data :
-        register_file_read_reg2_data;
+        alu_result;
     assign cpu_data_out = fetchstage0_memory_access_cycle == 1'b0 ?
         32'h0 :
         register_file_read_reg1_data;
@@ -189,4 +198,8 @@ module maxicore32
         registerstage2_write_data :
         registerstage2_alu_result_latched;
 
+    assign alu_reg2 = register_file_read_reg2_data;
+    assign alu_reg3 = fetchstage0_memory_access_cycle == 1'b0 ?
+        register_file_read_reg3_data :
+        {{ 16 { memory_offset[15] }}, memory_offset };
 endmodule

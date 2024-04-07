@@ -14,6 +14,7 @@ module memorystage1
         output reg memory_read,
         output reg memory_write,
         output t_cycle_width memory_cycle_width,
+        output reg [15:0] memory_offset,
         output reg [3:0] reg_address_index,
         output reg [3:0] reg_data_index,
         output reg [3:0] reg_operand_index,
@@ -33,12 +34,14 @@ module memorystage1
                     memory_access_cycle <= 1'b1;
                     memory_read <= 1'b1;
                     memory_write <= 1'b0;
+                    alu_op <= { OP_ADD };
                 end
                 OPCODE_STORE: begin
                     $display("STAGE1: OPCODE_STORE - blocking fetch as we need the bus");
                     memory_access_cycle <= 1'b1;
                     memory_read <= 1'b0;
                     memory_write <= 1'b1;
+                    alu_op <= { OP_ADD };
                 end
                 OPCODE_ALUM: begin
                     $display("STAGE1: OPCODE_ALUM");
@@ -58,6 +61,7 @@ module memorystage1
             endcase
 
             memory_cycle_width <= inbound_instruction[26:25];
+            memory_offset <= inbound_instruction[15:0];
 
             reg_address_index <= inbound_instruction[19:16];
             reg_data_index <= inbound_instruction[23:20];

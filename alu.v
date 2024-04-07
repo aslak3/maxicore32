@@ -17,6 +17,7 @@ module alu
     reg give_result;
 
     always @ (op, reg2, reg3, carry_in) begin
+        $display("ALU: op: %01x reg2: %08x reg3: %08x", op, reg2, reg3);
         temp_reg2 = { 1'b0, reg2 };
         temp_reg3 = { 1'b0, reg3 };
         temp_result = { 1'b0, 32'h0 };
