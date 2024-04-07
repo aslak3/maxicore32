@@ -24,6 +24,7 @@ module maxicore32_tb;
     wire [31:0] data_in;
     wire [31:0] data_out;
     wire bus_error;
+    wire halted;
 
     maxicore32 dut (
         .reset(reset),
@@ -35,11 +36,14 @@ module maxicore32_tb;
         .data_strobes(data_strobes),
         .read(read),
         .write(write),
-        .bus_error(bus_error)
+        .bus_error(bus_error),
+        .halted(halted)
     );
 
     assign data_in = ram_data_out;
     assign ram_data_in = data_out;
+
+    integer dump_counter;
 
     initial begin
         reset = 1'b1;
@@ -62,6 +66,13 @@ module maxicore32_tb;
 
             if (bus_error == 1'b1) begin
                 $display("BUS ERROR");
+                $fatal;
+            end
+            if (halted == 1'b1) begin
+                $display("HALTED");
+                for (dump_counter = 0; dump_counter < 32; dump_counter++) begin
+                    $display("%d = %08x", dump_counter * 4, memory.contents[dump_counter]);
+                end
                 $fatal;
             end
         end

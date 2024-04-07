@@ -13,7 +13,8 @@ module maxicore32
         output [3:0] data_strobes,
         output read,
         output write,
-        output bus_error
+        output bus_error,
+        output reg halted
     );
 
     wire [31:0] cpu_address;
@@ -162,13 +163,14 @@ module maxicore32
     always @ (posedge reset, posedge clock) begin
         if (reset) begin
             halting_counter <= 2'b00;
+            halted <= 1'b0;
         end else begin
             if (fetchstage0_halting) begin
-                halting_counter <= halting_counter + 2'b01;
-
-                if (halting_counter == 2'b11) begin
+                if (halting_counter != 2'b11) begin
+                    halting_counter <= halting_counter + 2'b01;
+                end else begin
                     $display("End HALT state reached");
-                    $fatal;
+                    halted <= 1'b1;
                 end
             end
         end
