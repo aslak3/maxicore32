@@ -116,7 +116,8 @@ module maxicore32
     wire [31:0] memorystage1_outbound_instruction;
     wire memory_read, memory_write;
     wire t_cycle_width memory_cycle_width;
-    wire [15:0] memory_offset;
+    wire [15:0] memorystage1_alu_immediate;
+    wire memorystage1_alu_immediate_cycle;
 
     memorystage1 memorystage1 (
         .reset(reset),
@@ -128,11 +129,12 @@ module maxicore32
         .memory_read(memory_read),
         .memory_write(memory_write),
         .memory_cycle_width(memory_cycle_width),
-        .memory_offset(memory_offset),
         .reg_data_index(register_file_read_reg1_index),
         .reg_address_index(register_file_read_reg2_index),
         .reg_operand_index(register_file_read_reg3_index),
-        .alu_op(alu_op)
+        .alu_op(alu_op),
+        .alu_immediate(memorystage1_alu_immediate),
+        .alu_immediate_cycle(memorystage1_alu_immediate_cycle)
     );
 
     wire [31:0] registersstage2_outbound_instruction;
@@ -193,7 +195,7 @@ module maxicore32
         memory_cycle_width;
 
     assign program_counter_inc = fetchstage0_memory_access_cycle == 1'b0 ?
-        1'b1 :
+        ( fetchstage0_halting == 1'b0 ? 1'b1 : 1'b0 ) :
         1'b0;
 
     assign register_file_write_data = registerstage2_alu_cycle == 1'b0 ?
@@ -201,7 +203,7 @@ module maxicore32
         registerstage2_alu_result_latched;
 
     assign alu_reg2 = register_file_read_reg2_data;
-    assign alu_reg3 = fetchstage0_memory_access_cycle == 1'b0 ?
+    assign alu_reg3 = memorystage1_alu_immediate_cycle == 1'b0 ?
         register_file_read_reg3_data :
-        {{ 16 { memory_offset[15] }}, memory_offset };
+        {{ 16 { memorystage1_alu_immediate[15] }}, memorystage1_alu_immediate };
 endmodule

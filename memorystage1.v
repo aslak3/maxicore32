@@ -14,11 +14,12 @@ module memorystage1
         output reg memory_read,
         output reg memory_write,
         output t_cycle_width memory_cycle_width,
-        output reg [15:0] memory_offset,
+        output reg [15:0] alu_immediate,
         output reg [3:0] reg_address_index,
         output reg [3:0] reg_data_index,
         output reg [3:0] reg_operand_index,
-        output t_alu_op alu_op
+        output t_alu_op alu_op,
+        output reg alu_immediate_cycle
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
@@ -27,6 +28,7 @@ module memorystage1
         if (reset) begin
             memory_access_cycle <= 1'b0;
             outbound_instruction <= { OPCODE_NOP, 27'h0 };
+            alu_immediate_cycle <= 1'b0;
         end else begin
             case (opcode)
                 OPCODE_LOAD: begin
@@ -35,6 +37,8 @@ module memorystage1
                     memory_read <= 1'b1;
                     memory_write <= 1'b0;
                     alu_op <= { OP_ADD };
+                    alu_immediate <= inbound_instruction[15:0];
+                    alu_immediate_cycle <= 1'b1;
                 end
                 OPCODE_STORE: begin
                     $display("STAGE1: OPCODE_STORE - blocking fetch as we need the bus");
@@ -42,26 +46,38 @@ module memorystage1
                     memory_read <= 1'b0;
                     memory_write <= 1'b1;
                     alu_op <= { OP_ADD };
+                    alu_immediate <= inbound_instruction[15:0];
+                    alu_immediate_cycle <= 1'b1;
                 end
                 OPCODE_ALUM: begin
                     $display("STAGE1: OPCODE_ALUM");
                     alu_op <= { 1'b0, inbound_instruction[15:12] };
                     memory_access_cycle <= 1'b0;
+                    alu_immediate_cycle <= 1'b1;
+                end
+                OPCODE_ALUMI: begin
+                    $display("STAGE1: OPCODE_ALUMI");
+                    alu_op <= { 1'b0, inbound_instruction[15:12] };
+                    memory_access_cycle <= 1'b0;
+                    alu_immediate <= { inbound_instruction[26],
+                        inbound_instruction[26:24], inbound_instruction[11:0] };
+                    alu_immediate_cycle <= 1'b1;
                 end
                 OPCODE_ALU: begin
                     $display("STAGE1: OPCODE_ALU");
                     alu_op <= { 1'b1, inbound_instruction[15:12] };
                     memory_access_cycle <= 1'b0;
+                    alu_immediate_cycle <= 1'b1;
                 end
                 default: begin
                     memory_read <= 1'b0;
                     memory_write <= 1'b0;
                     memory_access_cycle <= 1'b0;
+                    alu_immediate_cycle <= 1'b0;
                 end
             endcase
 
             memory_cycle_width <= inbound_instruction[26:25];
-            memory_offset <= inbound_instruction[15:0];
 
             reg_address_index <= inbound_instruction[19:16];
             reg_data_index <= inbound_instruction[23:20];

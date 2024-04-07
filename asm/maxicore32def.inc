@@ -142,7 +142,9 @@ R15 = 0b1000000000000000
     ; long form ALU operations, ie. dest := op2 operation op3
     {aluop:twoargalu} {dst:reg}, {operand2:reg}, {operand3:reg} =>
         0b00101 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ operand3[3:0] @ 0x00
+	{aluop:twoargalu} {dst:reg}, {operand2:reg}, {value} =>
+		0b00110 @ value[14:12] @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ value[11:0]
     ; same but one operand, ie. dst := operantion op2
     {aluop:oneargalu} {dst:reg}, {operand2:reg} =>
-        0b00110 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
+        0b00111 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
 }

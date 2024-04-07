@@ -77,6 +77,13 @@ module registersstage2
                     alu_cycle <= 1'b1;
                     alu_result_latched <= alu_result;
                 end
+                OPCODE_ALUMI: begin
+                    $display("STAGE2: OPCODE_ALUMI");
+                    write_index <= inbound_instruction[23:20];
+                    write <= 1'b1;
+                    alu_cycle <= 1'b1;
+                    alu_result_latched <= alu_result;
+                end
                 OPCODE_ALU: begin
                     $display("STAGE2: OPCODE_ALU");
                     write_index <= inbound_instruction[23:20];
