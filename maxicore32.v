@@ -83,6 +83,7 @@ module maxicore32
     );
 
     wire fetchstage0_memory_access_cycle;
+    wire fetchstage0_halting;
     wire [31:0] fetchstage0_outbound_instruction;
 
     fetchstage0 fetchstage0 (
@@ -91,6 +92,7 @@ module maxicore32
 
         .block_fetch(fetchstage0_memory_access_cycle),
         .mem_data(cpu_data_in),
+        .halting(fetchstage0_halting),
         .outbound_instruction(fetchstage0_outbound_instruction)
     );
 
@@ -126,6 +128,7 @@ module maxicore32
         .write_immediate(register_file_write_immediate),
         .write_immediate_data(register_file_write_immediate_data),
         .write_immediate_type(register_file_write_immediate_type),
+        .halting(fetchstage0_halting),
         .outbound_instruction(registersstage2_outbound_instruction)
     );
 

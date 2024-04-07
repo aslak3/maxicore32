@@ -14,6 +14,7 @@ module registersstage2
         output reg write_immediate,
         output reg [15:0] write_immediate_data,
         output t_immediate_type write_immediate_type,
+        input halting,
         output reg [31:0] outbound_instruction
     );
 
@@ -70,6 +71,11 @@ module registersstage2
 
             $display("STAGE2: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
+
+            if (halting) begin
+                $display("STAGE2: Halting");
+                $fatal;
+            end
         end
     end
 endmodule
