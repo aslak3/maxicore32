@@ -4,6 +4,7 @@
                 load.ws r3, (r1)
                 nop
                 store.w (r2), r3
+                halt
                 nop
                 nop
                 nop
