@@ -141,7 +141,6 @@ module maxicore32
     assign cpu_data_out = fetchstage0_memory_access_cycle == 1'b0 ?
         32'h0 :
         register_file_read_reg1_data;
-    assign cpu_cycle_width = CW_LONG;
     assign cpu_read = fetchstage0_memory_access_cycle == 1'b0 ?
         1'b1 :
         memory_read;

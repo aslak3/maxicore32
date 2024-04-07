@@ -31,7 +31,7 @@ module registersstage2
                 OPCODE_LOADI: begin
                     $display("STAGE2: OPCODE_LOADI - Immediate load");
                     write_index <= inbound_instruction[23:20];
-                    write_immediate_type <= inbound_instruction[25:24];
+                    write_immediate_type <= inbound_instruction[26:25];
                     write_immediate_data <= inbound_instruction[15:0];
                     write_immediate <= 1'b1;
                     write <= 1'b0;
