@@ -39,7 +39,7 @@ registersstage2_tb: registersstage2.v.v tb/registersstage2_tb.v
 	$(VERILATOR_LINT) --top registersstage2_tb $^
 	$(IVERILOG) -s registersstage2_tb -o $@ $^
 
-maxicore32_tb: maxicore32.v registers.v businterface.v \
+maxicore32_tb: maxicore32.v businterface.v registers.v alu.v \
 	fetchstage0.v memorystage1.v registersstage2.v \
 	memory.v tb/maxicore32_tb.v
 	$(VERILATOR_LINT) --top maxicore32_tb $^

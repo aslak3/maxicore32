@@ -1,5 +1,7 @@
 `include "registers.vh"
 `include "opcodes.vh"
+`include "businterface.vh"
+`include "alu.vh"
 
 module memorystage1
     (
@@ -13,7 +15,9 @@ module memorystage1
         output reg memory_write,
         output t_cycle_width memory_cycle_width,
         output reg [3:0] reg_address_index,
-        output reg [3:0] reg_data_index
+        output reg [3:0] reg_data_index,
+        output reg [3:0] reg_operand_index,
+        output t_alu_op alu_op
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
@@ -36,6 +40,16 @@ module memorystage1
                     memory_read <= 1'b0;
                     memory_write <= 1'b1;
                 end
+                OPCODE_ALUM: begin
+                    $display("STAGE1: OPCODE_ALUM");
+                    alu_op <= { 1'b0, inbound_instruction[15:12] };
+                    memory_access_cycle <= 1'b0;
+                end
+                OPCODE_ALU: begin
+                    $display("STAGE1: OPCODE_ALU");
+                    alu_op <= { 1'b1, inbound_instruction[15:12] };
+                    memory_access_cycle <= 1'b0;
+                end
                 default: begin
                     memory_read <= 1'b0;
                     memory_write <= 1'b0;
@@ -47,6 +61,7 @@ module memorystage1
 
             reg_address_index <= inbound_instruction[19:16];
             reg_data_index <= inbound_instruction[23:20];
+            reg_operand_index <= inbound_instruction[11:8];
 
             $display("STAGE1: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;

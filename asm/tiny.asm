@@ -1,9 +1,13 @@
+                nop
                 loadi.u r1, stuff
-                loadi.u r2, target
+                loadi.u r4, 1
                 nop
-                load.ws r3, (r1)
+                load.l r2, (r1)
                 nop
-                store.w (r2), r3
+                nop
+                not r3, r2
+                nop
+                nop
                 halt
                 nop
                 nop
@@ -11,5 +15,4 @@
                 nop
                 nop
 
-stuff:          #d16 -1
-target:
+stuff:          #d32 0x12345678

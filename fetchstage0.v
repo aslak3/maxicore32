@@ -6,10 +6,10 @@ module fetchstage0
         input reset,
         input clock,
 
-        input block_fetch,
         input [31:0] mem_data,
-        output reg halting,
-        output reg [31:0] outbound_instruction
+        output reg [31:0] outbound_instruction,
+        input block_fetch,
+        output reg halting
     );
 
     wire t_opcode opcode = mem_data[31:27];
@@ -31,7 +31,7 @@ module fetchstage0
             if (block_fetch) begin
                 $display("STAGE0: Blocking fetch; Inserting NOP");
                 outbound_instruction <= { OPCODE_NOP, 27'h0 };
-            end if (halting)  begin
+            end else if (halting) begin
                 $display("STAGE0: Halting; Inserting NOP");
                 outbound_instruction <= { OPCODE_NOP, 27'h0 };
             end else begin
