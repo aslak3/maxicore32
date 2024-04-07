@@ -96,6 +96,7 @@ module maxicore32
 
     wire [31:0] memorystage1_outbound_instruction;
     wire memory_read, memory_write;
+    wire t_cycle_width memory_cycle_width;
 
     memorystage1 memorystage1 (
         .reset(reset),
@@ -106,6 +107,7 @@ module maxicore32
         .memory_access_cycle(fetchstage0_memory_access_cycle),
         .memory_read(memory_read),
         .memory_write(memory_write),
+        .memory_cycle_width(memory_cycle_width),
         .reg_address_index(register_file_read_reg2_index),
         .reg_data_index(register_file_read_reg1_index)
     );
@@ -146,7 +148,12 @@ module maxicore32
     assign cpu_write = fetchstage0_memory_access_cycle == 1'b0 ?
         1'b0 :
         memory_write;
+    assign cpu_cycle_width = fetchstage0_memory_access_cycle == 1'b0 ?
+        CW_LONG :
+        memory_cycle_width;
 
-    assign program_counter_inc = ~fetchstage0_memory_access_cycle;
+    assign program_counter_inc = fetchstage0_memory_access_cycle == 1'b0 ?
+        1'b1 :
+        1'b0;
 
 endmodule

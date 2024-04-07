@@ -157,7 +157,8 @@ IR-S2 is clocked into IR-S3.
 ### Encoding
 
 - 31:27 - opcode (load/store)
-- 26:24 - transfer size (3)
+- 26:25 - cycle width
+- 24 - signed
 - 23:20 - reg to use for data (4) [write or read]
 - 19:16 - reg to use for address (4) [read]
 - 15:0 - offset (16)

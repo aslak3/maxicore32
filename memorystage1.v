@@ -11,6 +11,7 @@ module memorystage1
         output reg memory_access_cycle,
         output reg memory_read,
         output reg memory_write,
+        output t_cycle_width memory_cycle_width,
         output reg [3:0] reg_address_index,
         output reg [3:0] reg_data_index
     );
@@ -41,6 +42,8 @@ module memorystage1
                     memory_access_cycle <= 1'b0;
                 end
             endcase
+
+            memory_cycle_width <= inbound_instruction[26:25];
 
             reg_address_index <= inbound_instruction[19:16];
             reg_data_index <= inbound_instruction[23:20];

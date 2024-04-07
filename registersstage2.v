@@ -40,7 +40,26 @@ module registersstage2
                     $display("STAGE2: OPCODE_LOAD - Memory load");
                     write_index <= inbound_instruction[23:20];
                     write <= 1'b1;
-                    write_data <= data_in;
+                    // Sign and zero extend the data for the register.
+                    case (inbound_instruction[26:25])
+                        CW_BYTE: begin
+                            if (inbound_instruction[24]) begin
+                                write_data <= {{ 24 { data_in[7] }}, data_in[7:0] };
+                            end else begin
+                                write_data <= { 24'h0, data_in[7:0] };
+                            end
+                        end
+                        CW_WORD: begin
+                            if (inbound_instruction[24]) begin
+                                write_data <= {{ 16 { data_in[15] }}, data_in[15:0] };
+                            end else begin
+                                write_data <= { 16'h0, data_in[15:0] };
+                            end
+                        end
+                        default: begin
+                            write_data <= data_in;
+                        end
+                    endcase
                     write_immediate <= 1'b0;
                 end
                 default: begin
