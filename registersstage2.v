@@ -19,10 +19,55 @@ module registersstage2
         output t_immediate_type write_immediate_type,
         output reg alu_cycle,
         input t_reg alu_result,
-        output t_reg alu_result_latched
+        output t_reg alu_result_latched,
+        output reg jump,
+        output reg alu_carry_in,
+        input alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
+    wire t_alu_condition alu_condition = inbound_instruction[15:12];
+    reg alu_carry_result, alu_zero_result, alu_neg_result, alu_over_result;
+    reg cond_true;
+
+    always @ (alu_carry_result, alu_zero_result, alu_neg_result, alu_over_result, alu_condition) begin
+        case (alu_condition)
+            COND_AL:
+                cond_true = 1'b1;
+            COND_EQ:
+                cond_true = alu_zero_result;
+            COND_NE:
+                cond_true = ~alu_zero_result;
+            COND_CS:
+                cond_true = alu_carry_result;
+            COND_CC:
+                cond_true = ~alu_carry_result;
+            COND_MI:
+                cond_true = alu_neg_result;
+            COND_PL:
+                cond_true = ~alu_neg_result;
+            COND_VS:
+                cond_true = alu_over_result;
+            COND_VC:
+                cond_true = ~cond_true <= alu_over_result;
+            COND_HI:
+                cond_true = ~cond_true <= alu_carry_result & ~cond_true <= alu_zero_result;
+            COND_LS:
+                cond_true = cond_true <= alu_carry_result | cond_true <= alu_zero_result;
+            COND_GE:
+                cond_true = ~(cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+            COND_LT:
+                cond_true = cond_true <= alu_neg_result ^ cond_true <= alu_over_result;
+            COND_GT:
+                cond_true = ~cond_true <= alu_zero_result &
+                    ~(cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+            COND_LE:
+                cond_true = cond_true <= alu_zero_result |
+                    (cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+            default:
+                cond_true = 1'b0;
+        endcase
+    end
 
     always @ (posedge reset, posedge clock) begin
         if (reset) begin
@@ -31,8 +76,15 @@ module registersstage2
             write_immediate_type <= IT_UNSIGNED;
             write_immediate_data <= 16'h0;
             write <= 1'b0;
-            alu_cycle <= 1'b0;
+            alu_cycle <= 1'b0;;
+            jump <= 1'b0;
         end else begin
+            write <= 1'b0;
+            alu_cycle <= 1'b0;;
+            jump <= 1'b0;
+            write <= 1'b0;
+            write_immediate <= 1'b0;
+
             case (opcode)
                 OPCODE_LOADI: begin
                     $display("STAGE2: OPCODE_LOADI - Immediate load");
@@ -40,8 +92,6 @@ module registersstage2
                     write_immediate_type <= inbound_instruction[26:25];
                     write_immediate_data <= inbound_instruction[15:0];
                     write_immediate <= 1'b1;
-                    write <= 1'b0;
-                    alu_cycle <= 1'b0;
                 end
                 OPCODE_LOAD: begin
                     $display("STAGE2: OPCODE_LOAD - Memory load");
@@ -72,28 +122,51 @@ module registersstage2
                 end
                 OPCODE_ALUM: begin
                     $display("STAGE2: OPCODE_ALUM");
-                    write_index <= inbound_instruction[23:20];
-                    write <= 1'b1;
-                    alu_cycle <= 1'b1;
-                    alu_result_latched <= alu_result;
                 end
                 OPCODE_ALUMI: begin
                     $display("STAGE2: OPCODE_ALUMI");
-                    write_index <= inbound_instruction[23:20];
-                    write <= 1'b1;
-                    alu_cycle <= 1'b1;
-                    alu_result_latched <= alu_result;
                 end
                 OPCODE_ALU: begin
                     $display("STAGE2: OPCODE_ALU");
-                    write_index <= inbound_instruction[23:20];
-                    write <= 1'b1;
-                    alu_cycle <= 1'b1;
-                    alu_result_latched <= alu_result;
+                end
+                OPCODE_BRANCH: begin
+                    if (cond_true) begin
+                        $display("STAGE2: OPCODE_BRANCH: Branch being taken");
+                        alu_cycle <= 1'b1;
+                        alu_result_latched <= alu_result;
+                        jump <= 1'b1;
+                    end else begin
+                        $display("STAGE2: OPCODE_BRANCH: Branch NOT being taken");
+                    end
+                end
+                OPCODE_JUMP: begin
+                    if (cond_true) begin
+                        $display("STAGE2: OPCODE_BRANCH: Branch being taken");
+                        jump <= 1'b1;
+                    end else begin
+                        $display("STAGE2: OPCODE_BRANCH: Branch NOT being taken");
+                    end
                 end
                 default: begin
-                    write <= 1'b0;
-                    write_immediate <= 1'b0;
+                end
+            endcase
+
+            case (opcode)
+                OPCODE_ALUM,
+                OPCODE_ALUMI,
+                OPCODE_ALU: begin
+                    $display("ZERO IS NOW %01b", alu_zero_out);
+                    alu_carry_result <= alu_carry_out;
+                    alu_zero_result <= alu_zero_out;
+                    alu_neg_result <= alu_neg_out;
+                    alu_over_result <= alu_over_out;
+                    alu_carry_in <= alu_carry_out;
+                    alu_result_latched <= alu_result;
+                    alu_cycle <= 1'b1;
+                    write_index <= inbound_instruction[23:20];
+                    write <= 1'b1;
+                end
+                default: begin
                 end
             endcase
 

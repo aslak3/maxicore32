@@ -1,18 +1,17 @@
                 nop                 ; FIX!
                 loadi.u r1, stuff
                 nop
-                load.l r2, (r1)
+                load.bu r2, (r1)
                 nop
-                or r3, r2, 0x678
+again:          add r1, r1, 1
+                nop
+                nop
+                store.b (r1), r2
+                sub r2, r2, 1
+                branch.ne again
+                nop
+                nop
+                nop
                 halt
 
-                nop
-                nop
-                nop
-                nop
-                nop
-                nop
-                nop
-                nop
-
-stuff:          #d32 0x12345000
+stuff:          #d8 0x20

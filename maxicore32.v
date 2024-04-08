@@ -38,10 +38,10 @@ module maxicore32
         .businterface_read(read), .businterface_write(write)
     );
 
-    reg program_counter_jump = 1'b0;
+    wire program_counter_jump;
     wire program_counter_inc;
     reg program_counter_branch = 1'b0;
-    reg [31:0] program_counter_jump_data = 32'h0;
+    wire [31:0] program_counter_jump_data;
     reg [15:0] program_counter_branch_data = 16'h0;
     wire [31:0] program_counter_read_data;
 
@@ -118,6 +118,8 @@ module maxicore32
     wire t_cycle_width memory_cycle_width;
     wire [15:0] memorystage1_alu_immediate;
     wire memorystage1_alu_immediate_cycle;
+    wire memorystage1_branch_cycle;
+    wire memorystage1_jump_cycle;
 
     memorystage1 memorystage1 (
         .reset(reset),
@@ -134,7 +136,9 @@ module maxicore32
         .reg_operand_index(register_file_read_reg3_index),
         .alu_op(alu_op),
         .alu_immediate(memorystage1_alu_immediate),
-        .alu_immediate_cycle(memorystage1_alu_immediate_cycle)
+        .alu_immediate_cycle(memorystage1_alu_immediate_cycle),
+        .branch_cycle(memorystage1_branch_cycle),
+        .jump_cycle(memorystage1_jump_cycle)
     );
 
     wire [31:0] registersstage2_outbound_instruction;
@@ -157,7 +161,11 @@ module maxicore32
         .write_immediate_type(register_file_write_immediate_type),
         .alu_cycle(registerstage2_alu_cycle),
         .alu_result(alu_result),
-        .alu_result_latched(registerstage2_alu_result_latched)
+        .alu_result_latched(registerstage2_alu_result_latched),
+        .jump(program_counter_jump),
+        .alu_carry_in(alu_carry_in),
+        .alu_carry_out(alu_carry_out), .alu_zero_out(alu_zero_out),
+        .alu_neg_out(alu_neg_out), .alu_over_out(alu_over_out)
     );
 
     reg [1:0] halting_counter;
@@ -202,8 +210,14 @@ module maxicore32
         registerstage2_write_data :
         registerstage2_alu_result_latched;
 
-    assign alu_reg2 = register_file_read_reg2_data;
+    assign alu_reg2 = memorystage1_branch_cycle == 1'b0 ?
+        register_file_read_reg2_data :
+        program_counter_read_data;
     assign alu_reg3 = memorystage1_alu_immediate_cycle == 1'b0 ?
         register_file_read_reg3_data :
         {{ 16 { memorystage1_alu_immediate[15] }}, memorystage1_alu_immediate };
+
+    assign program_counter_jump_data = memorystage1_jump_cycle == 1'b0 ?
+        registerstage2_alu_result_latched :
+        register_file_read_reg2_data;
 endmodule

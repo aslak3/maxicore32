@@ -70,6 +70,7 @@ module program_counter
             program_counter <= 32'h0;
         end else if (clock) begin
             if (jump) begin
+                $display("Jumping to %08x", jump_data);
                 program_counter <= jump_data;
             end else if (inc) begin
                 program_counter <= program_counter + 4;

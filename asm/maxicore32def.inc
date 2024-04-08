@@ -146,4 +146,10 @@ R15 = 0b1000000000000000
     ; same but one operand, ie. dst := operantion op2
     {aluop:oneargalu} {dst:reg}, {operand2:reg} =>
         0b00111 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
+
+	branch {target} =>
+		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
+	branch.{cond:condition} {target} =>
+		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
+
 }

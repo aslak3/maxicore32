@@ -9,6 +9,8 @@ localparam t_opcode OPCODE_STORE    = 5'b00100;
 localparam t_opcode OPCODE_ALUM     = 5'b00101;
 localparam t_opcode OPCODE_ALUMI    = 5'b00110;
 localparam t_opcode OPCODE_ALU      = 5'b00111;
+localparam t_opcode OPCODE_BRANCH   = 5'b01000;
+localparam t_opcode OPCODE_JUMP     = 5'b01001;
 
 `define OPCODES_VH 1
 `endif
