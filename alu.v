@@ -56,10 +56,6 @@ module alu
                 temp_result = { 1'b0, temp_short_result };
             end
 
-            OP_INC:
-                temp_result = temp_reg2 + 1;
-            OP_DEC:
-                temp_result = temp_reg2 - 1;
             OP_NOT:
                 temp_result = ~{ 1'b1, temp_reg2[31:0]};
             OP_LOGIC_LEFT:

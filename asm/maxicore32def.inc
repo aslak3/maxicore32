@@ -95,24 +95,23 @@ R15 = 0b1000000000000000
     and     => 0x4
     or      => 0x5
     xor     => 0x6
-    copy    => 0x7
-    compare => 0x8
-    bit     => 0x9
-    mulu    => 0xa
-    muls    => 0xb
+    compare => 0x7
+    bit     => 0x8
+    mulu    => 0x9
+    muls    => 0xa
 }
 #subruledef oneargalu
 {
-    inc        => 0x0
-    dec        => 0x1
-    not        => 0x2
-    logicleft  => 0x3
-    logicright => 0x4
-    arithleft  => 0x5
-    arithright => 0x6
-    negate     => 0x7
-    swap       => 0x8
-    test       => 0x9
+    not        => 0x0
+    logicleft  => 0x1
+    logicright => 0x2
+    arithleft  => 0x3
+    arithright => 0x4
+    negate     => 0x5
+    swap       => 0x6
+    test       => 0x7
+    signextb   => 0x8
+    signextw   => 0x9
 }
 
 ; - 31:27 - opcode

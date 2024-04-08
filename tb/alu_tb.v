@@ -115,14 +115,6 @@ module alu_tb;
         run_test(OP_MULS,           32'h00007fff, 32'h00008000, 1'b0,  32'hc0008000, 1'b0, 1'b0, 1'b1, 1'b0);
 
         // no operand
-        run_test(OP_INC,            32'h00000000, 32'h00000000, 1'b0, 32'h00000001, 1'b0, 1'b0, 1'b0, 1'b0);
-        run_test(OP_INC,            32'h7fffffff, 32'h00000000, 1'b0, 32'h80000000, 1'b0, 1'b0, 1'b1, 1'b0);
-        run_test(OP_INC,            32'hffffffff, 32'h00000000, 1'b0, 32'h00000000, 1'b1, 1'b1, 1'b0, 1'b0);
-
-        run_test(OP_DEC,            32'h00000000, 32'h00000000, 1'b0, 32'hffffffff, 1'b1, 1'b0, 1'b1, 1'b0);
-        run_test(OP_DEC,            32'h00000001, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
-        run_test(OP_DEC,            32'hffffffff, 32'h00000000, 1'b0, 32'hfffffffe, 1'b0, 1'b0, 1'b1, 1'b0);
-
         run_test(OP_NOT,            32'h80808080, 32'h00000000, 1'b0, 32'h7f7f7f7f, 1'b0, 1'b0, 1'b0, 1'b0);
         run_test(OP_NOT,            32'hffffffff, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
         run_test(OP_NOT,            32'h00000000, 32'h00000000, 1'b0, 32'hffffffff, 1'b0, 1'b0, 1'b1, 1'b0);
