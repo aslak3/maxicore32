@@ -22,7 +22,8 @@ localparam t_alu_op OP_ADD =                { 1'b0, 4'h0 },
                     OP_SWAP =               { 1'b1, 4'h6 },
                     OP_TEST =               { 1'b1, 4'h7 },
                     OP_SIGN_EXT_B =         { 1'b1, 4'h8 },
-                    OP_SIGN_EXT_W =         { 1'b1, 4'h9 };
+                    OP_SIGN_EXT_W =         { 1'b1, 4'h9 },
+                    OP_COPY =               { 1'b1, 4'ha };
 
 typedef reg [3:0] t_alu_condition;
 

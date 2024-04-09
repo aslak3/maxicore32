@@ -55,9 +55,7 @@ module program_counter
         input   clock,
         input   jump,
         input   inc,
-        input   branch,
         input   t_reg jump_data,
-        input   [15:0] branch_data,
         output  t_reg read_data
     );
 
@@ -74,8 +72,6 @@ module program_counter
                 program_counter <= jump_data;
             end else if (inc) begin
                 program_counter <= program_counter + 4;
-            end else if (branch) begin
-                program_counter <= program_counter + { {16{branch_data[15]}}, branch_data[15:0]};
             end
         end
     end

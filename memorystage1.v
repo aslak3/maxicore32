@@ -83,6 +83,7 @@ module memorystage1
                 end
                 OPCODE_JUMP: begin
                     $display("STAGE1: OPCODE_JUMP");
+                    alu_op <= { OP_COPY };
                     jump_cycle <= 1'b1;
                 end
                 default: begin

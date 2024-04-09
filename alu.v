@@ -79,6 +79,9 @@ module alu
             OP_SIGN_EXT_W:
                 temp_result = { 1'b0, {16{ temp_reg2[15] }}, temp_reg2[15:0] };
 
+            OP_COPY:
+                temp_result = temp_reg2;
+
             default:
                 temp_result = { 1'b0, 32'h0 };
         endcase

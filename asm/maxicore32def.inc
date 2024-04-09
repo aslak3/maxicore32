@@ -112,6 +112,7 @@ R15 = 0b1000000000000000
     test       => 0x7
     signextb   => 0x8
     signextw   => 0x9
+    copy       => 0xa
 }
 
 ; - 31:27 - opcode
@@ -151,5 +152,10 @@ R15 = 0b1000000000000000
 		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
 	branch.{cond:condition} {target} =>
 		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
+	jump {dst:reg} =>
+		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ 0x0 @ 0x000
+	jump.{cond:condition} {dst:reg} =>
+		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ cond[3:0] @ 0x000
+
 
 }

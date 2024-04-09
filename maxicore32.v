@@ -40,9 +40,6 @@ module maxicore32
 
     wire program_counter_jump;
     wire program_counter_inc;
-    reg program_counter_branch = 1'b0;
-    wire [31:0] program_counter_jump_data;
-    reg [15:0] program_counter_branch_data = 16'h0;
     wire [31:0] program_counter_read_data;
 
     program_counter program_counter (
@@ -51,9 +48,7 @@ module maxicore32
 
         .jump(program_counter_jump),
         .inc(program_counter_inc),
-        .branch(program_counter_branch),
-        .jump_data(program_counter_jump_data),
-        .branch_data(program_counter_branch_data),
+        .jump_data(registerstage2_alu_result_latched),
         .read_data(program_counter_read_data)
     );
 
@@ -144,7 +139,7 @@ module maxicore32
     wire [31:0] registersstage2_outbound_instruction;
     wire t_reg registerstage2_write_data;
     wire registerstage2_alu_cycle;
-    wire t_reg registerstage2_alu_result_latched;
+    t_reg registerstage2_alu_result_latched;
 
     registersstage2 registersstage2 (
         .reset(reset),
@@ -217,7 +212,4 @@ module maxicore32
         register_file_read_reg3_data :
         {{ 16 { memorystage1_alu_immediate[15] }}, memorystage1_alu_immediate };
 
-    assign program_counter_jump_data = memorystage1_jump_cycle == 1'b0 ?
-        registerstage2_alu_result_latched :
-        register_file_read_reg2_data;
 endmodule

@@ -79,8 +79,7 @@ module registersstage2
             alu_cycle <= 1'b0;;
             jump <= 1'b0;
         end else begin
-            write <= 1'b0;
-            alu_cycle <= 1'b0;;
+            alu_cycle <= 1'b0;
             jump <= 1'b0;
             write <= 1'b0;
             write_immediate <= 1'b0;
@@ -141,10 +140,12 @@ module registersstage2
                 end
                 OPCODE_JUMP: begin
                     if (cond_true) begin
-                        $display("STAGE2: OPCODE_BRANCH: Branch being taken");
+                        $display("STAGE2: OPCODE_JUMP: Branch being taken");
+                        alu_cycle <= 1'b1;
+                        alu_result_latched <= alu_result;
                         jump <= 1'b1;
                     end else begin
-                        $display("STAGE2: OPCODE_BRANCH: Branch NOT being taken");
+                        $display("STAGE2: OPCODE_JUMP: Branch NOT being taken");
                     end
                 end
                 default: begin
