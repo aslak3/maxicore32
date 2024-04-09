@@ -203,6 +203,7 @@ Same as above
 ## Branch/CallBranch
 
 - 31:27 - opcode
+- 26 - call flag
 - 23:20 - reg for old pc (rD) [write]
 - 19:16 - top 4 bits of offset
 - 15:12 - condition
@@ -215,9 +216,11 @@ Same as above
 2. write old PC to rPC if condition met
 3. branch to new PC if condition met
 
-## Jump
+## Jump/CallJump
 
 - 31:27 - opcode
+- 26 call flag
+- 23:20 - reg for old pc (rD) [write]
 - 19:16 - reg to use for new PC
 - 15:12 - condition
 

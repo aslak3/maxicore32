@@ -41,6 +41,7 @@ module maxicore32
     wire program_counter_jump;
     wire program_counter_inc;
     wire [31:0] program_counter_read_data;
+    t_reg registerstage2_alu_result_latched;
 
     program_counter program_counter (
         .reset(reset),
@@ -94,9 +95,9 @@ module maxicore32
         .neg_out(alu_neg_out), .over_out(alu_over_out)
     );
 
+    wire [31:0] fetchstage0_outbound_instruction;
     wire fetchstage0_memory_access_cycle;
     wire fetchstage0_halting;
-    wire [31:0] fetchstage0_outbound_instruction;
 
     fetchstage0 fetchstage0 (
         .reset(reset),
@@ -109,6 +110,7 @@ module maxicore32
     );
 
     wire [31:0] memorystage1_outbound_instruction;
+    wire [31:0] memorystage1_outbound_address;
     wire memory_read, memory_write;
     wire t_cycle_width memory_cycle_width;
     wire [15:0] memorystage1_alu_immediate;
@@ -122,6 +124,8 @@ module maxicore32
 
         .inbound_instruction(fetchstage0_outbound_instruction),
         .outbound_instruction(memorystage1_outbound_instruction),
+        .inbound_address(program_counter_read_data),
+        .outbound_address(memorystage1_outbound_address),
         .memory_access_cycle(fetchstage0_memory_access_cycle),
         .memory_read(memory_read),
         .memory_write(memory_write),
@@ -137,9 +141,9 @@ module maxicore32
     );
 
     wire [31:0] registersstage2_outbound_instruction;
+    wire [31:0] registersstage2_outbound_address;
     wire t_reg registerstage2_write_data;
     wire registerstage2_alu_cycle;
-    t_reg registerstage2_alu_result_latched;
 
     registersstage2 registersstage2 (
         .reset(reset),
@@ -147,6 +151,8 @@ module maxicore32
 
         .inbound_instruction(memorystage1_outbound_instruction),
         .outbound_instruction(registersstage2_outbound_instruction),
+        .inbound_address(memorystage1_outbound_address),
+        .outbound_address(registersstage2_outbound_address),
         .data_in(cpu_data_in),
         .write_index(register_file_write_index),
         .write(register_file_write),

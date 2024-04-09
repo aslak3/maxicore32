@@ -157,5 +157,15 @@ R15 = 0b1000000000000000
 	jump.{cond:condition} {dst:reg} =>
 		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ cond[3:0] @ 0x000
 
+	callbranch {savepc:reg}, {target} =>
+		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
+	calllbranch.{cond:condition} {savepc:reg}, {target} =>
+		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
+	calljump {savepc:reg}, {dst:reg} =>
+		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ 0x0 @ 0x000
+	calljump.{cond:condition} {savepc:reg}, {dst:reg} =>
+		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ cond[3:0] @ 0x000
+
+
 
 }

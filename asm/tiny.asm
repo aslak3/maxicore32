@@ -1,12 +1,13 @@
                 nop                 ; FIX!
                 loadi.u r1, stuff
                 loadi.u r3, again
-                load.bu r2, (r1)
+                load.wu r2, (r1)
                 nop
-again:          add r1, r1, 1
+again:          add r1, r1, 2
+                callbranch r15, storeit
                 nop
                 nop
-                store.b (r1), r2
+                nop
                 sub r2, r2, 1
                 jump.ne r3
                 nop
@@ -14,4 +15,10 @@ again:          add r1, r1, 1
                 nop
                 halt
 
-stuff:          #d8 0x20
+storeit:        store.w (r1), r2
+                jump r15
+                nop
+                nop
+                nop
+
+stuff:          #d16 0x20

@@ -72,7 +72,7 @@ module maxicore32_tb;
             end
             if (bus_error || halted) begin
                 $display("=== MEMORY DUMP ===");
-                for (dump_counter = 0; dump_counter < 32; dump_counter++) begin
+                for (dump_counter = 0; dump_counter < 64; dump_counter++) begin
                     $display("%0d =\t%08x", dump_counter * 4, memory.contents[dump_counter]);
                 end
                 $display("=== REGISTERS ===");

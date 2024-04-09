@@ -10,6 +10,8 @@ module memorystage1
 
         input [31:0] inbound_instruction,
         output reg [31:0] outbound_instruction,
+        input [31:0] inbound_address,
+        output reg [31:0] outbound_address,
         output reg memory_access_cycle,
         output reg memory_read,
         output reg memory_write,
@@ -100,6 +102,7 @@ module memorystage1
 
             $display("STAGE1: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
+            outbound_address <= inbound_address;
         end
     end
 endmodule

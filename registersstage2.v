@@ -10,6 +10,8 @@ module registersstage2
 
         input [31:0] inbound_instruction,
         output reg [31:0] outbound_instruction,
+        input [31:0] inbound_address,
+        output reg [31:0] outbound_address,
         input [31:0] data_in,
         output reg [3:0] write_index,
         output reg write,
@@ -131,9 +133,15 @@ module registersstage2
                 OPCODE_BRANCH: begin
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_BRANCH: Branch being taken");
-                        alu_cycle <= 1'b1;
+                        alu_cycle <= 1'b0;
                         alu_result_latched <= alu_result;
                         jump <= 1'b1;
+                        if (inbound_instruction[24]) begin
+                            $display("STAGE_OPCODE_BRANCH: Saving PC");
+                            write_index <= inbound_instruction[23:20];
+                            write_data <= inbound_address;
+                            write <= 1'b1;
+                        end
                     end else begin
                         $display("STAGE2: OPCODE_BRANCH: Branch NOT being taken");
                     end
@@ -141,9 +149,15 @@ module registersstage2
                 OPCODE_JUMP: begin
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_JUMP: Branch being taken");
-                        alu_cycle <= 1'b1;
+                        alu_cycle <= 1'b0;
                         alu_result_latched <= alu_result;
                         jump <= 1'b1;
+                        if (inbound_instruction[24]) begin
+                            $display("STAGE_OPCODE_JUMP: Saving PC");
+                            write_index <= inbound_instruction[23:20];
+                            write_data <= inbound_address;
+                            write <= 1'b1;
+                        end
                     end else begin
                         $display("STAGE2: OPCODE_JUMP: Branch NOT being taken");
                     end
@@ -173,6 +187,7 @@ module registersstage2
 
             $display("STAGE2: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
+            outbound_address <= inbound_address;
         end
     end
 endmodule
