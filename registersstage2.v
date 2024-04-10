@@ -51,21 +51,19 @@ module registersstage2
             COND_VS:
                 cond_true = alu_over_result;
             COND_VC:
-                cond_true = ~cond_true <= alu_over_result;
+                cond_true = ~alu_over_result;
             COND_HI:
-                cond_true = ~cond_true <= alu_carry_result & ~cond_true <= alu_zero_result;
+                cond_true = ~alu_carry_result & ~alu_zero_result;
             COND_LS:
-                cond_true = cond_true <= alu_carry_result | cond_true <= alu_zero_result;
+                cond_true = alu_carry_result | alu_zero_result;
             COND_GE:
-                cond_true = ~(cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+                cond_true = ~(alu_neg_result ^ alu_over_result);
             COND_LT:
-                cond_true = cond_true <= alu_neg_result ^ cond_true <= alu_over_result;
+                cond_true = alu_neg_result ^ alu_over_result;
             COND_GT:
-                cond_true = ~cond_true <= alu_zero_result &
-                    ~(cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+                cond_true = ~alu_zero_result & ~(alu_neg_result ^ alu_over_result);
             COND_LE:
-                cond_true = cond_true <= alu_zero_result |
-                    (cond_true <= alu_neg_result ^ cond_true <= alu_over_result);
+                cond_true = alu_zero_result | (alu_neg_result ^ alu_over_result);
             default:
                 cond_true = 1'b0;
         endcase
