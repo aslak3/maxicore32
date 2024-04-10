@@ -6,24 +6,6 @@
     #bits 8
 }
 
-
-R0  = 0b0000000000000001
-R1  = 0b0000000000000010
-R2  = 0b0000000000000100
-R3  = 0b0000000000001000
-R4  = 0b0000000000010000
-R5  = 0b0000000000100000
-R6  = 0b0000000001000000
-R7  = 0b0000000010000000
-R8  = 0b0000000100000000
-R9  = 0b0000001000000000
-R10 = 0b0000010000000000
-R11 = 0b0000100000000000
-R12 = 0b0001000000000000
-R13 = 0b0010000000000000
-R14 = 0b0100000000000000
-R15 = 0b1000000000000000
-
 #subruledef reg
 {
     r0  => 0
@@ -127,27 +109,30 @@ R15 = 0b1000000000000000
     nop => 0b00000 @ 0b000 @ 0x000000
     halt => 0b00001 @ 0b000 @ 0x000000
 
-    loadi.{type:loaditype} {dst:reg}, {value} =>
+    ; load immediate with one of four types: top, bottom, signed and unsigned
+    loadi.{type:loaditype} {dst:reg},{value} =>
         0b00010 @ type[2:0] @ dst[3:0] @ 0x0 @ value[15:0]
 
-    load.{type:loadtype} {dst:reg}, {offset}({src:reg}) =>
+    ; load and store, with and without offset
+    load.{type:loadtype} {dst:reg},{offset}({src:reg}) =>
         0b00011 @ type[2:0] @ dst[3:0] @ src[3:0] @ offset[15:0]
-    store.{type:storetype} {offset}({dst:reg}), {src:reg} =>
+    store.{type:storetype} {offset}({dst:reg}),{src:reg} =>
         0b00100 @ type[2:0] @ src[3:0] @ dst[3:0] @ offset[15:0]
-    load.{type:loadtype} {dst:reg}, ({src:reg}) =>
+    load.{type:loadtype} {dst:reg},({src:reg}) =>
         0b00011 @ type[2:0] @ dst[3:0] @ src[3:0] @ 0x0000
-    store.{type:storetype} ({dst:reg}), {src:reg} =>
+    store.{type:storetype} ({dst:reg}),{src:reg} =>
         0b00100 @ type[2:0] @ src[3:0] @ dst[3:0] @ 0x0000
 
-    ; long form ALU operations, ie. dest := op2 operation op3
-    {aluop:twoargalu} {dst:reg}, {operand2:reg}, {operand3:reg} =>
+    ; ALU operations, ie. dest := op2 operation op3
+    {aluop:twoargalu} {dst:reg},{operand2:reg},{operand3:reg} =>
         0b00101 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ operand3[3:0] @ 0x00
-	{aluop:twoargalu} {dst:reg}, {operand2:reg}, {value} =>
+	{aluop:twoargalu} {dst:reg},{operand2:reg},{value} =>
 		0b00110 @ value[14:12] @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ value[11:0]
-    ; same but one operand, ie. dst := operantion op2
-    {aluop:oneargalu} {dst:reg}, {operand2:reg} =>
+    ; same but one operand, ie. dst := operation op2
+    {aluop:oneargalu} {dst:reg},{operand2:reg} =>
         0b00111 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
 
+    ; branch and jump, with and without condition
 	branch {target} =>
 		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
 	branch.{cond:condition} {target} =>
@@ -157,15 +142,13 @@ R15 = 0b1000000000000000
 	jump.{cond:condition} {dst:reg} =>
 		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ cond[3:0] @ 0x000
 
-	callbranch {savepc:reg}, {target} =>
+    ; branch and jump to subroutine, with and without condition - pc is saved into savepc
+	callbranch {savepc:reg},{target} =>
 		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
-	calllbranch.{cond:condition} {savepc:reg}, {target} =>
+	calllbranch.{cond:condition} {savepc:reg},{target} =>
 		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
-	calljump {savepc:reg}, {dst:reg} =>
+	calljump {savepc:reg},{dst:reg} =>
 		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ 0x0 @ 0x000
-	calljump.{cond:condition} {savepc:reg}, {dst:reg} =>
+	calljump.{cond:condition} {savepc:reg},{dst:reg} =>
 		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ cond[3:0] @ 0x000
-
-
-
 }
