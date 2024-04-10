@@ -95,6 +95,19 @@ module maxicore32
         .neg_out(alu_neg_out), .over_out(alu_over_out)
     );
 
+    wire status_register_write;
+    wire status_register_carry, status_register_zero, status_register_neg, status_register_over;
+
+    status_register status_register (
+        .reset(reset),
+        .clock(clock),
+        .write(status_register_write),
+        .carry_data(alu_carry_out), .zero_data(alu_zero_out),
+        .neg_data(alu_neg_out), .over_data(alu_over_out),
+        .read_carry(status_register_carry), .read_zero(status_register_zero),
+        .read_neg(status_register_neg), .read_over(status_register_over)
+    );
+
     wire [31:0] fetchstage0_outbound_instruction;
     wire fetchstage0_memory_access_cycle;
     wire fetchstage0_halting;
@@ -137,7 +150,8 @@ module maxicore32
         .alu_immediate(memorystage1_alu_immediate),
         .alu_immediate_cycle(memorystage1_alu_immediate_cycle),
         .branch_cycle(memorystage1_branch_cycle),
-        .jump_cycle(memorystage1_jump_cycle)
+        .jump_cycle(memorystage1_jump_cycle),
+        .status_register_write(status_register_write)
     );
 
     wire [31:0] registersstage2_outbound_instruction;
@@ -165,8 +179,8 @@ module maxicore32
         .alu_result_latched(registerstage2_alu_result_latched),
         .jump(program_counter_jump),
         .alu_carry_in(alu_carry_in),
-        .alu_carry_out(alu_carry_out), .alu_zero_out(alu_zero_out),
-        .alu_neg_out(alu_neg_out), .alu_over_out(alu_over_out)
+        .alu_carry(status_register_carry), .alu_zero(status_register_zero),
+        .alu_neg(status_register_neg), .alu_over(status_register_over)
     );
 
     reg [1:0] halting_counter;

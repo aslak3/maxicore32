@@ -24,46 +24,45 @@ module registersstage2
         output t_reg alu_result_latched,
         output reg jump,
         output reg alu_carry_in,
-        input alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out
+        input alu_carry, alu_zero, alu_neg, alu_over
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
     wire t_alu_condition alu_condition = inbound_instruction[15:12];
-    reg alu_carry_result, alu_zero_result, alu_neg_result, alu_over_result;
     reg cond_true;
 
-    always @ (alu_carry_result, alu_zero_result, alu_neg_result, alu_over_result, alu_condition) begin
+    always @ (alu_carry, alu_zero, alu_neg, alu_over, alu_condition) begin
         case (alu_condition)
             COND_AL:
                 cond_true = 1'b1;
             COND_EQ:
-                cond_true = alu_zero_result;
+                cond_true = alu_zero;
             COND_NE:
-                cond_true = ~alu_zero_result;
+                cond_true = ~alu_zero;
             COND_CS:
-                cond_true = alu_carry_result;
+                cond_true = alu_carry;
             COND_CC:
-                cond_true = ~alu_carry_result;
+                cond_true = ~alu_carry;
             COND_MI:
-                cond_true = alu_neg_result;
+                cond_true = alu_neg;
             COND_PL:
-                cond_true = ~alu_neg_result;
+                cond_true = ~alu_neg;
             COND_VS:
-                cond_true = alu_over_result;
+                cond_true = alu_over;
             COND_VC:
-                cond_true = ~alu_over_result;
+                cond_true = ~alu_over;
             COND_HI:
-                cond_true = ~alu_carry_result & ~alu_zero_result;
+                cond_true = ~alu_carry & ~alu_zero;
             COND_LS:
-                cond_true = alu_carry_result | alu_zero_result;
+                cond_true = alu_carry | alu_zero;
             COND_GE:
-                cond_true = ~(alu_neg_result ^ alu_over_result);
+                cond_true = ~(alu_neg ^ alu_over);
             COND_LT:
-                cond_true = alu_neg_result ^ alu_over_result;
+                cond_true = alu_neg ^ alu_over;
             COND_GT:
-                cond_true = ~alu_zero_result & ~(alu_neg_result ^ alu_over_result);
+                cond_true = ~alu_zero & ~(alu_neg ^ alu_over);
             COND_LE:
-                cond_true = alu_zero_result | (alu_neg_result ^ alu_over_result);
+                cond_true = alu_zero | (alu_neg ^ alu_over);
             default:
                 cond_true = 1'b0;
         endcase
@@ -168,12 +167,6 @@ module registersstage2
                 OPCODE_ALUM,
                 OPCODE_ALUMI,
                 OPCODE_ALU: begin
-                    $display("ZERO IS NOW %01b", alu_zero_out);
-                    alu_carry_result <= alu_carry_out;
-                    alu_zero_result <= alu_zero_out;
-                    alu_neg_result <= alu_neg_out;
-                    alu_over_result <= alu_over_out;
-                    alu_carry_in <= alu_carry_out;
                     alu_result_latched <= alu_result;
                     alu_cycle <= 1'b1;
                     write_index <= inbound_instruction[23:20];

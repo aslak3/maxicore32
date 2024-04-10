@@ -23,7 +23,8 @@ module memorystage1
         output t_alu_op alu_op,
         output reg alu_immediate_cycle,
         output reg branch_cycle,
-        output reg jump_cycle
+        output reg jump_cycle,
+        output reg status_register_write
     );
 
     wire t_opcode opcode = inbound_instruction[31:27];
@@ -38,6 +39,7 @@ module memorystage1
             alu_immediate_cycle <= 1'b0;
             branch_cycle <= 1'b0;
             jump_cycle <= 1'b0;
+            status_register_write <= 1'b0;
 
             case (opcode)
                 OPCODE_LOAD: begin
@@ -62,6 +64,7 @@ module memorystage1
                     $display("STAGE1: OPCODE_ALUM");
                     alu_op <= { 1'b0, inbound_instruction[15:12] };
                     alu_immediate_cycle <= 1'b0;
+                    status_register_write <= 1'b1;
                 end
                 OPCODE_ALUMI: begin
                     $display("STAGE1: OPCODE_ALUMI");
@@ -69,11 +72,13 @@ module memorystage1
                     alu_immediate <= { inbound_instruction[26],
                         inbound_instruction[26:24], inbound_instruction[11:0] };
                     alu_immediate_cycle <= 1'b1;
+                    status_register_write <= 1'b1;
                 end
                 OPCODE_ALU: begin
                     $display("STAGE1: OPCODE_ALU");
                     alu_op <= { 1'b1, inbound_instruction[15:12] };
                     alu_immediate_cycle <= 1'b0;
+                    status_register_write <= 1'b1;
                 end
                 OPCODE_BRANCH: begin
                     $display("STAGE1: OPCODE_BRANCH");

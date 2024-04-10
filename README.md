@@ -23,12 +23,7 @@ This is a dumping ground, nothing more. Eventually it will become the core's mai
 # Random open questions
 
 * IO access: Will likely be via a top of table register with offsets. Seems adequate.
-* Use cases for r0 = 0
-  * Branch is just saving PC to r0
-  * Compare, though imm=0 will be the same
-  * Clear is AND 0, but see above
 * Need a mechanism for moving condition codes in and out of a register, as this was missing from both of the previous designs
-* Should duplicate opcodes be gutted? Eg inc vs add rD,1
 
 ## Example code
 
@@ -128,7 +123,6 @@ For opcode==LOAD* or ALU* the data from either the external data bus or the ALU 
 
 IR-S2 is clocked into IR-S3.
 
-
 ## Common layout positions
 
 - 31:27 - opcode
@@ -150,7 +144,6 @@ IR-S2 is clocked into IR-S3.
 0. fetch
 1. empty
 2. write value into reg rD
-3. empty
 
 ## load/store
 
@@ -166,9 +159,8 @@ IR-S2 is clocked into IR-S3.
 ### Stages
 
 0. fetch
-1. read or write memory rA with displacement
+1. read or write memory rA with displacement calculated by ALU
 2. optional: write value into rD
-3. empty
 
 ## ALU
 
@@ -185,7 +177,6 @@ IR-S2 is clocked into IR-S3.
 0. fetch
 1. setup ALU
 2. write result into rD
-3. empty
 
 ## Encoding for ALUI
 
@@ -212,14 +203,13 @@ Same as above
 ### Stages
 
 0. fetch
-1. empty
-2. write old PC to rPC if condition met
-3. branch to new PC if condition met
+1. setup ALU
+2. write old PC to rPC if condition met and branch to new PC if condition met
 
 ## Jump/CallJump
 
 - 31:27 - opcode
-- 26 call flag
+- 26 - call flag
 - 23:20 - reg for old pc (rD) [write]
 - 19:16 - reg to use for new PC
 - 15:12 - condition
@@ -227,42 +217,5 @@ Same as above
 ### Stages
 
 0. fetch
-1. empty
-2. empty
-3. jump to new PC is condition met
-
-## Wiring
-
-### register_File
-
-* input   clear
-  * unused
-* input   write
-  * stage 2 on OPCODE_LOADI*
-* input   inc
-  * unused
-* input   dec
-  * unused
-* input   t_reg_index write_index
-  * fixed at [23:20] from IR-S2 (reg rD)
-* input   t_reg_index incdec_index
-  * unused
-* input   t_reg write_data
-  * Switched via mux between: IR-S2
-    * [15:0] from instruction for OPCODE_LOADI
-    * ALU result (OPCODE_ALU*)
-    * PC (OPCODE_CALLBRANCH)
-* input   t_reg_index read_reg1_index, read_reg2_index, read_reg3_index
-  * fixed at [...] from IR-S1
-    * 23:20 (rD)
-    * 19:16 (rA)
-    * 11:8 (rO)
-* output  t_reg read_reg1_data IR-S1
-  * Switched via mux between:
-    * ALU rD input
-* output  t_reg read_reg2_data
-  * Switched via mux between: IR-S1
-    * Processor address bus
-    * ALU rA input
-* output  t_reg read_reg3_data IR-S1
-  * fixed at rO input
+1. setup ALU (dummy)
+2. write old PC to rPC if condition met and branch to new PC if condition met

@@ -9,7 +9,7 @@ module register_file
         input   t_reg write_data,
         input   write_immediate,
         input   [15:0] write_immediate_data,
-        input   [1:0] write_immediate_type,
+        input   t_immediate_type write_immediate_type,
         input   t_reg_index read_reg1_index, read_reg2_index, read_reg3_index,
         output  t_reg read_reg1_data, read_reg2_data, read_reg3_data
     );
@@ -72,6 +72,39 @@ module program_counter
                 program_counter <= jump_data;
             end else if (inc) begin
                 program_counter <= program_counter + 4;
+            end
+        end
+    end
+
+endmodule
+
+module status_register
+    (
+        input   reset,
+        input   clock,
+        input   write,
+        input   carry_data, zero_data, neg_data, over_data,
+        output  read_carry, read_zero, read_neg, read_over
+    );
+
+    reg carry, zero, neg, over;
+
+    assign read_carry = carry;
+    assign read_zero = zero;
+    assign read_neg = neg;
+    assign read_over = over;
+
+    always @ (posedge reset, posedge clock) begin
+        if (reset) begin
+            carry <= 1'b0; zero <= 1'b0; neg <= 1'b0; over <= 1'b0;
+        end else if (clock) begin
+            if (write) begin
+                $display("Setting status register: CARRY: %01b ZERO: %01b NEG: %01b OVER: %01b",
+                    carry, zero, neg, over);
+                carry <= carry_data;
+                zero <= zero_data;
+                neg <= neg_data;
+                over <= over_data;
             end
         end
     end
