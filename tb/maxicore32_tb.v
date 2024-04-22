@@ -1,11 +1,44 @@
+module display
+    (
+        input clock,
+        input cs,
+        input write,
+        input [15:0] low_address,
+        input [31:0] data_in
+    );
+
+    always @ (posedge clock) begin
+        if (cs) begin
+            if (write) begin
+                $display("DISPLAY ADDRESS: %04x DATA: %08x", low_address, data_in);
+            end
+        end
+    end
+endmodule
+
 module maxicore32_tb;
     `include "tests.vh"
 
     reg reset;
     reg clock;
 
+    reg [1:0] decoder_outputs;
+    wire memory_cs = decoder_outputs[1];
+    wire display_cs = decoder_outputs[0];
     wire [31:2] address;
-    wire [31:0] ram_data_in;
+
+    always @ (address[31:24]) begin
+        case (address[31:24])
+            8'h00: decoder_outputs = { 1'b1, 1'b0 }; 
+            8'hff: decoder_outputs = { 1'b0, 1'b1 };
+            default: begin
+                decoder_outputs = { 1'b0, 1'b0 };
+                $display("Something else selected");
+            end
+        endcase
+    end
+
+    wire [31:0] data_out;
     wire [31:0] ram_data_out;
     wire [3:0] data_strobes;
     wire read;
@@ -13,16 +46,25 @@ module maxicore32_tb;
 
     memory memory (
         .clock(clock),
+        .cs(memory_cs),
         .address(address),
-        .data_in(ram_data_in),
+        .data_in(data_out),
         .data_out(ram_data_out),
         .data_strobes(data_strobes),
         .read(read),
         .write(write)
     );
 
+    wire [15:0] low_address = { address[15:2], 2'b00 };
+    display display (
+        .clock(clock),
+        .cs(display_cs),
+        .write(write),
+        .low_address(low_address),
+        .data_in(data_out)
+    );
+
     wire [31:0] data_in;
-    wire [31:0] data_out;
     wire bus_error;
     wire halted;
 
@@ -40,8 +82,9 @@ module maxicore32_tb;
         .halted(halted)
     );
 
+    wire [31:0] shifted_address = { address, 2'b00 };
+
     assign data_in = ram_data_out;
-    assign ram_data_in = data_out;
 
     integer dump_counter;
 
@@ -62,7 +105,7 @@ module maxicore32_tb;
             #period;
 
             $display("ADDRESS: %08x DATA_IN: %08x DATA_OUT: %08x DATA_STROBES: %04b READ: %d WRITE: %d",
-                address << 2, data_in, data_out, data_strobes, read, write);
+                shifted_address, data_in, data_out, data_strobes, read, write);
 
             if (bus_error) begin
                 $display("BUS ERROR");

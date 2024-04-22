@@ -2,6 +2,7 @@ module memory
     (
         input       clock,
 
+        input       cs,
         input       [31:2] address,
         input       [31:0] data_in,
         output reg  [31:0] data_out,
@@ -19,23 +20,25 @@ module memory
     end
 
     always @ (negedge clock) begin
-        if (write) begin
-            if (data_strobes [3]) begin
-                contents[low_byte_address][31:24] <= data_in[31:24];
+        if (cs) begin
+            if (write) begin
+                if (data_strobes [3]) begin
+                    contents[low_byte_address][31:24] <= data_in[31:24];
+                end
+                if (data_strobes [2]) begin
+                    contents[low_byte_address][23:16] <= data_in[23:16];
+                end
+                if (data_strobes [1]) begin
+                    contents [low_byte_address][15:8] <= data_in[15:8];
+                end
+                if (data_strobes [0]) begin
+                    contents [low_byte_address][7:0] <= data_in[7:0];
+                end
             end
-            if (data_strobes [2]) begin
-                contents[low_byte_address][23:16] <= data_in[23:16];
-            end
-            if (data_strobes [1]) begin
-                contents [low_byte_address][15:8] <= data_in[15:8];
-            end
-            if (data_strobes [0]) begin
-                contents [low_byte_address][7:0] <= data_in[7:0];
-            end
-        end
 
-        if (read) begin
-            data_out <= contents[low_byte_address];
+            if (read) begin
+                data_out <= contents[low_byte_address];
+            end
         end
     end
 endmodule

@@ -1,10 +1,13 @@
 main:           loadi.u r15,stack
                 loadi.u r1,string
+                loadi.t r10,0xff00
+                loadi.b r10,0x123c
 
                 callbranch r14,my_strlen
                 nop
                 nop
                 nop
+                store.l (r10),r2
                 halt
 
 string:         #d "Hello, world...\0"
@@ -13,7 +16,6 @@ string:         #d "Hello, world...\0"
 
                 #res 128
 stack:
-
 
 ; strlen: r1 is string, returns length in r2, r1 not preserved
 my_strlen:      sub r15,r15,8               ; make room on stack for two longs

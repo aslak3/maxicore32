@@ -41,9 +41,16 @@ registersstage2_tb: registersstage2.v.v tb/registersstage2_tb.v
 
 maxicore32_tb: maxicore32.v businterface.v registers.v alu.v \
 	fetchstage0.v memorystage1.v registersstage2.v \
-	memory.v tb/maxicore32_tb.v
-	$(VERILATOR_LINT) --top maxicore32_tb $^
-	$(IVERILOG) -s maxicore32_tb -o $@ $^
+	memory.v tb/maxicore32_tb.v \
+	maxicore32-ram-contents.txt
+	$(VERILATOR_LINT) --top maxicore32_tb $(filter %.v,$^)
+	$(IVERILOG) -s maxicore32_tb -o $@ $(filter %.v,$^)
+
+maxicore32-ram-contents.txt: asm/test.asm asm/maxicore32def.inc
+	(cd asm && \
+	customasm maxicore32def.inc test.asm -f binary -o t && \
+	truncate -s 1024 t) && \
+	xxd -c 4 -ps asm/t > maxicore32-ram-contents.txt
 
 tests: $(ALL_TESTBENCHES)
 	set -e; for T in $^; do $(VVP) $$T; done
@@ -58,4 +65,4 @@ maxicore32.bin: maxicore32.asc
 	$(ICEPACK) $^ $@
 
 clean:
-	rm -vf $(ALL_TESTBENCHES) businterface_tb *.vcd *.json *.asc *.bin
+	rm -vf $(ALL_TESTBENCHES) businterface_tb *.vcd *.json *.asc *.bin asm/t maxicore32-ram-contents.txt
