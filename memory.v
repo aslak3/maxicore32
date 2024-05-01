@@ -11,9 +11,9 @@ module memory
         input       write
     );
 
-    wire [7:0] low_byte_address = address [9:2];
+    wire [9:0] low_byte_address = address [11:2];
 
-    reg [31:0] contents [256];
+    reg [31:0] contents [1024];
 
     initial begin
         $readmemh("maxicore32-ram-contents.txt", contents);

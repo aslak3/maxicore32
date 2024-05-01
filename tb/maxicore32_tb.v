@@ -67,6 +67,7 @@ module maxicore32_tb;
     wire [31:0] data_in;
     wire bus_error;
     wire halted;
+    wire [5:0] user;
 
     maxicore32 dut (
         .reset(reset),
@@ -79,7 +80,8 @@ module maxicore32_tb;
         .read(read),
         .write(write),
         .bus_error(bus_error),
-        .halted(halted)
+        .halted(halted),
+        .user(user)
     );
 
     wire [31:0] shifted_address = { address, 2'b00 };
@@ -90,18 +92,25 @@ module maxicore32_tb;
 
     initial begin
         reset = 1'b1;
+        clock = 1'b0;
+
+        #period;
+
         clock = 1'b1;
 
         #period;
 
-        reset = 1'b0;
+        clock = 1'b0;
+
         #period;
 
+        reset = 1'b0;
+
         forever begin
-            clock = 1'b0;
+            clock = 1'b1;
             #period;
 
-            clock = 1'b1;
+            clock = 1'b0;
             #period;
 
             $display("ADDRESS: %08x DATA_IN: %08x DATA_OUT: %08x DATA_STROBES: %04b READ: %d WRITE: %d",

@@ -10,104 +10,127 @@ module memorystage1
 
         input [31:0] inbound_instruction,
         output reg [31:0] outbound_instruction,
-        input [31:0] inbound_address,
-        output reg [31:0] outbound_address,
         output reg memory_access_cycle,
+        output reg control_flow_start_cycle,
         output reg memory_read,
         output reg memory_write,
-        output t_cycle_width memory_cycle_width,
-        output reg [15:0] alu_immediate,
+        output reg [1:0] memory_cycle_width,
         output reg [3:0] reg_address_index,
         output reg [3:0] reg_data_index,
         output reg [3:0] reg_operand_index,
-        output t_alu_op alu_op,
+        output reg agu_immediate_mode,
+        output reg [15:0] immediate,
+        output reg [4:0] alu_op,
         output reg alu_immediate_cycle,
         output reg branch_cycle,
         output reg jump_cycle,
-        output reg status_register_write
+        output reg halting
     );
 
-    wire t_opcode opcode = inbound_instruction[31:27];
+    wire [4:0] opcode = inbound_instruction[31:27];
 
-    always @ (posedge reset, posedge clock) begin
+    always @ (posedge clock) begin
         if (reset) begin
-            memory_access_cycle <= 1'b0;
             outbound_instruction <= { OPCODE_NOP, 27'h0 };
-            alu_immediate_cycle <= 1'b0;
-        end else begin
             memory_access_cycle <= 1'b0;
+            memory_access_cycle <= 1'b0;
+            control_flow_start_cycle <= 1'b0;
             alu_immediate_cycle <= 1'b0;
             branch_cycle <= 1'b0;
             jump_cycle <= 1'b0;
-            status_register_write <= 1'b0;
+            halting <= 1'b0;
+        end else begin
+            memory_access_cycle <= 1'b0;
+            control_flow_start_cycle <= 1'b0;
+            memory_read <= 1'b0;
+            memory_write <= 1'b0;
+            alu_immediate_cycle <= 1'b0;
+            branch_cycle <= 1'b0;
+            jump_cycle <= 1'b0;
+
+            $display("STAGE1: Got instruction %08x", inbound_instruction);
 
             case (opcode)
+                OPCODE_NOP: begin
+                    $display("STAGE1: NOP");
+                end
+                OPCODE_HALT: begin
+                    $display("STAGE1: HALT");
+                    halting <= 1'b1;
+                end
                 OPCODE_LOAD: begin
                     $display("STAGE1: OPCODE_LOAD - blocking fetch as we need the bus");
-                    memory_access_cycle <= 1'b1;
                     memory_read <= 1'b1;
                     memory_write <= 1'b0;
-                    alu_op <= { OP_ADD };
-                    alu_immediate <= inbound_instruction[15:0];
-                    alu_immediate_cycle <= 1'b1;
+                    memory_access_cycle <= 1'b1;
+                    agu_immediate_mode <= 1'b1;
+                    immediate <= inbound_instruction[15:0];
                 end
                 OPCODE_STORE: begin
-                    $display("STAGE1: OPCODE_STORE - blocking fetch as we need the bus");
-                    memory_access_cycle <= 1'b1;
+                    $display("STAGE1: OPCODE_STORER - blocking fetch as we need the bus");
                     memory_read <= 1'b0;
                     memory_write <= 1'b1;
-                    alu_op <= { OP_ADD };
-                    alu_immediate <= inbound_instruction[15:0];
-                    alu_immediate_cycle <= 1'b1;
+                    memory_access_cycle <= 1'b1;
+                    agu_immediate_mode <= 1'b1;
+                    immediate <= inbound_instruction[15:0];
+                end
+                OPCODE_LOADR: begin
+                    $display("STAGE1: OPCODE_LOADR - blocking fetch as we need the bus");
+                    memory_read <= 1'b1;
+                    memory_write <= 1'b0;
+                    memory_access_cycle <= 1'b1;
+                    agu_immediate_mode <= 1'b0;
+                end
+                OPCODE_STORER: begin
+                    $display("STAGE1: OPCODE_STORE - blocking fetch as we need the bus");
+                    memory_read <= 1'b0;
+                    memory_write <= 1'b1;
+                    memory_access_cycle <= 1'b1;
+                    agu_immediate_mode <= 1'b0;
                 end
                 OPCODE_ALUM: begin
                     $display("STAGE1: OPCODE_ALUM");
                     alu_op <= { 1'b0, inbound_instruction[15:12] };
                     alu_immediate_cycle <= 1'b0;
-                    status_register_write <= 1'b1;
                 end
                 OPCODE_ALUMI: begin
                     $display("STAGE1: OPCODE_ALUMI");
                     alu_op <= { 1'b0, inbound_instruction[15:12] };
-                    alu_immediate <= { inbound_instruction[26],
+                    immediate <= { inbound_instruction[26],
                         inbound_instruction[26:24], inbound_instruction[11:0] };
                     alu_immediate_cycle <= 1'b1;
-                    status_register_write <= 1'b1;
                 end
                 OPCODE_ALU: begin
                     $display("STAGE1: OPCODE_ALU");
                     alu_op <= { 1'b1, inbound_instruction[15:12] };
                     alu_immediate_cycle <= 1'b0;
-                    status_register_write <= 1'b1;
                 end
                 OPCODE_BRANCH: begin
                     $display("STAGE1: OPCODE_BRANCH");
                     alu_op <= { OP_ADD };
-                    alu_immediate <= {
+                    immediate <= {
                         inbound_instruction[19:16], inbound_instruction[11:0] };
                     alu_immediate_cycle <= 1'b1;
                     branch_cycle <= 1'b1;
+                    control_flow_start_cycle <= 1'b1;
                 end
                 OPCODE_JUMP: begin
                     $display("STAGE1: OPCODE_JUMP");
                     alu_op <= { OP_COPY };
                     jump_cycle <= 1'b1;
+                    control_flow_start_cycle <= 1'b1;
                 end
                 default: begin
-                    memory_read <= 1'b0;
-                    memory_write <= 1'b0;
                 end
             endcase
 
             memory_cycle_width <= inbound_instruction[26:25];
 
-            reg_address_index <= inbound_instruction[19:16];
             reg_data_index <= inbound_instruction[23:20];
+            reg_address_index <= inbound_instruction[19:16];
             reg_operand_index <= inbound_instruction[11:8];
 
-            $display("STAGE1: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
-            outbound_address <= inbound_address;
         end
     end
 endmodule

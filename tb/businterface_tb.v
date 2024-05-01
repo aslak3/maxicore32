@@ -5,7 +5,7 @@ module businterface_tb;
     `include "tests.vh" // For period only
 
     reg [31:0] cpu_address;
-    t_cycle_width cpu_cycle_width;
+    reg [1:0] cpu_cycle_width;
     reg [31:0] cpu_data_out;
     wire [31:0] cpu_data_in;
     reg cpu_read, cpu_write;
@@ -35,7 +35,7 @@ module businterface_tb;
     task run_test
         (
             input [31:0] test_cpu_address,
-            input t_cycle_width test_cpu_cycle_width,
+            input [1:0] test_cpu_cycle_width,
             input [31:0] test_cpu_data_out,
             input test_cpu_read, test_cpu_write,
             input [31:0] test_businterface_data_in,

@@ -94,7 +94,9 @@
     test       => 0x7
     signextb   => 0x8
     signextw   => 0x9
-    copy       => 0xa
+    unsignextb => 0xa
+    unsignextw => 0xb
+    copy       => 0xc
 }
 
 ; - 31:27 - opcode
@@ -123,32 +125,38 @@
     store.{type:storetype} ({dst:reg}),{src:reg} =>
         0b00100 @ type[2:0] @ src[3:0] @ dst[3:0] @ 0x0000
 
+    ; load and store with register offset
+    load.{type:loadtype} {dst:reg},{srcoffset:reg}({src:reg}) =>
+        0b00101 @ type[2:0] @ dst[3:0] @ src[3:0] @ 0x0 @ srcoffset[3:0] @ 0x00
+    store.{type:storetype} {dstoffset:reg}({dst:reg}),{src:reg} =>
+        0b00110 @ type[2:0] @ src[3:0] @ dst[3:0] @ 0x0 @ dstoffset[3:0] @ 0x00
+
     ; ALU operations, ie. dest := op2 operation op3
     {aluop:twoargalu} {dst:reg},{operand2:reg},{operand3:reg} =>
-        0b00101 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ operand3[3:0] @ 0x00
+        0b00111 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ operand3[3:0] @ 0x00
 	{aluop:twoargalu} {dst:reg},{operand2:reg},{value} =>
-		0b00110 @ value[14:12] @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ value[11:0]
+		0b01000 @ value[14:12] @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ value[11:0]
     ; same but one operand, ie. dst := operation op2
     {aluop:oneargalu} {dst:reg},{operand2:reg} =>
-        0b00111 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
+        0b01001 @ 0b000 @ dst[3:0] @ operand2[3:0] @ aluop[3:0] @ 0x0 @ 0x00
 
     ; branch and jump, with and without condition
 	branch {target} =>
-		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
+		0b01010 @ 0b000 @ 0x0 @ { target - pc - 4}[15:12] @ 0x0 @ { target - pc - 4}[11:0]
 	branch.{cond:condition} {target} =>
-		0b01000 @ 0b000 @ 0x0 @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
+		0b01010 @ 0b000 @ 0x0 @ { target - pc - 4}[15:12] @ cond[3:0] @ { target - pc - 4}[11:0]
 	jump {dst:reg} =>
-		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ 0x0 @ 0x000
+		0b01011 @ 0b000 @ 0x0 @ dst[3:0] @ 0x0 @ 0x000
 	jump.{cond:condition} {dst:reg} =>
-		0b01001 @ 0b000 @ 0x0 @ dst[3:0] @ cond[3:0] @ 0x000
+		0b01011 @ 0b000 @ 0x0 @ dst[3:0] @ cond[3:0] @ 0x000
 
     ; branch and jump to subroutine, with and without condition - pc is saved into savepc
 	callbranch {savepc:reg},{target} =>
-		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ 0x0 @ { target - pc - 8}[11:0]
+		0b01010 @ 0b001 @ savepc[3:0] @ { target - pc - 4}[15:12] @ 0x0 @ { target - pc - 4}[11:0]
 	calllbranch.{cond:condition} {savepc:reg},{target} =>
-		0b01000 @ 0b001 @ savepc[3:0] @ { target - pc - 8}[15:12] @ cond[3:0] @ { target - pc - 8}[11:0]
+		0b01010 @ 0b001 @ savepc[3:0] @ { target - pc - 4}[15:12] @ cond[3:0] @ { target - pc - 4}[11:0]
 	calljump {savepc:reg},{dst:reg} =>
-		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ 0x0 @ 0x000
+		0b01011 @ 0b001 @ savepc[3:0] @ dst[3:0] @ 0x0 @ 0x000
 	calljump.{cond:condition} {savepc:reg},{dst:reg} =>
-		0b01001 @ 0b001 @ savepc[3:0] @ dst[3:0] @ cond[3:0] @ 0x000
+		0b01011 @ 0b001 @ savepc[3:0] @ dst[3:0] @ cond[3:0] @ 0x000
 }

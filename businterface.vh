@@ -1,5 +1,4 @@
 `ifndef BUSINTERFACE_H
-typedef reg [1:0] t_cycle_width;
 
 localparam  CW_LONG = 2'b00,
             CW_WORD = 2'b01,

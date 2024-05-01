@@ -3,7 +3,7 @@
 module businterface
     (
         input [31:0] cpu_address,
-        input t_cycle_width cpu_cycle_width,
+        input [1:0] cpu_cycle_width,
         input [31:0] cpu_data_out,
         output reg [31:0] cpu_data_in,
         input cpu_read, cpu_write,

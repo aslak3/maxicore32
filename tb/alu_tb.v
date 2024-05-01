@@ -4,13 +4,17 @@
 module alu_tb;
     `define TB_NO_CLOCK 1
     `include "tests.vh" // For period only
-    t_alu_op op;
-    t_reg reg2, reg3;
+    reg reset;
+    reg clock;
+    reg [4:0] op;
+    reg [31:0] reg2, reg3;
     reg carry_in;
-    wire t_reg result;
+    wire [31:0] result;
     wire carry_out, zero_out, neg_out, over_out;
 
     alu dut (
+        .reset(reset),
+        .clock(clock),
         .op(op),
         .reg2(reg2), .reg3(reg3),
         .carry_in(carry_in),
@@ -20,10 +24,10 @@ module alu_tb;
 
     task run_test
         (
-            input t_alu_op test_op,
-            input t_reg test_reg2, test_reg3,
+            input [4:0] test_op,
+            input [31:0] test_reg2, test_reg3,
             input test_carry_in,
-            input t_reg exp_result,
+            input [31:0] exp_result,
             input exp_carry_out, exp_zero_out, exp_neg_out, exp_over_out
         );
         begin
@@ -31,6 +35,12 @@ module alu_tb;
             reg2 = test_reg2;
             reg3 = test_reg3;
             carry_in = test_carry_in;
+
+            clock = 1'b1;
+
+            #period
+
+            clock = 1'b0;
 
             #period
 

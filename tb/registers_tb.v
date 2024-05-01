@@ -5,17 +5,16 @@ module register_file_tb;
 
     reg reset;
     reg clock;
-    t_reg_index write_index;
+    reg [3:0] write_index;
     reg write;
-    t_reg write_data;
+    reg [31:0] write_data;
     reg write_immediate;
     reg [15:0] write_immediate_data;
-    t_immediate_type write_immediate_type;
-    t_reg_index read_reg1_index, read_reg2_index, read_reg3_index;
-    wire t_reg read_reg1_data, read_reg2_data, read_reg3_data;
+    reg [1:0] write_immediate_type;
+    reg [3:0] read_reg1_index, read_reg2_index, read_reg3_index;
+    wire [31:0] read_reg1_data, read_reg2_data, read_reg3_data;
 
     register_file dut (
-        .reset(reset),
         .clock(clock),
         .write_index(write_index),
         .write(write),
@@ -32,7 +31,6 @@ module register_file_tb;
     );
 
     initial begin
-        reset = 1'b0;
         clock = 1'b0;
         write_index = 4'h0;
         write = 1'b0;
@@ -45,14 +43,6 @@ module register_file_tb;
         read_reg3_index = 4'h2;
         #period;
 
-        reset = 1;
-        #period;
-
-        `assert(read_reg1_data == 32'h0, "Reg r0 resets");
-        `assert(read_reg2_data == 32'h0, "Reg r1 resets");
-        `assert(read_reg3_data == 32'h0, "Reg r2 resets");
-
-        reset = 0;
         #period;
 
         write = 1'b1;
@@ -102,9 +92,9 @@ module program_counter_tb;
     reg reset;
     reg clock;
     reg jump, inc, branch;
-    t_reg jump_data;
+    reg [31:0] jump_data;
     reg [15:0] branch_data;
-    t_reg read_data;
+    reg [31:0] read_data;
 
     program_counter dut (
         .reset(reset),

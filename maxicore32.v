@@ -1,6 +1,7 @@
 `include "registers.vh"
 `include "alu.vh"
 `include "businterface.vh"
+`include "opcodes.vh"
 
 module maxicore32
     (
@@ -14,11 +15,12 @@ module maxicore32
         output read,
         output write,
         output bus_error,
-        output reg halted
+        output reg halted,
+        output [5:0] user
     );
 
     wire [31:0] cpu_address;
-    wire t_cycle_width cpu_cycle_width;
+    wire [1:0] cpu_cycle_width;
     wire [31:0] cpu_data_out;
     wire [31:0] cpu_data_in;
     wire cpu_read, cpu_write;
@@ -41,7 +43,8 @@ module maxicore32
     wire program_counter_jump;
     wire program_counter_inc;
     wire [31:0] program_counter_read_data;
-    t_reg registerstage2_alu_result_latched;
+    reg [31:0] registerstage2_alu_result_latched;
+    wire [31:0] alu_result;
 
     program_counter program_counter (
         .reset(reset),
@@ -49,21 +52,20 @@ module maxicore32
 
         .jump(program_counter_jump),
         .inc(program_counter_inc),
-        .jump_data(registerstage2_alu_result_latched),
+        .jump_data(alu_result),
         .read_data(program_counter_read_data)
     );
 
-    wire t_reg_index register_file_write_index;
+    wire [3:0] register_file_write_index;
     wire register_file_write;
-    t_reg register_file_write_data;
+    wire [31:0] register_file_write_data;
     wire register_file_write_immediate;
     wire [15:0] register_file_write_immediate_data;
-    t_immediate_type register_file_write_immediate_type;
-    t_reg_index register_file_read_reg1_index, register_file_read_reg2_index, register_file_read_reg3_index;
-    wire t_reg register_file_read_reg1_data, register_file_read_reg2_data, register_file_read_reg3_data;
+    wire [1:0] register_file_write_immediate_type;
+    wire [3:0] register_file_read_reg1_index, register_file_read_reg2_index, register_file_read_reg3_index;
+    wire [31:0] register_file_read_reg1_data, register_file_read_reg2_data, register_file_read_reg3_data;
 
     register_file register_file (
-        .reset(reset),
         .clock(clock),
 
         .write_index(register_file_write_index),
@@ -80,13 +82,26 @@ module maxicore32
         .read_reg3_data(register_file_read_reg3_data)
     );
 
-    t_alu_op alu_op;
-    t_reg alu_reg2, alu_reg3;
+    wire agu_immediate_mode;
+    wire [31:0] agu_result;
+    wire [15:0] memorystage1_immediate;
+    agu agu (
+        .base_address(register_file_read_reg2_data),
+        .immediate_mode(agu_immediate_mode),
+        .immediate(memorystage1_immediate),
+        .register_data(register_file_read_reg3_data),
+        .result(agu_result)
+    );
+
+    wire [4:0] alu_op;
+    wire [31:0] alu_reg2, alu_reg3;
     reg alu_carry_in;
-    wire t_reg alu_result;
     wire alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out;
 
     alu alu (
+        .reset(reset),
+        .clock(clock),
+
         .op(alu_op),
         .reg2(alu_reg2), .reg3(alu_reg3),
         .carry_in(alu_carry_in),
@@ -101,32 +116,20 @@ module maxicore32
     status_register status_register (
         .reset(reset),
         .clock(clock),
+
         .write(status_register_write),
         .carry_data(alu_carry_out), .zero_data(alu_zero_out),
         .neg_data(alu_neg_out), .over_data(alu_over_out),
         .read_carry(status_register_carry), .read_zero(status_register_zero),
         .read_neg(status_register_neg), .read_over(status_register_over)
     );
-
-    wire [31:0] fetchstage0_outbound_instruction;
-    wire fetchstage0_memory_access_cycle;
-    wire fetchstage0_halting;
-
-    fetchstage0 fetchstage0 (
-        .reset(reset),
-        .clock(clock),
-
-        .mem_data(cpu_data_in),
-        .outbound_instruction(fetchstage0_outbound_instruction),
-        .block_fetch(fetchstage0_memory_access_cycle),
-        .halting(fetchstage0_halting)
-    );
-
+    wire [31:0] memorystage1_inbound_instruction;
     wire [31:0] memorystage1_outbound_instruction;
-    wire [31:0] memorystage1_outbound_address;
+    wire memorystage1_memory_access_cycle;
+    wire memorystage1_control_flow_start_cycle;
+    wire memorystage1_halting;
     wire memory_read, memory_write;
-    wire t_cycle_width memory_cycle_width;
-    wire [15:0] memorystage1_alu_immediate;
+    wire [1:0] memory_cycle_width;
     wire memorystage1_alu_immediate_cycle;
     wire memorystage1_branch_cycle;
     wire memorystage1_jump_cycle;
@@ -135,38 +138,37 @@ module maxicore32
         .reset(reset),
         .clock(clock),
 
-        .inbound_instruction(fetchstage0_outbound_instruction),
+        .inbound_instruction(memorystage1_inbound_instruction),
         .outbound_instruction(memorystage1_outbound_instruction),
-        .inbound_address(program_counter_read_data),
-        .outbound_address(memorystage1_outbound_address),
-        .memory_access_cycle(fetchstage0_memory_access_cycle),
+        .memory_access_cycle(memorystage1_memory_access_cycle),
+        .control_flow_start_cycle(memorystage1_control_flow_start_cycle),
         .memory_read(memory_read),
         .memory_write(memory_write),
         .memory_cycle_width(memory_cycle_width),
         .reg_data_index(register_file_read_reg1_index),
         .reg_address_index(register_file_read_reg2_index),
         .reg_operand_index(register_file_read_reg3_index),
+        .immediate(memorystage1_immediate),
+        .agu_immediate_mode(agu_immediate_mode),
         .alu_op(alu_op),
-        .alu_immediate(memorystage1_alu_immediate),
         .alu_immediate_cycle(memorystage1_alu_immediate_cycle),
         .branch_cycle(memorystage1_branch_cycle),
         .jump_cycle(memorystage1_jump_cycle),
-        .status_register_write(status_register_write)
+        .halting(memorystage1_halting)
     );
 
     wire [31:0] registersstage2_outbound_instruction;
     wire [31:0] registersstage2_outbound_address;
-    wire t_reg registerstage2_write_data;
+    wire [31:0] registerstage2_write_data;
     wire registerstage2_alu_cycle;
 
     registersstage2 registersstage2 (
         .reset(reset),
         .clock(clock),
 
+        .return_address(program_counter_read_data),
         .inbound_instruction(memorystage1_outbound_instruction),
         .outbound_instruction(registersstage2_outbound_instruction),
-        .inbound_address(memorystage1_outbound_address),
-        .outbound_address(registersstage2_outbound_address),
         .data_in(cpu_data_in),
         .write_index(register_file_write_index),
         .write(register_file_write),
@@ -175,22 +177,21 @@ module maxicore32
         .write_immediate_data(register_file_write_immediate_data),
         .write_immediate_type(register_file_write_immediate_type),
         .alu_cycle(registerstage2_alu_cycle),
-        .alu_result(alu_result),
-        .alu_result_latched(registerstage2_alu_result_latched),
         .jump(program_counter_jump),
         .alu_carry_in(alu_carry_in),
         .alu_carry(status_register_carry), .alu_zero(status_register_zero),
-        .alu_neg(status_register_neg), .alu_over(status_register_over)
+        .alu_neg(status_register_neg), .alu_over(status_register_over),
+        .status_register_write(status_register_write)
     );
 
     reg [1:0] halting_counter;
 
-    always @ (posedge reset, posedge clock) begin
+    always @ (posedge clock) begin
         if (reset) begin
             halting_counter <= 2'b00;
             halted <= 1'b0;
         end else begin
-            if (fetchstage0_halting) begin
+            if (memorystage1_halting) begin
                 if (halting_counter != 2'b11) begin
                     halting_counter <= halting_counter + 2'b01;
                 end else begin
@@ -201,35 +202,52 @@ module maxicore32
         end
     end
 
-    assign cpu_address = fetchstage0_memory_access_cycle == 1'b0 ?
+    reg last_control_flow_start_cycle;
+    always @ (posedge clock) begin
+        last_control_flow_start_cycle <= memorystage1_control_flow_start_cycle;
+    end
+
+    wire insert_nops = memorystage1_memory_access_cycle | memorystage1_control_flow_start_cycle |
+        last_control_flow_start_cycle | memorystage1_halting;
+
+    assign memorystage1_inbound_instruction =
+        insert_nops == 1'b0 ? cpu_data_in : { OPCODE_NOP, 27'b0 };
+
+    assign cpu_address = memorystage1_memory_access_cycle == 1'b0 ?
         program_counter_read_data :
-        alu_result;
-    assign cpu_data_out = fetchstage0_memory_access_cycle == 1'b0 ?
+        agu_result;
+    assign cpu_data_out = memorystage1_memory_access_cycle == 1'b0 ?
         32'h0 :
         register_file_read_reg1_data;
-    assign cpu_read = fetchstage0_memory_access_cycle == 1'b0 ?
+    assign cpu_read = memorystage1_memory_access_cycle == 1'b0 ?
         1'b1 :
         memory_read;
-    assign cpu_write = fetchstage0_memory_access_cycle == 1'b0 ?
+    assign cpu_write = memorystage1_memory_access_cycle == 1'b0 ?
         1'b0 :
         memory_write;
-    assign cpu_cycle_width = fetchstage0_memory_access_cycle == 1'b0 ?
+    assign cpu_cycle_width = memorystage1_memory_access_cycle == 1'b0 ?
         CW_LONG :
         memory_cycle_width;
 
-    assign program_counter_inc = fetchstage0_memory_access_cycle == 1'b0 ?
-        ( fetchstage0_halting == 1'b0 ? 1'b1 : 1'b0 ) :
+    assign program_counter_inc = insert_nops == 1'b0 ?
+        ( memorystage1_halting == 1'b0 ? 1'b1 : 1'b0 ) :
         1'b0;
 
     assign register_file_write_data = registerstage2_alu_cycle == 1'b0 ?
         registerstage2_write_data :
-        registerstage2_alu_result_latched;
+        alu_result;
 
     assign alu_reg2 = memorystage1_branch_cycle == 1'b0 ?
         register_file_read_reg2_data :
         program_counter_read_data;
     assign alu_reg3 = memorystage1_alu_immediate_cycle == 1'b0 ?
         register_file_read_reg3_data :
-        {{ 16 { memorystage1_alu_immediate[15] }}, memorystage1_alu_immediate };
+        {{ 16 { memorystage1_immediate[15] }}, memorystage1_immediate };
 
+    assign user[0] = clock;
+    assign user[1] = read;
+    assign user[2] = write;
+    assign user[3] = reset;
+    assign user[4] = memorystage1_halting;
+    assign user[5] = data_in[27];
 endmodule

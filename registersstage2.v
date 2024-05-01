@@ -8,30 +8,28 @@ module registersstage2
         input reset,
         input clock,
 
+        input [31:0] return_address,
         input [31:0] inbound_instruction,
         output reg [31:0] outbound_instruction,
-        input [31:0] inbound_address,
-        output reg [31:0] outbound_address,
         input [31:0] data_in,
         output reg [3:0] write_index,
         output reg write,
-        output t_reg write_data,
+        output reg [31:0] write_data,
         output reg write_immediate,
         output reg [15:0] write_immediate_data,
-        output t_immediate_type write_immediate_type,
+        output reg [1:0] write_immediate_type,
         output reg alu_cycle,
-        input t_reg alu_result,
-        output t_reg alu_result_latched,
         output reg jump,
         output reg alu_carry_in,
+        output reg status_register_write,
         input alu_carry, alu_zero, alu_neg, alu_over
     );
 
-    wire t_opcode opcode = inbound_instruction[31:27];
-    wire t_alu_condition alu_condition = inbound_instruction[15:12];
+    wire [4:0] opcode = inbound_instruction[31:27];
+    wire [3:0] alu_condition = inbound_instruction[15:12];
     reg cond_true;
 
-    always @ (alu_carry, alu_zero, alu_neg, alu_over, alu_condition) begin
+    always @ (*) begin
         case (alu_condition)
             COND_AL:
                 cond_true = 1'b1;
@@ -68,20 +66,23 @@ module registersstage2
         endcase
     end
 
-    always @ (posedge reset, posedge clock) begin
+    always @ (posedge clock) begin
         if (reset) begin
             outbound_instruction <= { OPCODE_NOP, 27'h0 };
             write_index <= 4'h0;
             write_immediate_type <= IT_UNSIGNED;
             write_immediate_data <= 16'h0;
+            write_immediate <= 1'b0;
             write <= 1'b0;
-            alu_cycle <= 1'b0;;
-            jump <= 1'b0;
-        end else begin
             alu_cycle <= 1'b0;
             jump <= 1'b0;
-            write <= 1'b0;
+            status_register_write <= 1'b0;
+        end else begin
             write_immediate <= 1'b0;
+            write <= 1'b0;
+            alu_cycle <= 1'b0;
+            jump <= 1'b0;
+            status_register_write <= 1'b0;
 
             case (opcode)
                 OPCODE_LOADI: begin
@@ -91,8 +92,9 @@ module registersstage2
                     write_immediate_data <= inbound_instruction[15:0];
                     write_immediate <= 1'b1;
                 end
-                OPCODE_LOAD: begin
-                    $display("STAGE2: OPCODE_LOAD - Memory load");
+                OPCODE_LOAD,
+                OPCODE_LOADR: begin
+                    $display("STAGE2: OPCODE_LOAD[R] - Memory load");
                     write_index <= inbound_instruction[23:20];
                     write <= 1'b1;
                     // Sign and zero extend the data for the register.
@@ -131,12 +133,11 @@ module registersstage2
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_BRANCH: Branch being taken");
                         alu_cycle <= 1'b0;
-                        alu_result_latched <= alu_result;
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
-                            $display("STAGE_OPCODE_BRANCH: Saving PC");
+                            $display("STAGE2: OPCODE_BRANCH: Saving PC");
                             write_index <= inbound_instruction[23:20];
-                            write_data <= inbound_address;
+                            write_data <= return_address;
                             write <= 1'b1;
                         end
                     end else begin
@@ -147,12 +148,11 @@ module registersstage2
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_JUMP: Branch being taken");
                         alu_cycle <= 1'b0;
-                        alu_result_latched <= alu_result;
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
-                            $display("STAGE_OPCODE_JUMP: Saving PC");
+                            $display("STAGE2:OPCODE_JUMP: Saving PC");
                             write_index <= inbound_instruction[23:20];
-                            write_data <= inbound_address;
+                            write_data <= return_address;
                             write <= 1'b1;
                         end
                     end else begin
@@ -167,8 +167,8 @@ module registersstage2
                 OPCODE_ALUM,
                 OPCODE_ALUMI,
                 OPCODE_ALU: begin
-                    alu_result_latched <= alu_result;
                     alu_cycle <= 1'b1;
+                    status_register_write <= 1'b1;
                     write_index <= inbound_instruction[23:20];
                     write <= 1'b1;
                 end
@@ -178,7 +178,6 @@ module registersstage2
 
             $display("STAGE2: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;
-            outbound_address <= inbound_address;
         end
     end
 endmodule
