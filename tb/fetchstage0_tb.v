@@ -1,2 +1,0 @@
-module fetchstage0_tb;
-endmodule

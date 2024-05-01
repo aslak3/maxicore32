@@ -13,10 +13,10 @@ ICEPROG = iceprog
 VERILATOR_LINT = verilator --lint-only --timing
 
 ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb businterface_tb \
-	fetchstage0_tb maxicore32_tb
+	maxicore32_tb
 
 CORE_V_SRC = maxicore32.v businterface.v registers.v alu.v agu.v \
-	fetchstage0.v memorystage1.v registersstage2.v \
+	memorystage1.v registersstage2.v \
 	memory.v
 
 all-testbenches: $(ALL_TESTBENCHES)
@@ -33,9 +33,6 @@ alu_tb: alu.v tb/alu_tb.v
 businterface_tb: businterface.v tb/businterface_tb.v
 	$(VERILATOR_LINT) --top businterface_tb $^
 	$(IVERILOG) -s businterface_tb -o $@ $^
-fetchstage0_tb: fetchstage0.v tb/fetchstage0_tb.v
-	$(VERILATOR_LINT) --top fetchstage0_tb $^
-	$(IVERILOG) -s fetchstage0_tb -o $@ $^
 memorystage1_tb: memorystage1.v.v tb/memorystage1_tb.v
 	$(VERILATOR_LINT) --top memorystage1_tb $^
 	$(IVERILOG) -s memorystage1_tb -o $@ $^
