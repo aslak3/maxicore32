@@ -1,0 +1,35 @@
+set_io --warn-no-port clock 44        # GLOBAL_CLK
+set_io --warn-no-port button 41       # BUTTON0
+set_io --warn-no-port buzzer 4        # BUZZER
+
+set_io --warn-no-port vga_clk 11      # DACCLK
+set_io --warn-no-port h_sync 9        # HSYNC
+set_io --warn-no-port v_sync 10       # VSYNC
+set_io --warn-no-port n_vga_blank 20  # VGA_BLANK
+
+set_io --warn-no-port red[3] 27       # RED3
+set_io --warn-no-port red[2] 28       # RED2
+set_io --warn-no-port red[1] 31       # RED1
+set_io --warn-no-port red[0] 32       # RED0
+
+set_io --warn-no-port green[3] 21     # GEREN3
+set_io --warn-no-port green[2] 23     # GREEN2
+set_io --warn-no-port green[1] 25     # GREEN1
+set_io --warn-no-port green[0] 26     # GREEN0
+
+set_io --warn-no-port blue[3] 12      # BLUE3
+set_io --warn-no-port blue[2] 13      # BLUE2
+set_io --warn-no-port blue[1] 18      # BLUE1
+set_io --warn-no-port blue[0] 19      # BLUE0
+
+set_io --warn-no-port leds[2] 40      # LED2
+set_io --warn-no-port leds[1] 39      # LED1
+set_io --warn-no-port leds[0] 38      # LED0
+
+set_io --warn-no-port user[5] 3       # USER5
+set_io --warn-no-port user[4] 2       # USER4
+set_io --warn-no-port user[3] 48      # USER3
+set_io --warn-no-port user[2] 47      # USER2
+set_io --warn-no-port user[1] 46      # USER1
+set_io --warn-no-port user[0] 45      # USER0
+
