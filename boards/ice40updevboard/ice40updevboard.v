@@ -12,6 +12,10 @@ module ice40updevboard
 
         output buzzer,
         output [2:0] leds,
+
+        inout ps2a_clock,
+        inout ps2a_data,
+
         output reg [5:0] user
     );
 
@@ -20,21 +24,38 @@ module ice40updevboard
         clock_counter <= clock_counter + 8'h01;
     end
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
-    wire cpu_clock = clock_counter[1];
+    wire cpu_clock = clock_counter[2];
 
-    reg [2:0] decoder_outputs;
-    wire memory_cs = decoder_outputs[2];
-    wire map_cs = decoder_outputs[1];
-    wire display_cs = decoder_outputs[0];
+    reg memory_cs = 1'b0;
+    reg map_cs = 1'b0;
+    reg ps2_status_cs = 1'b0;
+    reg ps2_scancode_cs = 1'b0;
+    reg led_cs = 1'b0;
+    
     wire [31:2] address;
+    wire [7:0] high_byte_address = address[31:24];
+    wire [7:0] low_byte_address = { address[7:2], 2'b00 };
 
     always @ (*) begin
-        case (address[31:24])
-            8'h00: decoder_outputs = 3'b100;
-            8'h01: decoder_outputs = 3'b010;
-            8'hff: decoder_outputs = 3'b001;
+        memory_cs = 1'b0;
+        map_cs = 1'b0;
+        led_cs = 1'b0;
+        ps2_status_cs = 1'b0;
+        ps2_scancode_cs = 1'b0;
+
+        case (high_byte_address)
+            8'h00: memory_cs = 1'b1;   // Program RAM
+            8'h01: map_cs = 1'b1;      // Map RAM
+            8'h02: begin
+                case (low_byte_address)
+                    8'h00: led_cs = 1'b1;
+                    8'h04: ps2_status_cs = 1'b1;
+                    8'h08: ps2_scancode_cs = 1'b1;
+                    default: begin
+                    end
+                endcase
+            end
             default: begin
-                decoder_outputs = 3'b000;
             end
         endcase
     end
@@ -60,7 +81,7 @@ module ice40updevboard
 
     led led (
         .clock(cpu_clock),
-        .cs(display_cs),
+        .cs(led_cs),
         .write(write),
         .data_in(data_out),
         .led(leds[0])
@@ -82,11 +103,28 @@ module ice40updevboard
     end
 
     always @ (*)  begin
-        case ({memory_cs, map_cs, display_cs})
-            3'b100: data_in = ram_data_out;
-            3'b010: data_in = map_data_out;
-            default: data_in = 32'h0;
-        endcase
+        if (memory_cs) begin
+            data_in = ram_data_out;
+        end else if (map_cs) begin
+            data_in = map_data_out;
+        end else if (ps2_status_cs) begin
+            data_in = { ps2_scancode_ready, ps2_parity_error, 6'b000000, 24'h000000 };
+        end else if (ps2_scancode_cs) begin
+            data_in = { ps2_rx_scancode, 24'h0000000 };
+        end else begin
+            data_in = 32'h0;
+        end
+    end
+
+    reg ps2_scancode_ready = 1'b0;
+    always @ (posedge clock) begin
+        if (ps2_scancode_cs) begin
+            ps2_scancode_ready <= 1'b0;
+        end
+
+        if (ps2_scancode_ready_set) begin
+            ps2_scancode_ready <= 1'b1;
+        end
     end
         
     maxicore32 maxicore32 (
@@ -104,7 +142,7 @@ module ice40updevboard
         .user(user)
     );
 
-    assign leds[1] = ~reset;
+    assign leds[1] = ~ps2_scancode_ready_set;
     assign leds[2] = ~halted;
 
     wire vga_clock;
@@ -194,6 +232,26 @@ module ice40updevboard
         end
     end
 
-    assign buzzer = 0;
     assign n_vga_blank = 1;
+
+    wire ps2_edge_found;
+	ps2_edge_finder ps2_edge_finder (
+		.clock(cpu_clock),
+		.edge_found(ps2_edge_found),
+		.ps2_clock(ps2a_clock)
+	);
+
+    wire [7:0] ps2_rx_scancode;
+    wire ps2_scancode_ready_set;
+    wire ps2_parity_error;
+    ps2_rx_shifter ps2_rx_shifter (
+		.clock(cpu_clock),
+		.edge_found(ps2_edge_found),
+		.rx_scancode(ps2_rx_scancode),
+		.scancode_ready_set(ps2_scancode_ready_set),
+		.parity_error(ps2_parity_error),
+		.ps2_data(ps2a_data)
+	);
+
+    assign buzzer = 0;
 endmodule

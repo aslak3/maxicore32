@@ -26,6 +26,11 @@ set_io --warn-no-port leds[2] 40      # LED2
 set_io --warn-no-port leds[1] 39      # LED1
 set_io --warn-no-port leds[0] 38      # LED0
 
+set_io --warn-no-port ps2a_data 36    # PS2ADATA
+set_io --warn-no-port ps2a_clock 37   # PS2ACLK
+set_io --warn-no-port ps2b_data 35    # PS2ADATA
+set_io --warn-no-port ps2b_clock 34   # PS2ACLK
+
 set_io --warn-no-port user[5] 3       # USER5
 set_io --warn-no-port user[4] 2       # USER4
 set_io --warn-no-port user[3] 48      # USER3

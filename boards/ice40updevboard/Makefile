@@ -1,5 +1,6 @@
 include ../../Makefile
 include ../../vga/Makefile
+include ../../ps2/Makefile
 
 YOSYS = yosys
 PIN_DEF = constraints.pcf
@@ -12,7 +13,8 @@ ICEPROG = iceprog
 
 all: maxicore32.bin
 
-REL_V_SRC=$(addprefix ../../, $(CORE_V_SRC)) $(addprefix ../../vga/, $(VGA_V_SRC)) 
+REL_V_SRC=$(addprefix ../../, $(CORE_V_SRC)) $(addprefix ../../vga/, $(VGA_V_SRC)) \
+	$(addprefix ../../ps2/, $(PS2_V_SRC))
 
 maxicore32.json: $(REL_V_SRC) ice40updevboard.v ../../maxicore32-ram-contents.txt
 	$(VERILATOR_LINT) --top ice40updevboard -I../.. $(filter %.v,$^)
