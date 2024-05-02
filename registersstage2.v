@@ -117,8 +117,6 @@ module registersstage2
                             write_data <= data_in;
                         end
                     endcase
-                    write_immediate <= 1'b0;
-                    alu_cycle <= 1'b0;
                 end
                 OPCODE_ALUM: begin
                     $display("STAGE2: OPCODE_ALUM");
@@ -132,7 +130,6 @@ module registersstage2
                 OPCODE_BRANCH: begin
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_BRANCH: Branch being taken");
-                        alu_cycle <= 1'b0;
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
                             $display("STAGE2: OPCODE_BRANCH: Saving PC");
@@ -147,7 +144,6 @@ module registersstage2
                 OPCODE_JUMP: begin
                     if (cond_true) begin
                         $display("STAGE2: OPCODE_JUMP: Branch being taken");
-                        alu_cycle <= 1'b0;
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
                             $display("STAGE2:OPCODE_JUMP: Saving PC");

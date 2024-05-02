@@ -85,6 +85,7 @@ module maxicore32
     wire agu_immediate_mode;
     wire [31:0] agu_result;
     wire [15:0] memorystage1_immediate;
+
     agu agu (
         .base_address(register_file_read_reg2_data),
         .immediate_mode(agu_immediate_mode),
@@ -123,6 +124,7 @@ module maxicore32
         .read_carry(status_register_carry), .read_zero(status_register_zero),
         .read_neg(status_register_neg), .read_over(status_register_over)
     );
+
     wire [31:0] memorystage1_inbound_instruction;
     wire [31:0] memorystage1_outbound_instruction;
     wire memorystage1_memory_access_cycle;
@@ -203,6 +205,7 @@ module maxicore32
     end
 
     reg last_control_flow_start_cycle;
+
     always @ (posedge clock) begin
         last_control_flow_start_cycle <= memorystage1_control_flow_start_cycle;
     end

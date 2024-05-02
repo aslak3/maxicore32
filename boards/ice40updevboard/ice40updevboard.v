@@ -1,22 +1,3 @@
-module display
-    (
-        input clock,
-        input cs,
-        input write,
-        input [15:0] low_address,
-        input [31:0] data_in,
-        output reg led
-    );
-
-    always @ (negedge clock) begin
-        if (cs) begin
-            if (write) begin
-                led <= data_in[0];
-            end
-        end
-    end
-endmodule
-
 module ice40updevboard
     (
         input clock,
@@ -38,6 +19,7 @@ module ice40updevboard
     always @ (posedge clock) begin
         clock_counter <= clock_counter + 8'h01;
     end
+    // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[1];
 
     reg [2:0] decoder_outputs;
@@ -64,6 +46,7 @@ module ice40updevboard
     wire read;
     wire write;
 
+    // This is the program memory
     memory memory (
         .clock(cpu_clock),
         .cs(memory_cs),
@@ -75,12 +58,10 @@ module ice40updevboard
         .write(write)
     );
 
-    wire [15:0] low_address = { address[15:2], 2'b00 };
-    display display (
+    led led (
         .clock(cpu_clock),
         .cs(display_cs),
         .write(write),
-        .low_address(low_address),
         .data_in(data_out),
         .led(leds[0])
     );
@@ -179,7 +160,7 @@ module ice40updevboard
 
     wire [16*4-1:0] tile_data;
     tile_rom tile_rom (
-        .clock(cpu_clock),
+        .clock(vga_clock),
         .read(v_visible),
         .tile_index(tile_index[5:0]),
         .row_index(v_count[4:1]),

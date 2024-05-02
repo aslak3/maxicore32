@@ -2,6 +2,7 @@ main:           loadi.u r15,stack
                 loadi.u r1,string
                 loadi.t r10,0xff00
                 loadi.b r10,0x123c
+                loadi.u r3,0
 
                 callbranch r14,my_strlen
                 store.l (r10),r2

@@ -1,21 +1,3 @@
-module display
-    (
-        input clock,
-        input cs,
-        input write,
-        input [15:0] low_address,
-        input [31:0] data_in
-    );
-
-    always @ (posedge clock) begin
-        if (cs) begin
-            if (write) begin
-                $display("DISPLAY ADDRESS: %04x DATA: %08x", low_address, data_in);
-            end
-        end
-    end
-endmodule
-
 module maxicore32_tb;
     `include "tests.vh"
 
@@ -55,13 +37,13 @@ module maxicore32_tb;
         .write(write)
     );
 
-    wire [15:0] low_address = { address[15:2], 2'b00 };
-    display display (
+    wire dummy_led;
+    led led (
         .clock(clock),
         .cs(display_cs),
         .write(write),
-        .low_address(low_address),
-        .data_in(data_out)
+        .data_in(data_out),
+        .led(dummy_led)
     );
 
     wire [31:0] data_in;

@@ -17,7 +17,7 @@ ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb
 
 CORE_V_SRC = maxicore32.v businterface.v registers.v alu.v agu.v \
 	memorystage1.v registersstage2.v \
-	memory.v
+	memory.v led.v
 
 all-testbenches: $(ALL_TESTBENCHES)
 
