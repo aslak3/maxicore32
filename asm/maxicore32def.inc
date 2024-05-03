@@ -114,6 +114,10 @@
     ; load immediate with one of four types: top, bottom, signed and unsigned
     loadi.{type:loaditype} {dst:reg},{value} =>
         0b00010 @ type[2:0] @ dst[3:0] @ 0x0 @ value[15:0]
+    ; special: load a 32 bit value using two instructions
+    loadi.l {dst:reg},{value} =>
+        0b00010 @ 0b000 @ dst[3:0] @ 0x0 @ value[31:16] @
+        0b00010 @ 0b010 @ dst[3:0] @ 0x0 @ value[15:0]
 
     ; load and store, with and without offset
     load.{type:loadtype} {dst:reg},{offset}({src:reg}) =>
