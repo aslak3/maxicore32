@@ -16,21 +16,24 @@ module ice40updevboard
         inout ps2a_clock,
         inout ps2a_data,
 
-        output reg [5:0] user
+        output [5:0] user
     );
 
-    reg [7:0] clock_counter = 8'h0;
+    reg [15:0] clock_counter = 16'h0;
     always @ (posedge clock) begin
-        clock_counter <= clock_counter + 8'h01;
+        clock_counter <= clock_counter + 16'h01;
     end
+
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[2];
 
     reg memory_cs = 1'b0;
     reg map_cs = 1'b0;
+    reg led_cs = 1'b0;
     reg ps2_status_cs = 1'b0;
     reg ps2_scancode_cs = 1'b0;
-    reg led_cs = 1'b0;
+    reg tonegen_duration_cs = 1'b0;
+    reg tonegen_period_cs = 1'b0;
     
     wire [31:2] address;
     wire [7:0] high_byte_address = address[31:24];
@@ -42,6 +45,8 @@ module ice40updevboard
         led_cs = 1'b0;
         ps2_status_cs = 1'b0;
         ps2_scancode_cs = 1'b0;
+        tonegen_duration_cs = 1'b0;
+        tonegen_period_cs = 1'b0;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;   // Program RAM
@@ -51,6 +56,8 @@ module ice40updevboard
                     8'h00: led_cs = 1'b1;
                     8'h04: ps2_status_cs = 1'b1;
                     8'h08: ps2_scancode_cs = 1'b1;
+                    8'h0c: tonegen_duration_cs = 1'b1;
+                    8'h10: tonegen_period_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -81,10 +88,20 @@ module ice40updevboard
 
     led led (
         .clock(cpu_clock),
-        .cs(led_cs),
         .write(write),
+        .cs(led_cs),
         .data_in(data_out),
         .led(leds[0])
+    );
+
+    tonegen tonegen (
+        .reset(reset),
+        .clock(cpu_clock),
+        .write(write),
+        .duration_cs(tonegen_duration_cs),
+        .period_cs(tonegen_period_cs),
+        .data_in(data_out),
+        .sounder(buzzer)
     );
 
     reg [31:0] data_in;
@@ -102,6 +119,7 @@ module ice40updevboard
         end
     end
 
+    // Asserting onto databus
     always @ (*)  begin
         if (memory_cs) begin
             data_in = ram_data_out;
@@ -130,7 +148,6 @@ module ice40updevboard
     maxicore32 maxicore32 (
         .reset(reset),
         .clock(cpu_clock),
-
         .address(address),
         .data_in(data_in),
         .data_out(data_out),
@@ -252,6 +269,4 @@ module ice40updevboard
 		.parity_error(ps2_parity_error),
 		.ps2_data(ps2a_data)
 	);
-
-    assign buzzer = 0;
 endmodule

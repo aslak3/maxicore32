@@ -7,6 +7,8 @@ IO_BASE=0x02000000
 LED_OF=0x00
 PS2_STATUS_OF=0x04
 PS2_SCANCODE_OF=0x08
+TONEGEN_DURATION_OF=0x0c
+TONEGEN_PERIOD_OF=0x10
 
 KEY_BREAK=0xf0
 KEY_W=0x1d
@@ -23,8 +25,8 @@ TILE_PLAYER=9
 TILE_BLANK=12
 
                 loadi.u r15,stack
-                loadi.u r14,0                               ; return address
-                loadi.u r13,vars                            ; base of global variables
+                loadi.u r14,0                                       ; return address
+                loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
 
@@ -40,6 +42,7 @@ mainloop:       callbranch r14,drawplayer
 
                 load.wu r0,player_xy-vars(r13)
                 loadi.u r1,TILE_BLANK
+                and r3,r0,0b1111111                                 ; 32*4, used for checking x
 
                 compare r2,r2,KEY_W
                 nop
@@ -54,27 +57,47 @@ mainloop:       callbranch r14,drawplayer
                 nop
                 branch.eq .move_right
 
-.update:        load.bu r2,r0(r12)                              ; get whats at new space
+.update:        load.bu r2,r0(r12)                                  ; get whats at new space
                 nop
-                compare r2,r2,TILE_WALL                         ; see if we can't walk into it
+                compare r2,r2,TILE_WALL                             ; see if we can't walk into it
                 nop
-                branch.eq mainloop                              ; if we can't, skip updating
-                store.w player_xy-vars(r13),r0
+                branch.eq mainloop                                  ; if we can't, skip updating
+                store.w player_xy-vars(r13),r0                      ; update new position
+                compare r2,r2,TILE_GEM
+                nop
+                branch.eq gem
+
                 branch mainloop
 
-.move_up:       store.b r0(r12),r1
+.move_up:       compare r0,r0,WIDTH*4
+                store.b r0(r12),r1
+                branch.lt mainloop
                 sub r0,r0,WIDTH*4
                 branch .update
-.move_down:     store.b r0(r12),r1
-                add r0,r0,HEIGHT*4
+.move_down:     compare r0,r0,14*WIDTH*4                            ; TODO
+                store.b r0(r12),r1
+                branch.gt mainloop
+                add r0,r0,WIDTH*4
                 branch .update
-.move_left:     store.b r0(r12),r1
+.move_left:     compare r3,r3,0
+                store.b r0(r12),r1
+                branch.eq mainloop
                 sub r0,r0,1*4
                 branch .update
-.move_right:    store.b r0(r12),r1
+.move_right:    compare r3,r3,19*4                                  ; TODO
+                store.b r0(r12),r1
+                branch.eq mainloop
                 add r0,r0,1*4
                 branch .update
 
+gem:            loadi.u r0,0x1000
+                nop
+                store.l TONEGEN_PERIOD_OF(r11),r0
+                loadi.l r0,0x80000
+                nop
+                store.l TONEGEN_DURATION_OF(r11),r0
+                branch mainloop
+                
 drawplayer:     load.wu r0,player_xy-vars(r13)
                 loadi.u r1,TILE_PLAYER
                 store.b r0(r12),r1

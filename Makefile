@@ -13,7 +13,7 @@ ICEPROG = iceprog
 VERILATOR_LINT = verilator --lint-only --timing
 
 ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb businterface_tb \
-	maxicore32_tb
+	maxicore32_tb tonegen_tb
 
 CORE_V_SRC = maxicore32.v businterface.v registers.v alu.v agu.v \
 	memorystage1.v registersstage2.v \
@@ -43,6 +43,10 @@ registersstage2_tb: registersstage2.v.v tb/registersstage2_tb.v
 maxicore32_tb: $(CORE_V_SRC) tb/maxicore32_tb.v maxicore32-ram-contents.txt
 	$(VERILATOR_LINT) --top maxicore32_tb $(filter %.v,$^)
 	$(IVERILOG) -s maxicore32_tb -o $@ $(filter %.v,$^)
+
+tonegen_tb: tonegen/tonegen.v tb/tonegen/tonegen_tb.v
+	$(VERILATOR_LINT) --top tonegen_tb $^
+	$(IVERILOG) -s tonegen_tb -o $@ $^
 
 maxicore32-ram-contents.txt: asm/test.asm asm/maxicore32def.inc
 	(cd asm && \
