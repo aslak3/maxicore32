@@ -29,8 +29,21 @@ TILE_BLANK=12
                 loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
+                loadi.u r10,0                                       ; frame count
 
-mainloop:       callbranch r14,drawplayer
+waitloop:       callbranch r14,readkeybd                            ; wait for a key before starting
+
+                test r0,r0
+                nop
+                branch.eq waitloop
+
+mainloop:       add r10,r10,1
+                nop
+                bit r10,r10,0x3fff                                 ; every 2^14 loops
+                nop
+                callbranch.eq r14,moveboulders
+
+                callbranch r14,drawplayer
 
                 callbranch r14,readkeybd
 
@@ -97,11 +110,45 @@ gem:            loadi.u r0,0x1000
                 nop
                 store.l TONEGEN_DURATION_OF(r11),r0
                 branch mainloop
-                
+
 drawplayer:     load.wu r0,player_xy-vars(r13)
                 loadi.u r1,TILE_PLAYER
+                nop
                 store.b r0(r12),r1
                 jump r14
+
+; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
+moveboulders:   loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at row before last
+                nop
+.colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
+                nop
+                compare r1,r1,TILE_BOULDER                          ; hunting for moulders!
+                nop
+                branch.eq .foundboulder                             ; we will move them, if we should
+                compare r1,r1,TILE_GEM                              ; we are checking for gems too
+                nop
+                branch.eq .foundboulder                             ; gems are the same as boulders
+.foundcontinue: add r0,r0,4                                         ; move to next boulder
+                nop
+                bit r0,r0,0b1111111                                 ; see if we are at the end of row
+                nop
+                branch.ne .colloop                                  ; back to the next tile?
+                sub r0,r0,2*WIDTH*4                                 ; if not move back to start of prev row
+                nop
+                branch.pl .colloop                                  ; back to start the previous row
+                jump r14
+.foundboulder:  add r3,r0,WIDTH*4                                   ; getting square below
+                nop
+                load.bu r2,r3(r12)                                  ; get that into r2
+                nop
+                compare r2,r2,TILE_BLANK                            ; looking for empty
+                nop
+                branch.ne .foundcontinue                            ; done if not empty
+                store.b r3(r12),r1                                  ; otherwise move it there
+                loadi.u r1,TILE_BLANK
+                nop
+                store.b r0(r12),r1                                  ; clear original space
+                branch .foundcontinue                               ; back to look for more
 
 readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status of ps/2 port
                 nop

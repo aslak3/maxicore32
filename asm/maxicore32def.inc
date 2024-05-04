@@ -50,6 +50,7 @@
 
 #subruledef condition
 {
+    al => 0x0
     eq => 0x1
     zs => 0x1
     ne => 0x2
@@ -66,7 +67,6 @@
     lt => 0xc
     gt => 0xd
     le => 0xe
-    al => 0xf
 }
 #subruledef twoargalu
 {
@@ -157,7 +157,7 @@
     ; branch and jump to subroutine, with and without condition - pc is saved into savepc
 	callbranch {savepc:reg},{target} =>
 		0b01010 @ 0b001 @ savepc[3:0] @ { target - pc - 4}[15:12] @ 0x0 @ { target - pc - 4}[11:0]
-	calllbranch.{cond:condition} {savepc:reg},{target} =>
+	callbranch.{cond:condition} {savepc:reg},{target} =>
 		0b01010 @ 0b001 @ savepc[3:0] @ { target - pc - 4}[15:12] @ cond[3:0] @ { target - pc - 4}[11:0]
 	calljump {savepc:reg},{dst:reg} =>
 		0b01011 @ 0b001 @ savepc[3:0] @ dst[3:0] @ 0x0 @ 0x000
