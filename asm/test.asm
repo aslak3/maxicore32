@@ -32,7 +32,6 @@ TILE_BLANK=12
                 loadi.u r10,0                                       ; frame count
 
 waitloop:       callbranch r14,readkeybd                            ; wait for a key before starting
-
                 test r0,r0
                 nop
                 branch.eq waitloop
@@ -41,14 +40,11 @@ mainloop:       add r10,r10,1
                 nop
                 bit r10,r10,0x3fff                                 ; every 2^14 loops
                 nop
-                callbranch.eq r14,moveboulders
+                callbranch.eq r14,gravity
 
                 callbranch r14,drawplayer
 
-                callbranch r14,readkeybd
-
-                test r0,r0
-                nop
+                callbranch r14,readkeybd                            ; might be 0 with zero set
                 branch.eq mainloop
 
                 copy r2,r0
@@ -59,57 +55,79 @@ mainloop:       add r10,r10,1
 
                 compare r2,r2,KEY_W
                 nop
-                branch.eq .move_up
+                branch.eq .moveup
                 compare r2,r2,KEY_S
                 nop
-                branch.eq .move_down
+                branch.eq .movedown
                 compare r2,r2,KEY_A
                 nop
-                branch.eq .move_left
+                branch.eq .moveleft
                 compare r2,r2,KEY_D
                 nop
-                branch.eq .move_right
+                branch.eq .moveright
 
-.update:        load.bu r2,r0(r12)                                  ; get whats at new space
+.collisions:    load.bu r2,r0(r12)                                  ; get whats at new space, maybe again
                 nop
+                compare r2,r2,TILE_GEM                              ; gems!
+                nop
+                branch.eq .gem
                 compare r2,r2,TILE_WALL                             ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
-                store.w player_xy-vars(r13),r0                      ; update new position
-                compare r2,r2,TILE_GEM
+                compare r2,r2,TILE_BOULDER                          ; see if we can't walk into it
                 nop
-                branch.eq gem
-
+                branch.eq mainloop                                  ; if we can't, skip updating
+.updatepos:     store.w player_xy-vars(r13),r0                      ;.collisions new position
                 branch mainloop
 
-.move_up:       compare r0,r0,WIDTH*4
+; r0=new player pos, r1=new pos of boulder, r2=whats at new pos of boulder, r4=delta of player
+.bouldercheck:  load.bu r2,r0(r12)
+                nop
+                compare r2,r2,TILE_BOULDER
+                nop
+                branch.ne .collisions                               ; check more collisions
+                add r1,r0,r4                                        ; r1 is square on other side of boulder
+                nop
+                load.bu r2,r1(r12)                                  ; get that square
+                nop
+                compare r2,r2,TILE_BLANK
+                nop
+                branch.ne mainloop                                  ; can't move if square not empty
+                loadi.u r2,TILE_BOULDER                             ; moving the boulder
+                nop
+                store.b r1(r12),r2                                  ; move boulder
+                branch .updatepos                                   ; move into old space held by boulder
+
+.gem:           loadi.u r1,0x1000
+                nop
+                store.l TONEGEN_PERIOD_OF(r11),r1
+                loadi.l r1,0x80000
+                nop
+                store.l TONEGEN_DURATION_OF(r11),r1                 ; sound tone
+                branch .updatepos                                   ; move into space held by gem
+
+.moveup:        compare r0,r0,WIDTH*4
                 store.b r0(r12),r1
                 branch.lt mainloop
                 sub r0,r0,WIDTH*4
-                branch .update
-.move_down:     compare r0,r0,14*WIDTH*4                            ; TODO
+                branch .collisions
+.movedown:      compare r0,r0,14*WIDTH*4                            ; TODO
                 store.b r0(r12),r1
                 branch.gt mainloop
                 add r0,r0,WIDTH*4
-                branch .update
-.move_left:     compare r3,r3,0
+                branch .collisions
+.moveleft:      compare r3,r3,0
                 store.b r0(r12),r1
+                loadi.s r4,-4                                        ; r4 has direction
                 branch.eq mainloop
-                sub r0,r0,1*4
-                branch .update
-.move_right:    compare r3,r3,19*4                                  ; TODO
+                add r0,r0,r4
+                branch .bouldercheck
+.moveright:     compare r3,r3,19*4                                  ; TODO
                 store.b r0(r12),r1
+                loadi.u r4,4                                        ; r4 has direction
                 branch.eq mainloop
-                add r0,r0,1*4
-                branch .update
-
-gem:            loadi.u r0,0x1000
-                nop
-                store.l TONEGEN_PERIOD_OF(r11),r0
-                loadi.l r0,0x80000
-                nop
-                store.l TONEGEN_DURATION_OF(r11),r0
-                branch mainloop
+                add r0,r0,r4
+                branch .bouldercheck
 
 drawplayer:     load.wu r0,player_xy-vars(r13)
                 loadi.u r1,TILE_PLAYER
@@ -118,7 +136,7 @@ drawplayer:     load.wu r0,player_xy-vars(r13)
                 jump r14
 
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
-moveboulders:   loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at row before last
+gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at row before last
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
                 nop
@@ -150,6 +168,7 @@ moveboulders:   loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at 
                 store.b r0(r12),r1                                  ; clear original space
                 branch .foundcontinue                               ; back to look for more
 
+; return the key pressed in r0, or 0. return with flags set according to test r0
 readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status of ps/2 port
                 nop
                 bit r0,r0,0x80                                      ; top bit is data ready
@@ -164,6 +183,7 @@ readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status
                 compare r0,r0,KEY_BREAK                             ; now see if THIS key is a break
                 nop
                 branch.eq .nokey                                    ; if it was, then ignore that too
+                test r0,r0                                          ; exit with flags of key state
                 jump r14
 .nokey:         loadi.u r0,0                                        ; return 0 unless we got a real key down
                 jump r14
