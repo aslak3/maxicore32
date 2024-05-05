@@ -20,7 +20,6 @@ module registersstage2
         output reg [1:0] write_immediate_type,
         output reg alu_cycle,
         output reg jump,
-        output reg alu_carry_in,
         output reg status_register_write,
         input alu_carry, alu_zero, alu_neg, alu_over
     );

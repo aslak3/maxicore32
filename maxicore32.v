@@ -96,7 +96,6 @@ module maxicore32
 
     wire [4:0] alu_op;
     wire [31:0] alu_reg2, alu_reg3;
-    reg alu_carry_in;
     wire alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out;
 
     alu alu (
@@ -105,7 +104,7 @@ module maxicore32
 
         .op(alu_op),
         .reg2(alu_reg2), .reg3(alu_reg3),
-        .carry_in(alu_carry_in),
+        .carry_in(status_register_carry),
         .result(alu_result),
         .carry_out(alu_carry_out), .zero_out(alu_zero_out),
         .neg_out(alu_neg_out), .over_out(alu_over_out)
@@ -180,7 +179,6 @@ module maxicore32
         .write_immediate_type(register_file_write_immediate_type),
         .alu_cycle(registerstage2_alu_cycle),
         .jump(program_counter_jump),
-        .alu_carry_in(alu_carry_in),
         .alu_carry(status_register_carry), .alu_zero(status_register_zero),
         .alu_neg(status_register_neg), .alu_over(status_register_over),
         .status_register_write(status_register_write)
