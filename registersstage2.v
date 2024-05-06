@@ -5,23 +5,23 @@
 
 module registersstage2
     (
-        input reset,
-        input clock,
+        input       reset,
+        input       clock,
 
-        input [31:0] return_address,
-        input [31:0] inbound_instruction,
-        output reg [31:0] outbound_instruction,
-        input [31:0] data_in,
-        output reg [3:0] write_index,
-        output reg write,
-        output reg [31:0] write_data,
-        output reg write_immediate,
-        output reg [15:0] write_immediate_data,
-        output reg [1:0] write_immediate_type,
-        output reg alu_cycle,
-        output reg jump,
-        output reg status_register_write,
-        input alu_carry, alu_zero, alu_neg, alu_over
+        input       [31:0] return_address,
+        input       [31:0] inbound_instruction,
+        output reg  [31:0] outbound_instruction,
+        input       [31:0] data_in,
+        output reg  [3:0] write_index,
+        output reg  write,
+        output reg  [31:0] write_data,
+        output reg  write_immediate,
+        output reg  [15:0] write_immediate_data,
+        output reg  [1:0] write_immediate_type,
+        output reg  alu_cycle,
+        output reg  jump,
+        output reg  status_register_write,
+        input       alu_carry, alu_zero, alu_neg, alu_over
     );
 
     wire [4:0] opcode = inbound_instruction[31:27];

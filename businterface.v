@@ -2,18 +2,18 @@
 
 module businterface
     (
-        input [31:0] cpu_address,
-        input [1:0] cpu_cycle_width,
-        input [31:0] cpu_data_out,
-        output reg [31:0] cpu_data_in,
-        input cpu_read, cpu_write,
+        input       [31:0] cpu_address,
+        input       [1:0] cpu_cycle_width,
+        input       [31:0] cpu_data_out,
+        output reg  [31:0] cpu_data_in,
+        input       cpu_read, cpu_write,
 
-        output reg [31:2] businterface_address,
-        input [31:0] businterface_data_in,
-        output reg [31:0] businterface_data_out,
-        output reg [3:0] businterface_data_strobes,
-        output reg businterface_bus_error,
-        output reg businterface_read, businterface_write
+        output reg  [31:2] businterface_address,
+        input       [31:0] businterface_data_in,
+        output reg  [31:0] businterface_data_out,
+        output reg  [3:0] businterface_data_strobes,
+        output reg  businterface_bus_error,
+        output reg  businterface_read, businterface_write
     );
 
     always @ (*) begin

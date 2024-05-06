@@ -5,18 +5,18 @@
 
 module maxicore32
     (
-        input reset,
-        input clock,
+        input   reset,
+        input   clock,
 
-        output [31:2] address,
-        input [31:0] data_in,
-        output [31:0] data_out,
-        output [3:0] data_strobes,
-        output read,
-        output write,
-        output bus_error,
-        output reg halted,
-        output [5:0] user
+        output  [31:2] address,
+        input   [31:0] data_in,
+        output  [31:0] data_out,
+        output  [3:0] data_strobes,
+        output  read,
+        output  write,
+        output  bus_error,
+        output  reg halted,
+        output  [5:0] user
     );
 
     wire [31:0] cpu_address;
@@ -24,7 +24,6 @@ module maxicore32
     wire [31:0] cpu_data_out;
     wire [31:0] cpu_data_in;
     wire cpu_read, cpu_write;
-
     businterface businterface (
         .cpu_address(cpu_address),
         .cpu_cycle_width(cpu_cycle_width),
@@ -43,9 +42,7 @@ module maxicore32
     wire program_counter_jump;
     wire program_counter_inc;
     wire [31:0] program_counter_read_data;
-    reg [31:0] registerstage2_alu_result_latched;
     wire [31:0] alu_result;
-
     program_counter program_counter (
         .reset(reset),
         .clock(clock),
@@ -64,7 +61,6 @@ module maxicore32
     wire [1:0] register_file_write_immediate_type;
     wire [3:0] register_file_read_reg1_index, register_file_read_reg2_index, register_file_read_reg3_index;
     wire [31:0] register_file_read_reg1_data, register_file_read_reg2_data, register_file_read_reg3_data;
-
     register_file register_file (
         .clock(clock),
 
@@ -85,7 +81,6 @@ module maxicore32
     wire agu_immediate_mode;
     wire [31:0] agu_result;
     wire [15:0] memorystage1_immediate;
-
     agu agu (
         .base_address(register_file_read_reg2_data),
         .immediate_mode(agu_immediate_mode),
@@ -97,7 +92,6 @@ module maxicore32
     wire [4:0] alu_op;
     wire [31:0] alu_reg2, alu_reg3;
     wire alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out;
-
     alu alu (
         .reset(reset),
         .clock(clock),
@@ -112,7 +106,6 @@ module maxicore32
 
     wire status_register_write;
     wire status_register_carry, status_register_zero, status_register_neg, status_register_over;
-
     status_register status_register (
         .reset(reset),
         .clock(clock),
@@ -134,7 +127,6 @@ module maxicore32
     wire memorystage1_alu_immediate_cycle;
     wire memorystage1_branch_cycle;
     wire memorystage1_jump_cycle;
-
     memorystage1 memorystage1 (
         .reset(reset),
         .clock(clock),
@@ -159,10 +151,8 @@ module maxicore32
     );
 
     wire [31:0] registersstage2_outbound_instruction;
-    wire [31:0] registersstage2_outbound_address;
     wire [31:0] registerstage2_write_data;
     wire registerstage2_alu_cycle;
-
     registersstage2 registersstage2 (
         .reset(reset),
         .clock(clock),
@@ -185,7 +175,6 @@ module maxicore32
     );
 
     reg [1:0] halting_counter;
-
     always @ (posedge clock) begin
         if (reset) begin
             halting_counter <= 2'b00;
@@ -250,5 +239,5 @@ module maxicore32
     assign user[2] = write;
     assign user[3] = reset;
     assign user[4] = memorystage1_halting;
-    assign user[5] = data_in[27];
+    assign user[5] = memorystage1_control_flow_start_cycle;
 endmodule
