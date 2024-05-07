@@ -34,6 +34,7 @@ module ice40updevboard
     reg ps2_scancode_cs = 1'b0;
     reg tonegen_duration_cs = 1'b0;
     reg tonegen_period_cs = 1'b0;
+    reg scroll_cs = 1'b0;
     
     wire [31:2] address;
     wire [7:0] high_byte_address = address[31:24];
@@ -47,6 +48,7 @@ module ice40updevboard
         ps2_scancode_cs = 1'b0;
         tonegen_duration_cs = 1'b0;
         tonegen_period_cs = 1'b0;
+        scroll_cs = 1'b0;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;   // Program RAM
@@ -58,6 +60,7 @@ module ice40updevboard
                     8'h08: ps2_scancode_cs = 1'b1;
                     8'h0c: tonegen_duration_cs = 1'b1;
                     8'h10: tonegen_period_cs = 1'b1;
+                    8'h14: scroll_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -197,11 +200,12 @@ module ice40updevboard
     wire [7:0] proc_in;
 
     wire [7:0] tile_index;
+    reg [11:2] scroll = 10'b0000000000;
     map_ram map_ram (
         .a_clock(vga_clock),
         .a_read(v_visible & viewable_h_count[4:0] == 5'b11111),
-        .a_row_index(v_count[9:5]),
-        .a_col_index(h_count[9:5]),
+        .a_row_index(scroll[11:7] + v_count[9:5]),
+        .a_col_index(scroll[6:2] + h_count[9:5]),
         .a_out(tile_index),
         .b_clock(cpu_clock),
         .b_cs(map_cs),
@@ -212,6 +216,14 @@ module ice40updevboard
         .b_in(data_out[31:24]),
         .b_out(map_data_out[31:24])
     );
+
+    always @ (posedge clock) begin
+        if (write) begin
+            if (scroll_cs) begin
+                scroll = data_out[11:2];
+            end
+        end
+    end
 
     wire [16*4-1:0] tile_data;
     tile_rom tile_rom (

@@ -9,6 +9,7 @@ PS2_STATUS_OF=0x04
 PS2_SCANCODE_OF=0x08
 TONEGEN_DURATION_OF=0x0c
 TONEGEN_PERIOD_OF=0x10
+SCROLL_OF=0x14
 
 KEY_BREAK=0xf0
 KEY_W=0x1d
@@ -41,6 +42,8 @@ mainloop:       add r10,r10,1
                 bit r10,r10,0x3fff                                 ; every 2^14 loops
                 nop
                 callbranch.eq r14,gravity
+
+                callbranch r14,scrolling
 
                 callbranch r14,drawplayer
 
@@ -111,7 +114,7 @@ mainloop:       add r10,r10,1
                 branch.lt mainloop
                 sub r0,r0,WIDTH*4
                 branch .collisions
-.movedown:      compare r0,r0,14*WIDTH*4                            ; TODO
+.movedown:      compare r0,r0,(32-1)*WIDTH*4                        ; TODO
                 store.b r0(r12),r1
                 branch.gt mainloop
                 add r0,r0,WIDTH*4
@@ -122,21 +125,15 @@ mainloop:       add r10,r10,1
                 branch.eq mainloop
                 add r0,r0,r4
                 branch .bouldercheck
-.moveright:     compare r3,r3,19*4                                  ; TODO
+.moveright:     compare r3,r3,(32-1)*4
                 store.b r0(r12),r1
                 loadi.u r4,4                                        ; r4 has direction
                 branch.eq mainloop
                 add r0,r0,r4
                 branch .bouldercheck
 
-drawplayer:     load.wu r0,player_xy-vars(r13)
-                loadi.u r1,TILE_PLAYER
-                nop
-                store.b r0(r12),r1
-                jump r14
-
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
-gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at row before last
+gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at row before last
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
                 nop
@@ -168,6 +165,45 @@ gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                        ; start at 
                 store.b r0(r12),r1                                  ; clear original space
                 branch .foundcontinue                               ; back to look for more
 
+scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
+                nop
+                and r2,r0,0b1111100                                 ; 32*4, used for x
+                nop
+                sub r2,r2,(20*4)/2                                  ; move half a screen logicleft
+                nop
+                branch.mi .sethleft
+                compare r2,r2,(31-20)*4
+                nop
+                branch.hi .sethright
+.scrollh:       and r3,r0,0b111110000000                            ; get y
+                nop
+                sub r3,r3,(15/2)*WIDTH*4                            ; mid poiint
+                nop
+                branch.mi .setvtop
+                compare r3,r3,(31-15)*WIDTH*4
+                nop
+                branch.hi .setvbottom
+.scrollv:       or r2,r2,r3                                         ; combine x and y
+                nop
+                store.l SCROLL_OF(r11),r2
+                jump r14
+
+.sethleft:      loadi.u r2,0
+                branch .scrollh
+.sethright:     loadi.u r2,(32-20)*4
+                branch .scrollh
+.setvtop:       loadi.u r3,0
+                branch .scrollv
+.setvbottom:    loadi.u r3,(32-15)*WIDTH*4
+                branch .scrollv
+
+drawplayer:     load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
+                loadi.u r1,TILE_PLAYER
+                nop
+                store.b r0(r12),r1
+                jump r14
+
+
 ; return the key pressed in r0, or 0. return with flags set according to test r0
 readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status of ps/2 port
                 nop
@@ -192,5 +228,5 @@ readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status
 stack:
 
 vars:
-player_xy:      #d16 (0*4)+(2*WIDTH*4)                              ; position stored as tile mem offset
+player_xy:      #d16 (1*4)+(3*WIDTH*4)                              ; position stored as tile mem offset
 last_key:       #d16 0
