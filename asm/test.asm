@@ -30,16 +30,15 @@ TILE_BLANK=12
                 loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
-                loadi.u r10,0                                       ; frame count
+                loadi.l r10,0x200000                                ; frame count, backwards while waiting
 
-waitloop:       callbranch r14,readkeybd                            ; wait for a key before starting
-                test r0,r0
+waitloop:       sub r10,r10,1
                 nop
-                branch.eq waitloop
+                branch.ne waitloop
 
 mainloop:       add r10,r10,1
                 nop
-                bit r10,r10,0x3fff                                 ; every 2^14 loops
+                bit r10,r10,0x3fff                                  ; every 2^14 loops
                 nop
                 callbranch.eq r14,gravity
 
@@ -102,11 +101,9 @@ mainloop:       add r10,r10,1
                 branch .updatepos                                   ; move into old space held by boulder
 
 .gem:           loadi.u r1,0x1000
-                nop
+                loadi.l r2,0x80000
                 store.l TONEGEN_PERIOD_OF(r11),r1
-                loadi.l r1,0x80000
-                nop
-                store.l TONEGEN_DURATION_OF(r11),r1                 ; sound tone
+                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
                 branch .updatepos                                   ; move into space held by gem
 
 .moveup:        compare r0,r0,WIDTH*4
@@ -114,7 +111,7 @@ mainloop:       add r10,r10,1
                 branch.lt mainloop
                 sub r0,r0,WIDTH*4
                 branch .collisions
-.movedown:      compare r0,r0,(32-1)*WIDTH*4                        ; TODO
+.movedown:      compare r0,r0,(32-1)*WIDTH*4
                 store.b r0(r12),r1
                 branch.gt mainloop
                 add r0,r0,WIDTH*4
@@ -168,16 +165,14 @@ gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at r
 scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
                 nop
                 and r2,r0,0b1111100                                 ; 32*4, used for x
-                nop
+                and r3,r0,0b111110000000                            ; get y
                 sub r2,r2,(20*4)/2                                  ; move half a screen logicleft
                 nop
                 branch.mi .sethleft
                 compare r2,r2,(31-20)*4
                 nop
                 branch.hi .sethright
-.scrollh:       and r3,r0,0b111110000000                            ; get y
-                nop
-                sub r3,r3,(15/2)*WIDTH*4                            ; mid poiint
+.scrollh:       sub r3,r3,(15/2)*WIDTH*4                            ; mid poiint
                 nop
                 branch.mi .setvtop
                 compare r3,r3,(31-15)*WIDTH*4

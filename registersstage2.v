@@ -86,7 +86,6 @@ module registersstage2
             case (opcode)
                 OPCODE_LOADI: begin
                     $display("STAGE2: OPCODE_LOADI - Immediate load");
-                    write_index <= inbound_instruction[23:20];
                     write_immediate_type <= inbound_instruction[26:25];
                     write_immediate_data <= inbound_instruction[15:0];
                     write_immediate <= 1'b1;
@@ -94,7 +93,6 @@ module registersstage2
                 OPCODE_LOAD,
                 OPCODE_LOADR: begin
                     $display("STAGE2: OPCODE_LOAD[R] - Memory load");
-                    write_index <= inbound_instruction[23:20];
                     write <= 1'b1;
                     // Sign and zero extend the data for the register.
                     case (inbound_instruction[26:25])
@@ -132,7 +130,6 @@ module registersstage2
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
                             $display("STAGE2: OPCODE_BRANCH: Saving PC");
-                            write_index <= inbound_instruction[23:20];
                             write_data <= return_address;
                             write <= 1'b1;
                         end
@@ -146,7 +143,6 @@ module registersstage2
                         jump <= 1'b1;
                         if (inbound_instruction[24]) begin
                             $display("STAGE2:OPCODE_JUMP: Saving PC");
-                            write_index <= inbound_instruction[23:20];
                             write_data <= return_address;
                             write <= 1'b1;
                         end
@@ -164,12 +160,13 @@ module registersstage2
                 OPCODE_ALU: begin
                     alu_cycle <= 1'b1;
                     status_register_write <= 1'b1;
-                    write_index <= inbound_instruction[23:20];
                     write <= 1'b1;
                 end
                 default: begin
                 end
             endcase
+
+            write_index <= inbound_instruction[23:20];
 
             $display("STAGE2: Passing forward %08x", inbound_instruction);
             outbound_instruction <= inbound_instruction;

@@ -63,7 +63,7 @@ module alu
                 OP_NOT:
                     temp_result = ~{ 1'b1, temp_reg2[31:0]};
                 OP_LOGIC_LEFT:
-                    temp_result = temp_reg2 << 1;
+                    temp_result = { temp_reg2[31:0], 1'b0 };
                 OP_LOGIC_RIGHT:
                     temp_result = { temp_reg2[0], 1'b0, temp_reg2[31:1] };
                 OP_ARITH_LEFT:

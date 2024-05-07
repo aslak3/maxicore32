@@ -92,6 +92,7 @@ module maxicore32
     wire [4:0] alu_op;
     wire [31:0] alu_reg2, alu_reg3;
     wire alu_carry_out, alu_zero_out, alu_neg_out, alu_over_out;
+    wire status_register_carry, status_register_zero, status_register_neg, status_register_over;
     alu alu (
         .reset(reset),
         .clock(clock),
@@ -105,7 +106,6 @@ module maxicore32
     );
 
     wire status_register_write;
-    wire status_register_carry, status_register_zero, status_register_neg, status_register_over;
     status_register status_register (
         .reset(reset),
         .clock(clock),
