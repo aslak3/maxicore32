@@ -31,6 +31,9 @@ TILE_BLANK=12
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
                 loadi.l r10,0x200000                                ; frame count, backwards while waiting
+                loadi.s r5,4                                        ; direction boulder will slide
+
+                callbranch r14,scrolling
 
 waitloop:       sub r10,r10,1
                 nop
@@ -106,31 +109,25 @@ mainloop:       add r10,r10,1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
                 branch .updatepos                                   ; move into space held by gem
 
-.moveup:        compare r0,r0,WIDTH*4
-                store.b r0(r12),r1
+.moveup:        store.b r0(r12),r1
                 branch.lt mainloop
                 sub r0,r0,WIDTH*4
                 branch .collisions
-.movedown:      compare r0,r0,(32-1)*WIDTH*4
-                store.b r0(r12),r1
-                branch.gt mainloop
+.movedown:      store.b r0(r12),r1
                 add r0,r0,WIDTH*4
                 branch .collisions
-.moveleft:      compare r3,r3,0
+.moveleft:      loadi.s r4,-4
                 store.b r0(r12),r1
-                loadi.s r4,-4                                        ; r4 has direction
-                branch.eq mainloop
                 add r0,r0,r4
                 branch .bouldercheck
-.moveright:     compare r3,r3,(32-1)*4
+.moveright:     loadi.u r4,4                                        ; r4 has direction
                 store.b r0(r12),r1
-                loadi.u r4,4                                        ; r4 has direction
-                branch.eq mainloop
                 add r0,r0,r4
                 branch .bouldercheck
 
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
-gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at row before last
+gravity:        negate r5,r5                                        ; flip direction of sliding boulder
+                loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at row before last
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
                 nop
@@ -153,26 +150,38 @@ gravity:        loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at r
                 nop
                 load.bu r2,r3(r12)                                  ; get that into r2
                 nop
+                compare r2,r2,TILE_BOULDER                         ; boulder landing on boulder?
+                nop
+                branch.eq .thingonboulder                           ; see if thing is landing on boulder
                 compare r2,r2,TILE_BLANK                            ; looking for empty
                 nop
                 branch.ne .foundcontinue                            ; done if not empty
-                store.b r3(r12),r1                                  ; otherwise move it there
+.done:          store.b r3(r12),r1                                  ; otherwise move it there
                 loadi.u r1,TILE_BLANK
                 nop
                 store.b r0(r12),r1                                  ; clear original space
                 branch .foundcontinue                               ; back to look for more
+.thingonboulder:add r4,r3,r5                                        ; look at tile to the right/left
+                nop
+                load.bu r2,r4(r12)
+                nop
+                compare r2,r2,TILE_BLANK                            ; looking for empty
+                nop
+                branch.ne .foundcontinue                            ; done if not empty
+                copy r3,r4                                          ; found an empty, so set new pos
+                branch .done
 
 scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
                 nop
-                and r2,r0,0b1111100                                 ; 32*4, used for x
-                and r3,r0,0b111110000000                            ; get y
-                sub r2,r2,(20*4)/2                                  ; move half a screen logicleft
+                and r2,r0,0b000001111100                            ; get x
+                and r3,r0,0b111110000000                            ; get 32 * y
+                sub r2,r2,(20*4)/2                                  ; move half a screen
                 nop
                 branch.mi .sethleft
                 compare r2,r2,(31-20)*4
                 nop
                 branch.hi .sethright
-.scrollh:       sub r3,r3,(15/2)*WIDTH*4                            ; mid poiint
+.scrollh:       sub r3,r3,(15/2)*WIDTH*4                            ; mid point
                 nop
                 branch.mi .setvtop
                 compare r3,r3,(31-15)*WIDTH*4
@@ -223,5 +232,5 @@ readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status
 stack:
 
 vars:
-player_xy:      #d16 (1*4)+(3*WIDTH*4)                              ; position stored as tile mem offset
+player_xy:      #d16 (1*4)+(25*WIDTH*4)                              ; position stored as tile mem offset
 last_key:       #d16 0
