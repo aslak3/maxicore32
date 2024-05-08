@@ -2,12 +2,12 @@ module tile_rom
     (
         input clock,
         input read,
-        input [5:0] tile_index, // Only 12*4 = 48
+        input [5:0] tile_index, // 16*4 = 64
         input [3:0] row_index,
         output reg [4*16-1:0] dout
     );
 
-    reg [4*16-1:0] tile_mem [16 * 12*4];
+    reg [4*16-1:0] tile_mem [16 * 4*16];
 
     always @(posedge clock) begin
         if (read) begin

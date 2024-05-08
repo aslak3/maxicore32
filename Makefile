@@ -51,7 +51,7 @@ tonegen_tb: tonegen/tonegen.v tb/tonegen/tonegen_tb.v
 maxicore32-ram-contents.txt: asm/test.asm asm/maxicore32def.inc
 	(cd asm && \
 	customasm maxicore32def.inc test.asm -f binary -o t && \
-	truncate -s 4096 t) && \
+	truncate -s 2048 t) && \
 	xxd -c 4 -ps asm/t > maxicore32-ram-contents.txt
 
 tests: $(ALL_TESTBENCHES)

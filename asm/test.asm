@@ -18,12 +18,12 @@ KEY_A=0x1c
 KEY_D=0x23
 KEY_SPACE=0x29
 
-TILE_WALL=1
-TILE_DIRT=2
-TILE_BOULDER=3
-TILE_GEM=4
-TILE_PLAYER=9
-TILE_BLANK=12
+TILE_WALL=0x01
+TILE_DIRT=0x02
+TILE_BOULDER=0x03
+TILE_GEM=0x04
+TILE_PLAYER=0x09
+TILE_BLANK=0x0f
 
                 loadi.u r15,stack
                 loadi.u r14,0                                       ; return address
@@ -44,6 +44,10 @@ mainloop:       add r10,r10,1
                 bit r10,r10,0x3fff                                  ; every 2^14 loops
                 nop
                 callbranch.eq r14,gravity
+
+                bit r10,r10,0x1fff                                   ; every 2^12 loops
+                nop
+                callbranch.eq r14,animater
 
                 callbranch r14,scrolling
 
@@ -73,13 +77,15 @@ mainloop:       add r10,r10,1
 
 .collisions:    load.bu r2,r0(r12)                                  ; get whats at new space, maybe again
                 nop
-                compare r2,r2,TILE_GEM                              ; gems!
+                and r3,r2,0x0f
+                nop
+                compare r3,r3,TILE_GEM                              ; gems!
                 nop
                 branch.eq .gem
-                compare r2,r2,TILE_WALL                             ; see if we can't walk into it
+                compare r3,r3,TILE_WALL                             ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
-                compare r2,r2,TILE_BOULDER                          ; see if we can't walk into it
+                compare r3,r3,TILE_BOULDER                          ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
 .updatepos:     store.w player_xy-vars(r13),r0                      ;.collisions new position
@@ -87,6 +93,8 @@ mainloop:       add r10,r10,1
 
 ; r0=new player pos, r1=new pos of boulder, r2=whats at new pos of boulder, r4=delta of player
 .bouldercheck:  load.bu r2,r0(r12)
+                nop
+                and r2,r2,0x0f
                 nop
                 compare r2,r2,TILE_BOULDER
                 nop
@@ -131,10 +139,12 @@ gravity:        negate r5,r5                                        ; flip direc
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
                 nop
-                compare r1,r1,TILE_BOULDER                          ; hunting for moulders!
+                and r2,r1,0x0f
+                nop
+                compare r2,r2,TILE_BOULDER                          ; hunting for moulders!
                 nop
                 branch.eq .foundboulder                             ; we will move them, if we should
-                compare r1,r1,TILE_GEM                              ; we are checking for gems too
+                compare r2,r2,TILE_GEM                              ; we are checking for gems too
                 nop
                 branch.eq .foundboulder                             ; gems are the same as boulders
 .foundcontinue: add r0,r0,4                                         ; move to next boulder
@@ -153,9 +163,6 @@ gravity:        negate r5,r5                                        ; flip direc
                 compare r2,r2,TILE_BOULDER                          ; boulder landing on boulder?
                 nop
                 branch.eq .thingonboulder                           ; see if thing is landing on boulder
-                compare r2,r2,TILE_PLAYER
-                nop
-                branch.eq .hitplayer
                 compare r2,r2,TILE_BLANK                            ; looking for empty
                 nop
                 branch.ne .foundcontinue                            ; done if not empty
@@ -163,6 +170,13 @@ gravity:        negate r5,r5                                        ; flip direc
                 loadi.u r1,TILE_BLANK
                 nop
                 store.b r0(r12),r1                                  ; clear original space
+                add r3,r3,WIDTH*4                                   ; checking square below new pos
+                nop
+                load.bu r1,r3(r12)
+                nop
+                compare r1,r1,TILE_PLAYER
+                nop
+                branch.eq .hitplayer
                 branch .foundcontinue                               ; back to look for more
 .thingonboulder:add r4,r3,r5                                        ; look at tile to the right/left
                 nop
@@ -174,6 +188,26 @@ gravity:        negate r5,r5                                        ; flip direc
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
 .hitplayer:     halt
+
+animater:       loadi.u r0,(WIDTH*4*HEIGHT)-4                       ; start at bottom right
+                nop
+.loop:          load.bu r1,r0(r12)
+                nop
+                and r2,r1,0x0f
+                nop
+                compare r2,r2,TILE_GEM
+                nop
+                branch.eq .gem
+.continue:      sub r0,r0,4
+                nop
+                branch.pl .loop
+                jump r14
+.gem:           add r1,r1,0x10
+                nop
+                and r1,r1,0x3f
+                nop
+                store.b r0(r12),r1
+                branch .continue
 
 scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
                 nop
