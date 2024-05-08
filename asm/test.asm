@@ -150,9 +150,12 @@ gravity:        negate r5,r5                                        ; flip direc
                 nop
                 load.bu r2,r3(r12)                                  ; get that into r2
                 nop
-                compare r2,r2,TILE_BOULDER                         ; boulder landing on boulder?
+                compare r2,r2,TILE_BOULDER                          ; boulder landing on boulder?
                 nop
                 branch.eq .thingonboulder                           ; see if thing is landing on boulder
+                compare r2,r2,TILE_PLAYER
+                nop
+                branch.eq .hitplayer
                 compare r2,r2,TILE_BLANK                            ; looking for empty
                 nop
                 branch.ne .foundcontinue                            ; done if not empty
@@ -170,6 +173,7 @@ gravity:        negate r5,r5                                        ; flip direc
                 branch.ne .foundcontinue                            ; done if not empty
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
+.hitplayer:     halt
 
 scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
                 nop
