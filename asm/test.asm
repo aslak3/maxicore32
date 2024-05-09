@@ -23,7 +23,13 @@ TILE_DIRT=0x02
 TILE_BOULDER=0x03
 TILE_GEM=0x04
 TILE_PLAYER=0x09
+TILE_BAT=0x0a
 TILE_BLANK=0x0f
+
+BAT_DIR_UP=0x00
+BAT_DIR_LEFT=0x10
+BAT_DIR_DOWN=0x20
+BAT_DIR_RIGHT=0x30
 
                 loadi.u r15,stack
                 loadi.u r14,0                                       ; return address
@@ -118,7 +124,6 @@ mainloop:       add r10,r10,1
                 branch .updatepos                                   ; move into space held by gem
 
 .moveup:        store.b r0(r12),r1
-                branch.lt mainloop
                 sub r0,r0,WIDTH*4
                 branch .collisions
 .movedown:      store.b r0(r12),r1
@@ -189,25 +194,69 @@ gravity:        negate r5,r5                                        ; flip direc
                 branch .done
 .hitplayer:     halt
 
-animater:       loadi.u r0,(WIDTH*4*HEIGHT)-4                       ; start at bottom right
+animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the bat tile we are looking for
                 nop
+                xor r1,r4,0x80                                      ; flip it for next time
+                loadi.u r0,(WIDTH*4*HEIGHT)-4                       ; start at bottom right
+                store.b bat_tile_match-vars(r13),r1                 ; save it
+
 .loop:          load.bu r1,r0(r12)
                 nop
-                and r2,r1,0x0f
+                and r2,r1,0x8f
                 nop
                 compare r2,r2,TILE_GEM
                 nop
                 branch.eq .gem
+                compare r2,r2,r4                                    ; looking for bats
+                nop
+                branch.eq .bat
 .continue:      sub r0,r0,4
                 nop
                 branch.pl .loop
                 jump r14
+; r0=pos, r1=original and new tile
 .gem:           add r1,r1,0x10
                 nop
                 and r1,r1,0x3f
                 nop
                 store.b r0(r12),r1
                 branch .continue
+; r0=original pos, r1=tile, r2=bat direction, r3=whats at new tile/what we are writing, r4=
+.bat:           and r2,r1,0x30                                      ; get direction
+                nop
+                compare r2,r2,BAT_DIR_LEFT
+                nop
+                branch.eq .batleft
+                compare r2,r2,BAT_DIR_DOWN
+                nop
+                branch.eq .batdown
+                compare r2,r2,BAT_DIR_RIGHT
+                nop
+                branch.eq .batright
+                sub r2,r0,WIDTH*4
+                branch .collisions
+.batleft:       sub r2,r0,4
+                branch .collisions
+.batdown:       add r2,r0,WIDTH*4
+                branch .collisions
+.batright:      add r2,r0,4
+                branch .collisions
+.collisions:    load.bu r3,r2(r12)                                  ; get whats at the new tile
+                nop
+                compare r3,r3,TILE_BLANK                            ; can only move into empty spaces
+                nop
+                branch.ne .rotate                                   ; bat needs to turn as it would hit soemthing
+                loadi.u r3,TILE_BLANK
+                nop
+                store.b r0(r12),r3                                  ; clear tile vacated by bat
+.draw:          xor r3,r1,0x80                                      ; flip the "seen" bit
+                nop
+                store.b r2(r12),r3
+                branch .continue
+.rotate:        add r1,r1,0x10                                      ; rotate!
+                copy r2,r0                                          ; not moving
+                and r1,r1,0xbf
+                branch .draw
 
 scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
                 nop
@@ -272,3 +321,4 @@ stack:
 vars:
 player_xy:      #d16 (1*4)+(25*WIDTH*4)                              ; position stored as tile mem offset
 last_key:       #d16 0
+bat_tile_match: #d8 TILE_BAT
