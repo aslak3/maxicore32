@@ -43,7 +43,7 @@ module vga_sync
 		end
 
 		// AKA H sync
-		if (h >= 640 + 16 + 16 && h < 640 + 16 + 96 - 16) begin
+		if (h > 640 + 16 + 16 && h <= 640 + 16 + 96 - 16) begin
 			h_sync <= 0;
         end else begin
 			h_sync <= 1;
@@ -57,7 +57,7 @@ module vga_sync
 		end
     end
 
-    assign h_visible = h >= 16 && h < 640 + 16 ? 1 : 0;
+    assign h_visible = h > 16 && h <= 640 + 16 ? 1 : 0;
     assign v_visible = v < 480 ? 1 : 0;
 
     assign h_count = h;

@@ -122,7 +122,7 @@ module ice40updevboard
         end
     end
 
-    // Asserting onto databus
+    // Asserting onto databus (reads)
     always @ (*)  begin
         if (memory_cs) begin
             data_in = ram_data_out;
@@ -190,15 +190,6 @@ module ice40updevboard
     );
     wire [9:0] viewable_h_count = h_count - 10'd16;
 
-    reg [5:0] proc_row_index = 6'b0;
-    reg [5:0] proc_col_index = 6'b0;
-
-    wire proc_clock = v_visible;
-    reg proc_read = 1'b0;
-    reg proc_write = 1'b0;
-    reg [7:0] proc_out = 8'h0;
-    wire [7:0] proc_in;
-
     wire [7:0] tile_index;
     reg [11:2] scroll = 10'b0000000000;
     map_ram map_ram (
@@ -235,15 +226,13 @@ module ice40updevboard
     );
 
     reg [3:0] color_index;
-    always @ (posedge vga_clock) begin
-        if (h_visible == 1 && v_visible == 1) begin
-            color_index <= tile_data[4*viewable_h_count[4:1]+:4];
-        end
+    always @ (*) begin
+        color_index = tile_data[4*viewable_h_count[4:1]+:4];
     end
 
     wire [15:0] rgb_data;
     palette_rom palette_rom (
-        .clock(vga_clock),
+        .clock(clock),
         .read(1'b1),
         .color_index(color_index),
         .rgb_out(rgb_data)
