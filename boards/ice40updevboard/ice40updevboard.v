@@ -16,6 +16,9 @@ module ice40updevboard
         inout ps2a_clock,
         inout ps2a_data,
 
+        inout scl,
+        inout sda,
+
         output [5:0] user
     );
 
@@ -225,16 +228,14 @@ module ice40updevboard
         .dout(tile_data)
     );
 
-    reg [3:0] color_index;
+    reg [3:0] colour_index;
     always @ (*) begin
-        color_index = tile_data[4*viewable_h_count[4:1]+:4];
+        colour_index = tile_data[4*viewable_h_count[4:1]+:4];
     end
 
     wire [15:0] rgb_data;
-    palette_rom palette_rom (
-        .clock(clock),
-        .read(1'b1),
-        .color_index(color_index),
+    palette_lookup palette_lookup (
+        .colour_index(colour_index),
         .rgb_out(rgb_data)
     );
 
@@ -270,4 +271,7 @@ module ice40updevboard
 		.parity_error(ps2_parity_error),
 		.ps2_data(ps2a_data)
 	);
+
+    assign scl = 1'bz;
+    assign sda = 1'bz;
 endmodule

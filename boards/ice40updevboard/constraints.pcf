@@ -31,6 +31,9 @@ set_io --warn-no-port ps2a_clock 37   # PS2ACLK
 set_io --warn-no-port ps2b_data 35    # PS2ADATA
 set_io --warn-no-port ps2b_clock 34   # PS2ACLK
 
+set_io --warn-no-port scl 43          # SCL
+set_io --warn-no-port sda 42          # SDA
+
 set_io --warn-no-port user[5] 3       # USER5
 set_io --warn-no-port user[4] 2       # USER4
 set_io --warn-no-port user[3] 48      # USER3
