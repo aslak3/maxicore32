@@ -27,7 +27,7 @@ module i2c_controller
                 STOP2 = 9,
                 STOP3 = 10,
 		        RESTART1 = 11;
-                
+
 	reg running = 1'b0;				// Not idle; trigger recieved
 	reg pause_running = 1'b0;		// Used to wait for next trigger
 	reg running_clock;				// Generator of 100KHz ish SCL
@@ -109,7 +109,7 @@ module i2c_controller
 						// Assert the actual bit we are writing using the bit_counter
 						sda_local <= data_to_write[bit_counter - 1];
 						if (clock_flip) begin
-							// Clock going down, begin next bit && move to ACK all are sent
+							// Clock going down, begin next bit and move to ACK if all are sent
 							bit_counter = bit_counter - 1;
 							if (bit_counter == 0) begin
 								state <= WRITING_ACK;
@@ -219,7 +219,7 @@ module i2c_controller
 	end
 
 	assign busy = running;
-	
+
 	// Tri-state if the internal reg is 1
 	assign scl = scl_local == 1'b1 ? 1'bz : 1'b0;
 	assign sda = sda_local == 1'b1 ? 1'bz : 1'b0;

@@ -38,7 +38,11 @@ module ice40updevboard
     reg tonegen_duration_cs = 1'b0;
     reg tonegen_period_cs = 1'b0;
     reg scroll_cs = 1'b0;
-    
+    reg i2c_address_cs = 1'b0;
+    reg i2c_read_cs = 1'b0;
+    reg i2c_write_cs = 1'b0;
+    reg i2c_control_cs = 1'b0;
+
     wire [31:2] address;
     wire [7:0] high_byte_address = address[31:24];
     wire [7:0] low_byte_address = { address[7:2], 2'b00 };
@@ -52,6 +56,10 @@ module ice40updevboard
         tonegen_duration_cs = 1'b0;
         tonegen_period_cs = 1'b0;
         scroll_cs = 1'b0;
+        i2c_address_cs = 1'b0;
+        i2c_read_cs = 1'b0;
+        i2c_write_cs = 1'b0;
+        i2c_control_cs = 1'b0;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;   // Program RAM
@@ -64,6 +72,10 @@ module ice40updevboard
                     8'h0c: tonegen_duration_cs = 1'b1;
                     8'h10: tonegen_period_cs = 1'b1;
                     8'h14: scroll_cs = 1'b1;
+                    8'h18: i2c_address_cs = 1'b1;                
+                    8'h1c: i2c_read_cs = 1'b1;
+                    8'h20: i2c_write_cs = 1'b1;
+                    8'h24: i2c_control_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -126,6 +138,8 @@ module ice40updevboard
     end
 
     // Asserting onto databus (reads)
+    wire [31:0] i2c_data_out;
+    wire i2c_data_out_valid;
     always @ (*)  begin
         if (memory_cs) begin
             data_in = ram_data_out;
@@ -135,22 +149,13 @@ module ice40updevboard
             data_in = { ps2_scancode_ready, ps2_parity_error, 6'b000000, 24'h000000 };
         end else if (ps2_scancode_cs) begin
             data_in = { ps2_rx_scancode, 24'h0000000 };
+        end else if (i2c_data_out_valid) begin
+            data_in = i2c_data_out;
         end else begin
             data_in = 32'h0;
         end
     end
 
-    reg ps2_scancode_ready = 1'b0;
-    always @ (posedge clock) begin
-        if (ps2_scancode_cs) begin
-            ps2_scancode_ready <= 1'b0;
-        end
-
-        if (ps2_scancode_ready_set) begin
-            ps2_scancode_ready <= 1'b1;
-        end
-    end
-        
     maxicore32 maxicore32 (
         .reset(reset),
         .clock(cpu_clock),
@@ -165,7 +170,8 @@ module ice40updevboard
         .user(user)
     );
 
-    assign leds[1] = ~ps2_scancode_ready_set;
+    // On my "beta" board these are active low.
+    assign leds[1] = ~bus_error;
     assign leds[2] = ~halted;
 
     wire vga_clock;
@@ -272,6 +278,35 @@ module ice40updevboard
 		.ps2_data(ps2a_data)
 	);
 
-    assign scl = 1'bz;
-    assign sda = 1'bz;
+    i2c_interface i2c_interface (
+		.clock(clock),
+		.reset(reset),
+        .read(read),
+        .write(write),
+        .address_cs(i2c_address_cs),
+        .read_cs(i2c_read_cs),
+        .write_cs(i2c_write_cs),
+        .control_cs(i2c_control_cs),
+        .data_in(data_out),
+        .data_out(i2c_data_out),
+        .data_out_valid(i2c_data_out_valid),
+		.scl(scl),
+		.sda(sda)
+	);
+
+    reg ps2_scancode_ready = 1'b0;
+    always @ (posedge clock) begin
+        if (read) begin
+            if (ps2_scancode_cs) begin
+                ps2_scancode_ready <= 1'b0;
+            end
+        end
+
+        if (write) begin
+        end
+
+        if (ps2_scancode_ready_set) begin
+            ps2_scancode_ready <= 1'b1;
+        end
+    end
 endmodule

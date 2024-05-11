@@ -1,6 +1,7 @@
 include ../../Makefile
 include ../../vga/Makefile
 include ../../ps2/Makefile
+include ../../i2c/Makefile
 include ../../tonegen/Makefile
 
 YOSYS = yosys
@@ -15,7 +16,8 @@ ICEPROG = iceprog
 all: maxicore32.bin
 
 REL_V_SRC=$(addprefix ../../, $(CORE_V_SRC)) $(addprefix ../../vga/, $(VGA_V_SRC)) \
-	$(addprefix ../../ps2/, $(PS2_V_SRC)) $(addprefix ../../tonegen/, $(TONEGEN_V_SRC))
+	$(addprefix ../../ps2/, $(PS2_V_SRC)) $(addprefix ../../i2c/, $(I2C_V_SRC)) \
+	$(addprefix ../../tonegen/, $(TONEGEN_V_SRC))
 
 maxicore32.json: $(REL_V_SRC) ice40updevboard.v ../../maxicore32-ram-contents.txt
 	$(VERILATOR_LINT) --top ice40updevboard -I../.. $(filter %.v,$^)

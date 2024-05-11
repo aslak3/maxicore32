@@ -47,7 +47,7 @@ maxicore32_tb: $(CORE_V_SRC) tb/maxicore32_tb.v maxicore32-ram-contents.txt
 tonegen_tb: tonegen/tonegen.v tb/tonegen/tonegen_tb.v
 	$(VERILATOR_LINT) --top tonegen_tb $^
 	$(IVERILOG) -s tonegen_tb -o $@ $^
-i2c_controller_tb: i2c_controller/i2c_controller.v tb/i2c_controller/i2c_controller_tb.v
+i2c_controller_tb: i2c/i2c_controller.v tb/i2c_controller/i2c_controller_tb.v
 	$(VERILATOR_LINT) --top i2c_controller_tb $^
 	$(IVERILOG) -s i2c_controller_tb -o $@ $^
 
