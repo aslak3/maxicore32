@@ -22,7 +22,7 @@ LEVEL_NO=1
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
 
-main:           loadi.u r0,LEVEL_NO
+main:           loadi.u r1,LEVEL_NO
                 loadi.u r5,32
                 loadi.u r2,0
 .pageloop:      callbranch r14,writepage
@@ -64,6 +64,7 @@ writepage:      sub r15,r15,4
                 and r3,r3,0b1111111111                              ; mask away the level bits
                 loadi.u r4,32-1
                 mulu r3,r3,4                                        ; each tile is in a long
+                nop
 .writeloop:     load.bu r0,r3(r12)                                  ; get the byte
                 add r3,r3,4                                         ; next tile
                 store.b I2C_WRITE_OF(r11),r0                        ; write the byte to the eeprom

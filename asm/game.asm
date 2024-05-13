@@ -10,6 +10,11 @@ PS2_SCANCODE_OF=0x08
 TONEGEN_DURATION_OF=0x0c
 TONEGEN_PERIOD_OF=0x10
 SCROLL_OF=0x14
+I2C_ADDRESS_OF=0x18
+I2C_READ_OF=0x1c
+I2C_WRITE_OF=0x20
+I2C_CONTROL_OF=0x24
+I2C_STATUS_OF=I2C_CONTROL_OF
 
 KEY_BREAK=0xf0
 KEY_W=0x1d
@@ -31,6 +36,8 @@ BAT_DIR_LEFT=0x10
 BAT_DIR_DOWN=0x20
 BAT_DIR_RIGHT=0x30
 
+DEVICE_ADDRESS=0x50
+LEVEL_NO=1
                 loadi.u r15,stack
                 loadi.u r14,0                                       ; return address
                 loadi.u r13,vars                                    ; base of global variables
@@ -44,6 +51,9 @@ BAT_DIR_RIGHT=0x30
 waitloop:       sub r10,r10,1
                 nop
                 branch.ne waitloop
+
+                loadi.u r1,1
+                callbranch r14,loadlevel
 
 mainloop:       add r10,r10,1
                 nop
@@ -311,6 +321,69 @@ readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status
                 test r0,r0                                          ; exit with flags of key state
                 jump r14
 .nokey:         loadi.u r0,0                                        ; return 0 unless we got a real key down
+                jump r14
+
+; r1=level to load
+loadlevel:      sub r15,r15,4
+                nop
+                store.l 0(r15),r14                                  ; save current return address
+                loadi.u r0,0
+                nop
+                store.b I2C_CONTROL_OF(r11),r0                      ; clear last byte
+                loadi.u r0,DEVICE_ADDRESS
+                nop
+                store.b I2C_ADDRESS_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                mulu r1,r1,1024
+                nop
+                byteright r0,r1                                     ; take bits 15:8
+                nop
+                store.b I2C_WRITE_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                store.b I2C_WRITE_OF(r11),r1
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                loadi.u r0,DEVICE_ADDRESS | 0x80                    ; read
+                nop
+                store.b I2C_ADDRESS_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                loadi.u r1,32*32-1
+                loadi.u r2,0
+.loop:          store.b I2C_READ_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                load.bu r0,I2C_READ_OF(r11)
+                nop
+                store.b r2(r12),r0                                 ; save tile into screen
+                add r2,r2,4
+                sub r1,r1,1
+                nop
+                branch.ne .loop
+                loadi.u r0,0x80
+                nop
+                store.b I2C_CONTROL_OF(r11),r0                      ; set last byte
+                store.b I2C_READ_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                load.bu r0,I2C_READ_OF(r11)
+                nop
+                store.b r2(r12),r0
+                load.l r14,0(r15)
+                add r15,r15,4
+                jump r14
+
+nack:           halt
+
+; returns with zero clear if nack'd
+i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the current status
+                nop
+                test r0,r0
+                nop
+                branch.mi i2cwaitnotbusy                               ; loop back if busy is set
+                and r0,r0,0x40                                      ; test the ack status while here
                 jump r14
 
                 #res 128
