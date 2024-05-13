@@ -66,6 +66,10 @@ module alu
                     temp_result = { temp_reg2[31:0], 1'b0 };
                 OP_LOGIC_RIGHT:
                     temp_result = { temp_reg2[0], 1'b0, temp_reg2[31:1] };
+                OP_BYTE_LEFT:
+                    temp_result = { 1'b0, temp_reg2[23:0], 8'h00 };
+                OP_BYTE_RIGHT:
+                    temp_result = { 1'b0, 8'h00, temp_reg2[31:8] };
                 OP_ARITH_LEFT:
                     temp_result = { temp_reg2[31:0], 1'b0 };
                 OP_ARITH_RIGHT:

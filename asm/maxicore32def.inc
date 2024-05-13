@@ -87,16 +87,18 @@
     not        => 0x0
     logicleft  => 0x1
     logicright => 0x2
-    arithleft  => 0x3
-    arithright => 0x4
-    negate     => 0x5
-    swap       => 0x6
-    test       => 0x7
-    signextb   => 0x8
-    signextw   => 0x9
-    unsignextb => 0xa
-    unsignextw => 0xb
-    copy       => 0xc
+    byteleft   => 0x3
+    byteright  => 0x4
+    arithleft  => 0x5
+    arithright => 0x6
+    negate     => 0x7
+    swap       => 0x8
+    test       => 0x9
+    signextb   => 0xa
+    signextw   => 0xb
+    unsignextb => 0xc
+    unsignextw => 0xd
+    copy       => 0xe
 }
 
 ; - 31:27 - opcode
