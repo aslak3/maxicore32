@@ -7,7 +7,7 @@ module ps2_edge_finder
 	);
 
 	reg [7:0] edge_finder = 8'h00;
-	
+
 	always @ (posedge clock) begin
 		// Shift the incoming clock signal in
 		edge_finder <= { edge_finder[6:0], ps2_clock };
@@ -53,7 +53,7 @@ module ps2_rx_shifter
 
         scancode_rx_counter <= scancode_rx_counter + 16'h0001;
 
-        if (edge_found == 1'b0 && last_edge_found == 1'b1) begin
+        if (~edge_found && last_edge_found) begin
             scancode_rx_counter <= 16'h0000;
 
             case (state)

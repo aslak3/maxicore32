@@ -140,17 +140,17 @@ module ice40updevboard
     // Asserting onto databus (reads)
     wire [31:0] i2c_data_out;
     wire i2c_data_out_valid;
+    wire [31:0] ps2_data_out;
+    wire ps2_data_out_valid;
     always @ (*)  begin
         if (memory_cs) begin
             data_in = ram_data_out;
         end else if (map_cs) begin
             data_in = map_data_out;
-        end else if (ps2_status_cs) begin
-            data_in = { ps2_scancode_ready, ps2_parity_error, 6'b000000, 24'h000000 };
-        end else if (ps2_scancode_cs) begin
-            data_in = { ps2_rx_scancode, 24'h0000000 };
         end else if (i2c_data_out_valid) begin
             data_in = i2c_data_out;
+        end else if (ps2_data_out_valid) begin
+            data_in = ps2_data_out;
         end else begin
             data_in = 32'h0;
         end
@@ -198,25 +198,6 @@ module ice40updevboard
         .map_data_out(map_data_out)
     );
 
-    wire ps2_edge_found;
-	ps2_edge_finder ps2_edge_finder (
-		.clock(cpu_clock),
-		.edge_found(ps2_edge_found),
-		.ps2_clock(ps2a_clock)
-	);
-
-    wire [7:0] ps2_rx_scancode;
-    wire ps2_scancode_ready_set;
-    wire ps2_parity_error;
-    ps2_rx_shifter ps2_rx_shifter (
-		.clock(cpu_clock),
-		.edge_found(ps2_edge_found),
-		.rx_scancode(ps2_rx_scancode),
-		.scancode_ready_set(ps2_scancode_ready_set),
-		.parity_error(ps2_parity_error),
-		.ps2_data(ps2a_data)
-	);
-
     i2c_interface i2c_interface (
 		.clock(clock),
 		.reset(reset),
@@ -233,19 +214,14 @@ module ice40updevboard
 		.sda(sda)
 	);
 
-    reg ps2_scancode_ready = 1'b0;
-    always @ (posedge clock) begin
-        if (read) begin
-            if (ps2_scancode_cs) begin
-                ps2_scancode_ready <= 1'b0;
-            end
-        end
-
-        if (write) begin
-        end
-
-        if (ps2_scancode_ready_set) begin
-            ps2_scancode_ready <= 1'b1;
-        end
-    end
+    ps2_interface ps2_interface (
+		.clock(clock),
+        .read(read),
+        .status_cs(ps2_status_cs),
+        .scancode_cs(ps2_scancode_cs),
+        .data_out(ps2_data_out),
+        .data_out_valid(ps2_data_out_valid),
+        .ps2_clock(ps2a_clock),
+        .ps2_data(ps2a_data)
+    );
 endmodule
