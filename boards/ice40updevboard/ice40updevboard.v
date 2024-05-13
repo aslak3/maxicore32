@@ -8,7 +8,7 @@ module ice40updevboard
         output reg [3:0] green,
         output reg [3:0] blue,
         output n_vga_blank,
-        output vga_clk,
+        output reg vga_clock,
 
         output buzzer,
         output [2:0] leds,
@@ -174,90 +174,29 @@ module ice40updevboard
     assign leds[1] = ~bus_error;
     assign leds[2] = ~halted;
 
-    wire vga_clock;
-
     vga_clock_gen vga_clock_gen (
         .clock(clock),
         .vga_clock(vga_clock)
     );
-    assign vga_clk = vga_clock;
 
-    reg h_visible;
-    reg v_visible;
-    reg [9:0] h_count;
-    reg [9:0] v_count;
-    reg [9:0] frame_count;
-    vga_sync vga_sync (
-        .clock(vga_clock),
+    vga vga (
+        .vga_clock(vga_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
-        .h_visible(h_visible),
-        .v_visible(v_visible),
-        .h_count(h_count),
-        .v_count(v_count),
-        .frame_count(frame_count)
+        .n_vga_blank(n_vga_blank),
+        .red(red),
+        .green(green),
+        .blue(blue),
+
+        .cpu_clock(cpu_clock),
+        .read(read),
+        .write(write),
+        .address(address),
+        .map_cs(map_cs),
+        .scroll_cs(scroll_cs),
+        .data_in(data_out),
+        .map_data_out(map_data_out)
     );
-    wire [9:0] viewable_h_count = h_count - 10'd16;
-
-    wire [7:0] tile_index;
-    reg [11:2] scroll = 10'b0000000000;
-    map_ram map_ram (
-        .a_clock(vga_clock),
-        .a_read(v_visible & viewable_h_count[4:0] == 5'b11111),
-        .a_row_index(scroll[11:7] + v_count[9:5]),
-        .a_col_index(scroll[6:2] + h_count[9:5]),
-        .a_out(tile_index),
-        .b_clock(cpu_clock),
-        .b_cs(map_cs),
-        .b_read(read),
-        .b_write(write),
-        .b_row_index(address[11:7]),
-        .b_col_index(address[6:2]),
-        .b_in(data_out[31:24]),
-        .b_out(map_data_out[31:24])
-    );
-
-    always @ (posedge clock) begin
-        if (write) begin
-            if (scroll_cs) begin
-                scroll = data_out[11:2];
-            end
-        end
-    end
-
-    wire [16*4-1:0] tile_data;
-    tile_rom tile_rom (
-        .clock(vga_clock),
-        .read(v_visible),
-        .tile_index(tile_index[5:0]),
-        .row_index(v_count[4:1]),
-        .dout(tile_data)
-    );
-
-    reg [3:0] colour_index;
-    always @ (*) begin
-        colour_index = tile_data[4*viewable_h_count[4:1]+:4];
-    end
-
-    wire [15:0] rgb_data;
-    palette_lookup palette_lookup (
-        .colour_index(colour_index),
-        .rgb_out(rgb_data)
-    );
-
-    always @ (posedge vga_clock) begin
-        if (h_visible == 1 && v_visible == 1) begin
-            red <= rgb_data[11:8];
-            green <= rgb_data[7:4];
-            blue <= rgb_data[3:0];
-        end else begin
-            red <= 4'h0;
-            green <= 4'h0;
-            blue <= 4'h0;
-        end
-    end
-
-    assign n_vga_blank = 1;
 
     wire ps2_edge_found;
 	ps2_edge_finder ps2_edge_finder (

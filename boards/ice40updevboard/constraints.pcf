@@ -2,7 +2,7 @@ set_io --warn-no-port clock 44        # GLOBAL_CLK
 set_io --warn-no-port button 41       # BUTTON0
 set_io --warn-no-port buzzer 4        # BUZZER
 
-set_io --warn-no-port vga_clk 11      # DACCLK
+set_io --warn-no-port vga_clock 11    # DACCLK
 set_io --warn-no-port h_sync 9        # HSYNC
 set_io --warn-no-port v_sync 10       # VSYNC
 set_io --warn-no-port n_vga_blank 20  # VGA_BLANK
