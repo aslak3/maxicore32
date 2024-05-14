@@ -1,3 +1,6 @@
+`define ENABLE_VGA 1
+// `define ENABLE_LEVELS_ROM 1
+
 module ice40updevboard
     (
         input clock,
@@ -32,6 +35,7 @@ module ice40updevboard
 
     reg memory_cs = 1'b0;
     reg map_cs = 1'b0;
+    reg levels_cs = 1'b0;
     reg led_cs = 1'b0;
     reg ps2_status_cs = 1'b0;
     reg ps2_scancode_cs = 1'b0;
@@ -50,6 +54,7 @@ module ice40updevboard
     always @ (*) begin
         memory_cs = 1'b0;
         map_cs = 1'b0;
+        levels_cs = 1'b0;
         led_cs = 1'b0;
         ps2_status_cs = 1'b0;
         ps2_scancode_cs = 1'b0;
@@ -64,7 +69,8 @@ module ice40updevboard
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;   // Program RAM
             8'h01: map_cs = 1'b1;      // Map RAM
-            8'h02: begin
+            8'h02: levels_cs = 1'b1;
+            8'h0f: begin
                 case (low_byte_address)
                     8'h00: led_cs = 1'b1;
                     8'h04: ps2_status_cs = 1'b1;
@@ -88,6 +94,7 @@ module ice40updevboard
     wire [31:0] data_out;
     wire [31:0] ram_data_out;
     wire [31:0] map_data_out;
+    wire [31:0] levels_data_out;
     wire [3:0] data_strobes;
     wire read;
     wire write;
@@ -103,6 +110,16 @@ module ice40updevboard
         .read(read),
         .write(write)
     );
+
+`ifdef ENABLE_LEVELS_ROM
+    levels_rom levels_rom (
+        .clock(cpu_clock),
+        .cs(levels_cs),
+        .address(address),
+        .data_out(levels_data_out[31:24]),
+        .read(read)
+    );
+`endif
 
     led led (
         .clock(cpu_clock),
@@ -147,6 +164,8 @@ module ice40updevboard
             data_in = ram_data_out;
         end else if (map_cs) begin
             data_in = map_data_out;
+        end else if (levels_cs) begin
+            data_in = levels_data_out;
         end else if (i2c_data_out_valid) begin
             data_in = i2c_data_out;
         end else if (ps2_data_out_valid) begin
@@ -179,6 +198,7 @@ module ice40updevboard
         .vga_clock(vga_clock)
     );
 
+`ifdef ENABLE_VGA
     vga vga (
         .vga_clock(vga_clock),
         .h_sync(h_sync),
@@ -197,6 +217,7 @@ module ice40updevboard
         .data_in(data_out),
         .map_data_out(map_data_out)
     );
+`endif
 
     i2c_interface i2c_interface (
 		.clock(clock),

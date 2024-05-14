@@ -1,5 +1,5 @@
-VIDEO_MEM_BASE=0x01000000
-IO_BASE=0x02000000
+LEVELS_MEM_BASE=0x02000000
+IO_BASE=0x0f000000
 
 LED_OF=0x00
 PS2_STATUS_OF=0x04
@@ -14,22 +14,26 @@ I2C_CONTROL_OF=0x24
 I2C_STATUS_OF=I2C_CONTROL_OF
 
 DEVICE_ADDRESS=0x50
-LEVEL_NO=1
 
                 loadi.u r15,stack
                 loadi.u r14,0                                       ; return address
                 loadi.u r13,vars                                    ; base of global variables
-                loadi.l r12,VIDEO_MEM_BASE
+                loadi.l r12,LEVELS_MEM_BASE
                 loadi.l r11,IO_BASE
 
-main:           loadi.u r1,LEVEL_NO
-                loadi.u r5,32
+main:           loadi.u r1,0
+.levelloop:     loadi.u r5,32
                 loadi.u r2,0
 .pageloop:      callbranch r14,writepage
                 add r2,r2,32
                 sub r5,r5,1
                 nop
                 branch.ne .pageloop
+                add r1,r1,1
+                nop
+                compare r1,r1,8
+                nop
+                brance.ne .levelloop
                 loadi.s r0,-1
                 nop
                 store.l LED_OF(r11),r0
