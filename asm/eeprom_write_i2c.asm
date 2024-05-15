@@ -1,4 +1,4 @@
-LEVELS_MEM_BASE=0x02000000
+LEVELS_MEM_BASE=0x03000000
 IO_BASE=0x0f000000
 
 LED_OF=0x00
@@ -33,7 +33,7 @@ main:           loadi.u r1,0
                 nop
                 compare r1,r1,8
                 nop
-                brance.ne .levelloop
+                branch.ne .levelloop
                 loadi.s r0,-1
                 nop
                 store.l LED_OF(r11),r0

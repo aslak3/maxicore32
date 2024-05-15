@@ -41,3 +41,36 @@ module map_ram
         $readmemh("map.txt", b_map_mem);
     end
 endmodule
+
+
+module status_ram
+    (
+        input a_clock,
+        input a_read,
+        input [4:0] a_col_index, // by 32
+        output reg [7:0] a_out,
+        input b_clock,
+        input b_cs,
+        input b_write,
+        input [4:0] b_col_index, // by 32
+        input [7:0] b_in
+    );
+
+    (* ram_style = "logic" *)
+    reg [7:0] status_mem [32];
+
+    always @ (posedge a_clock) begin
+        if (a_read) begin
+            a_out <= status_mem[a_col_index]; // Output register controlled by clock.
+        end
+    end
+
+    always @ (negedge b_clock) begin
+        if (b_cs) begin
+            if (b_write) begin
+                status_mem[b_col_index] <= b_in;
+            end
+        end
+    end
+endmodule
+

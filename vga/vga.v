@@ -14,6 +14,7 @@ module vga
         input [31:2] address,
         input map_cs,
         input scroll_cs,
+        input status_cs,
         input [31:0] data_in,
         output [31:0] map_data_out
     );
@@ -35,14 +36,14 @@ module vga
     );
     wire [9:0] viewable_h_count = h_count - 10'd16;
 
-    wire [7:0] tile_index;
+    wire [7:0] map_tile_index;
     reg [11:2] scroll = 10'b0000000000;
     map_ram map_ram (
         .a_clock(vga_clock),
-        .a_read(v_visible & viewable_h_count[4:0] == 5'b11111),
-        .a_row_index(scroll[11:7] + v_count[9:5]),
+        .a_read(v_visible && v_count[9:5] != 5'b00000 && viewable_h_count[4:0] == 5'b11111),
+        .a_row_index(scroll[11:7] + v_count[9:5] - 5'b1),
         .a_col_index(scroll[6:2] + h_count[9:5]),
-        .a_out(tile_index),
+        .a_out(map_tile_index),
         .b_clock(cpu_clock),
         .b_cs(map_cs),
         .b_read(read),
@@ -52,6 +53,21 @@ module vga
         .b_in(data_in[31:24]),
         .b_out(map_data_out[31:24])
     );
+
+    wire [7:0] status_tile_index;
+    status_ram status_ram (
+        .a_clock(vga_clock),
+        .a_read(v_visible && v_count[9:5] == 5'b00000 && viewable_h_count[4:0] == 5'b11111),
+        .a_col_index(h_count[9:5]),
+        .a_out(status_tile_index),
+        .b_clock(cpu_clock),
+        .b_cs(status_cs),
+        .b_write(write),
+        .b_col_index(address[6:2]),
+        .b_in(data_in[31:24])
+    );
+
+    wire [7:0] tile_index = v_count[9:5] != 5'b00000 ? map_tile_index : status_tile_index;
 
     always @ (posedge cpu_clock) begin
         if (write) begin

@@ -35,6 +35,7 @@ module ice40updevboard
 
     reg memory_cs = 1'b0;
     reg map_cs = 1'b0;
+    reg status_cs = 1'b0;
     reg levels_cs = 1'b0;
     reg led_cs = 1'b0;
     reg ps2_status_cs = 1'b0;
@@ -54,6 +55,7 @@ module ice40updevboard
     always @ (*) begin
         memory_cs = 1'b0;
         map_cs = 1'b0;
+        status_cs = 1'b0;
         levels_cs = 1'b0;
         led_cs = 1'b0;
         ps2_status_cs = 1'b0;
@@ -69,7 +71,8 @@ module ice40updevboard
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;   // Program RAM
             8'h01: map_cs = 1'b1;      // Map RAM
-            8'h02: levels_cs = 1'b1;
+            8'h02: status_cs = 1'b1;
+            8'h03: levels_cs = 1'b1;
             8'h0f: begin
                 case (low_byte_address)
                     8'h00: led_cs = 1'b1;
@@ -214,6 +217,7 @@ module ice40updevboard
         .address(address),
         .map_cs(map_cs),
         .scroll_cs(scroll_cs),
+        .status_cs(status_cs),
         .data_in(data_out),
         .map_data_out(map_data_out)
     );

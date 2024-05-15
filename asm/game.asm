@@ -2,6 +2,7 @@ WIDTH=32
 HEIGHT=32
 
 VIDEO_MEM_BASE=0x01000000
+STATUS_MEM_BASE=0x02000000
 IO_BASE=0x0f000000
 
 LED_OF=0x00
@@ -23,13 +24,25 @@ KEY_A=0x1c
 KEY_D=0x23
 KEY_SPACE=0x29
 
+TILE_BLANK=0x00
 TILE_WALL=0x01
 TILE_DIRT=0x02
 TILE_BOULDER=0x03
-TILE_GEM=0x04
-TILE_PLAYER=0x09
-TILE_BAT=0x0a
-TILE_BLANK=0x0f
+TILE_PLAYER=0x04
+TILE_GEM=0x0c
+TILE_BAT=0x0e
+TILE_STATUS_BLANK=0x10
+TILE_STATUS_PLAYER=0x11
+TILE_STATUS_0=0x20
+TILE_STATUS_1=0x21
+TILE_STATUS_2=0x22
+TILE_STATUS_3=0x23
+TILE_STATUS_4=0x24
+TILE_STATUS_5=0x25
+TILE_STATUS_6=0x26
+TILE_STATUS_7=0x27
+TILE_STATUS_8=0x28
+TILE_STATUS_9=0x29
 
 BAT_DIR_UP=0x00
 BAT_DIR_LEFT=0x10
@@ -43,25 +56,27 @@ LEVEL_NO=1
                 loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
-                loadi.l r10,0x200000                                ; frame count, backwards while waiting
+                loadi.l r10,STATUS_MEM_BASE
+                loadi.l r9,0x200000                                 ; frame count, backwards while waiting
                 loadi.s r5,4                                        ; direction boulder will slide
 
                 callbranch r14,scrolling
+                callbranch r14,clearstatus
 
-waitloop:       sub r10,r10,1
+waitloop:       sub r9,r9,1
                 nop
                 branch.ne waitloop
 
                 loadi.u r1,1
                 callbranch r14,loadlevel
 
-mainloop:       add r10,r10,1
+mainloop:       add r9,r9,1
                 nop
-                bit r10,r10,0x3fff                                  ; every 2^14 loops
+                bit r9,r9,0x3fff                                    ; every 2^14 loops
                 nop
                 callbranch.eq r14,gravity
 
-                bit r10,r10,0x1fff                                   ; every 2^12 loops
+                bit r9,r9,0x1fff                                    ; every 2^12 loops
                 nop
                 callbranch.eq r14,animater
 
@@ -280,7 +295,7 @@ scrolling:      load.wu r0,player_xy-vars(r13)                      ; get curren
 .scrollh:       sub r3,r3,(15/2)*WIDTH*4                            ; mid point
                 nop
                 branch.mi .setvtop
-                compare r3,r3,(31-15)*WIDTH*4
+                compare r3,r3,(31-14)*WIDTH*4
                 nop
                 branch.hi .setvbottom
 .scrollv:       or r2,r2,r3                                         ; combine x and y
@@ -294,7 +309,7 @@ scrolling:      load.wu r0,player_xy-vars(r13)                      ; get curren
                 branch .scrollh
 .setvtop:       loadi.u r3,0
                 branch .scrollv
-.setvbottom:    loadi.u r3,(32-15)*WIDTH*4
+.setvbottom:    loadi.u r3,(32-14)*WIDTH*4
                 branch .scrollv
 
 drawplayer:     load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
@@ -384,6 +399,15 @@ i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the cu
                 nop
                 branch.mi i2cwaitnotbusy                               ; loop back if busy is set
                 and r0,r0,0x40                                      ; test the ack status while here
+                jump r14
+
+clearstatus:    loadi.u r0,TILE_STATUS_BLANK
+                loadi.u r1,32*4
+                nop
+.loop:          sub r1,r1,4
+                nop
+                store.b r1(r10),r0
+                branch.ne .loop
                 jump r14
 
                 #res 128
