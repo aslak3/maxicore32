@@ -56,7 +56,7 @@ BAT_DIR_DOWN=0x20
 BAT_DIR_RIGHT=0x30
 
 DEVICE_ADDRESS=0x50
-LEVEL_NO=1
+
                 loadi.u r15,stack
                 loadi.u r14,0                                       ; return address
                 loadi.u r13,vars                                    ; base of global variables
@@ -76,7 +76,7 @@ waitloop:       sub r9,r9,1
                 callbranch r14,newgame
                 callbranch r14,newlevel
                 callbranch r14,loadlevel
-                callbranch r14,gemstatusupdate
+                callbranch r14,statusupdate
 
 mainloop:       add r9,r9,1
                 nop
@@ -160,7 +160,7 @@ mainloop:       add r9,r9,1
                 nop
                 branch.mi .gem_unit_wrap
                 store.w gems_needed_1-vars(r13),r1
-.gemupdate:     callbranch r14,gemstatusupdate
+.gemupdate:     callbranch r14,statusupdate
                 branch .updatepos                                   ; move into space held by gem
 .gem_unit_wrap: loadi.u r1,9                                        ; 0-1 = 9
                 load.wu r2,gems_needed_10-vars(r13)                 ; get units of gems left
@@ -198,18 +198,19 @@ mainloop:       add r9,r9,1
                 add r0,r0,r4
                 branch .bouldercheck
 
-gemstatusupdate:load.wu r1,gems_needed_100-vars(r13)
+statusupdate:   load.wu r1,gems_needed_100-vars(r13)
                 load.wu r2,gems_needed_10-vars(r13)
                 load.wu r3,gems_needed_1-vars(r13)
+                load.wu r4,current_level-vars(r13)
                 add r1,r1,TILE_STATUS_0
                 add r2,r2,TILE_STATUS_0
                 add r3,r3,TILE_STATUS_0
+                add r4,r4,TILE_STATUS_1
                 store.b STATUS_GEM_HUNDREDS(r10),r1
                 store.b STATUS_GEM_TENS(r10),r2
                 store.b STATUS_GEM_UNITS(r10),r3
+                store.b STATUS_LEVEL(r10),r4
                 jump r14
-
-jump r14
 
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
 gravity:        negate r5,r5                                        ; flip direction of sliding boulder
@@ -547,16 +548,16 @@ status_live4:   #d8 TILE_STATUS_PLAYER
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_GEM
-status_gem0:    #d8 TILE_STATUS_0
-status_gem1:    #d8 TILE_STATUS_0
-status_gem2:    #d8 TILE_STATUS_0
+status_gem0:    #d8 TILE_STATUS_BLANK
+status_gem1:    #d8 TILE_STATUS_BLANK
+status_gem2:    #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_GEM
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_LEVEL1
                 #d8 TILE_STATUS_LEVEL2
                 #d8 TILE_STATUS_BLANK
-status_level:   #d8 TILE_STATUS_0
+status_level:   #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
 status_end:
 
