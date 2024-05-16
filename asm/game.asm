@@ -76,6 +76,7 @@ waitloop:       sub r9,r9,1
                 callbranch r14,newgame
                 callbranch r14,newlevel
                 callbranch r14,loadlevel
+                callbranch r14,gemstatusupdate
 
 mainloop:       add r9,r9,1
                 nop
@@ -153,7 +154,34 @@ mainloop:       add r9,r9,1
                 loadi.u r2,0x800
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
+                load.wu r1,gems_needed_1-vars(r13)                  ; get units of gems left
+                nop
+                sub r1,r1,1
+                nop
+                branch.mi .gem_unit_wrap
+                store.w gems_needed_1-vars(r13),r1
+.gemupdate:     callbranch r14,gemstatusupdate
                 branch .updatepos                                   ; move into space held by gem
+.gem_unit_wrap: loadi.u r1,9                                        ; 0-1 = 9
+                load.wu r2,gems_needed_10-vars(r13)                 ; get units of gems left
+                store.w gems_needed_1-vars(r13),r1
+                sub r2,r2,1
+                nop
+                branch.mi .gem_ten_wrap
+                store.w gems_needed_10-vars(r13),r2
+                branch .gemupdate
+.gem_ten_wrap:  loadi.u r1,9                                        ; 0-1 = 9
+                load.wu r2,gems_needed_100-vars(r13)                ; get units of gems left
+                store.w gems_needed_10-vars(r13),r1
+                sub r2,r2,1
+                nop
+                branch.mi .gem_hun_wrap
+                store.w gems_needed_100-vars(r13),r2
+                branch .gemupdate
+.gem_hun_wrap:  loadi.u r1,9                                        ; 0-1 = 9
+                nop
+                store.w gems_needed_100-vars(r13),r1
+                branch .gemupdate
 
 .moveup:        store.b r0(r12),r1
                 sub r0,r0,WIDTH*4
@@ -169,6 +197,19 @@ mainloop:       add r9,r9,1
                 store.b r0(r12),r1
                 add r0,r0,r4
                 branch .bouldercheck
+
+gemstatusupdate:load.wu r1,gems_needed_100-vars(r13)
+                load.wu r2,gems_needed_10-vars(r13)
+                load.wu r3,gems_needed_1-vars(r13)
+                add r1,r1,TILE_STATUS_0
+                add r2,r2,TILE_STATUS_0
+                add r3,r3,TILE_STATUS_0
+                store.b STATUS_GEM_HUNDREDS(r10),r1
+                store.b STATUS_GEM_TENS(r10),r2
+                store.b STATUS_GEM_UNITS(r10),r3
+                jump r14
+
+jump r14
 
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
 gravity:        negate r5,r5                                        ; flip direction of sliding boulder
@@ -490,6 +531,12 @@ last_key:       #d16 0
 lives_left:     #d16 0
 current_level:  #d16 0
 new_life_pos:   #d16 0
+
+STATUS_GEM_HUNDREDS=36
+STATUS_GEM_TENS=40
+STATUS_GEM_UNITS=44
+
+STATUS_LEVEL=72
 
 status_start:   #d8 TILE_STATUS_BLANK
 status_live0:   #d8 TILE_STATUS_PLAYER
