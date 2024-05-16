@@ -224,7 +224,20 @@ gravity:        negate r5,r5                                        ; flip direc
                 branch.ne .foundcontinue                            ; done if not empty
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
-.hitplayer:     halt                                                ; todo
+.hitplayer:     loadi.u r1,TILE_BLANK
+                nop
+                store.b r0(r12),r1                                  ; clear original space
+                load.wu r0,lives_left-vars(r13)
+                nop
+                sub r0,r0,1
+                nop
+                store.w lives_left-vars(r13),r0
+                branch.eq .nolivesleft
+                load.wu r0,new_life_pos-vars(r13)
+                nop
+                store.w player_pos-vars(r13),r0                     ; reset starting position for player
+                branch .done
+.nolivesleft:   halt
 
 animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the bat tile we are looking for
                 nop
@@ -435,12 +448,19 @@ newlevel:       sub r15,r15,4
                 mulu r0,r0,LEVEL_SIZE
                 nop
                 add r0,r0,levels
+                nop
+                load.wu r1,LEVEL_PLAYER_POS(r0)
+                nop
+                store.w new_life_pos-vars(r13),r1                   ; save the death restart postion
                 loadi.u r1,player_pos
                 loadi.u r2,LEVEL_SIZE
                 callbranch r14,copywords
+
                 load.l r14,0(r15)
                 add r15,r15,4
                 jump r14
+
+; utility
 
 ; r0=source, r1=dest, r2=count of words
 copywords:      sub r2,r2,2
@@ -461,6 +481,7 @@ exit_pos:       #d16 0
 last_key:       #d16 0
 lives_left:     #d16 0
 current_level:  #d16 0
+new_life_pos:   #d16 0
 
 status_start:   #d8 TILE_STATUS_BLANK
 status_live0:   #d8 TILE_STATUS_PLAYER
