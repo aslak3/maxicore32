@@ -35,6 +35,7 @@ module vga
         .frame_count(frame_count)
     );
     wire [9:0] viewable_h_count = h_count - 10'd16;
+    wire [4:0] internal_tile_count = 5'b00000 - viewable_h_count[4:0];
 
     wire [7:0] map_tile_index;
     reg [11:2] scroll = 10'b0000000000;
@@ -88,7 +89,7 @@ module vga
 
     reg [3:0] colour_index;
     always @ (*) begin
-        colour_index = tile_data[4*viewable_h_count[4:1]+:4];
+        colour_index = tile_data[4*internal_tile_count[4:1]+:4];
     end
 
     wire [15:0] rgb_data;

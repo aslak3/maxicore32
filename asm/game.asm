@@ -29,10 +29,16 @@ TILE_WALL=0x01
 TILE_DIRT=0x02
 TILE_BOULDER=0x03
 TILE_PLAYER=0x04
+TILE_STATUS_GEM=0x0b
 TILE_GEM=0x0c
+TILE_EXIT=0xd
 TILE_BAT=0x0e
+TILE_STAR=0x0f
 TILE_STATUS_BLANK=0x10
 TILE_STATUS_PLAYER=0x11
+TILE_STATUS_DEAD_PLAYER=0x12
+TILE_STATUS_LEVEL1=0x13
+TILE_STATUS_LEVEL2=0x14
 TILE_STATUS_0=0x20
 TILE_STATUS_1=0x21
 TILE_STATUS_2=0x22
@@ -61,13 +67,14 @@ LEVEL_NO=1
                 loadi.s r5,4                                        ; direction boulder will slide
 
                 callbranch r14,scrolling
-                callbranch r14,clearstatus
+                callbranch r14,updatestatus
 
 waitloop:       sub r9,r9,1
                 nop
                 branch.ne waitloop
 
-                loadi.u r1,1
+                callbranch r14,newgame
+                callbranch r14,newlevel
                 callbranch r14,loadlevel
 
 mainloop:       add r9,r9,1
@@ -89,7 +96,7 @@ mainloop:       add r9,r9,1
 
                 copy r2,r0
 
-                load.wu r0,player_xy-vars(r13)
+                load.wu r0,player_pos-vars(r13)
                 loadi.u r1,TILE_BLANK
                 and r3,r0,0b1111111                                 ; 32*4, used for checking x
 
@@ -119,7 +126,7 @@ mainloop:       add r9,r9,1
                 compare r3,r3,TILE_BOULDER                          ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
-.updatepos:     store.w player_xy-vars(r13),r0                      ;.collisions new position
+.updatepos:     store.w player_pos-vars(r13),r0                      ;.collisions new position
                 branch mainloop
 
 ; r0=new player pos, r1=new pos of boulder, r2=whats at new pos of boulder, r4=delta of player
@@ -282,7 +289,7 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the ba
                 and r1,r1,0b10111111
                 branch .draw
 
-scrolling:      load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
+scrolling:      load.wu r0,player_pos-vars(r13)                      ; get current position in tile memory
                 nop
                 and r2,r0,0b000001111100                            ; get x
                 and r3,r0,0b111110000000                            ; get 32 * y
@@ -312,7 +319,7 @@ scrolling:      load.wu r0,player_xy-vars(r13)                      ; get curren
 .setvbottom:    loadi.u r3,(32-14)*WIDTH*4
                 branch .scrollv
 
-drawplayer:     load.wu r0,player_xy-vars(r13)                      ; get current position in tile memory
+drawplayer:     load.wu r0,player_pos-vars(r13)                      ; get current position in tile memory
                 loadi.u r1,TILE_PLAYER
                 nop
                 store.b r0(r12),r1
@@ -338,10 +345,10 @@ readkeybd:      load.bu r0,PS2_STATUS_OF(r11)                       ; get status
 .nokey:         loadi.u r0,0                                        ; return 0 unless we got a real key down
                 jump r14
 
-; r1=level to load
 loadlevel:      sub r15,r15,4
                 nop
                 store.l 0(r15),r14                                  ; save current return address
+                load.wu r1,current_level-vars(r13)                  ; get current level
                 loadi.u r0,0
                 nop
                 store.b I2C_CONTROL_OF(r11),r0                      ; clear last byte
@@ -397,23 +404,93 @@ i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the cu
                 nop
                 test r0,r0
                 nop
-                branch.mi i2cwaitnotbusy                               ; loop back if busy is set
+                branch.mi i2cwaitnotbusy                            ; loop back if busy is set
                 and r0,r0,0x40                                      ; test the ack status while here
                 jump r14
 
-clearstatus:    loadi.u r0,TILE_STATUS_BLANK
-                loadi.u r1,32*4
+updatestatus:   loadi.u r1,20*4
+                loadi.u r2,status_end-vars
                 nop
-.loop:          sub r1,r1,4
+.loop:          sub r2,r2,1
+                sub r1,r1,4
+                load.bu r0,r2(r13)
                 nop
                 store.b r1(r10),r0
                 branch.ne .loop
                 jump r14
 
-                #res 128
+newgame:        loadi.u r0,5
+                nop
+                store.w lives_left-vars(r13),r0
+                loadi.u r0,0
+                nop
+                store.w current_level-vars(r13),r0
+                jump r14
+
+newlevel:       sub r15,r15,4
+                nop
+                store.l 0(r15),r14
+                load.wu r0,current_level-vars(r13)
+                nop
+                mulu r0,r0,LEVEL_SIZE
+                nop
+                add r0,r0,levels
+                loadi.u r1,player_pos
+                loadi.u r2,LEVEL_SIZE
+                callbranch r14,copywords
+                load.l r14,0(r15)
+                add r15,r15,4
+                jump r14
+
+; r0=source, r1=dest, r2=count of words
+copywords:      sub r2,r2,2
+                nop
+                load.wu r3,r2(r0)
+                nop
+                store.w r2(r1),r3
+                branch.ne copywords
+                jump r14
+
+                #res 32
 stack:
 
 vars:
-player_xy:      #d16 (1*4)+(25*WIDTH*4)                              ; position stored as tile mem offset
+player_pos:     #d16 0
+gems_needed:    #d16 0
+exit_pos:       #d16 0
 last_key:       #d16 0
+lives_left:     #d16 0
+current_level:  #d16 0
+
+status_start:   #d8 TILE_STATUS_BLANK
+status_live0:   #d8 TILE_STATUS_PLAYER
+status_live1:   #d8 TILE_STATUS_PLAYER
+status_live2:   #d8 TILE_STATUS_PLAYER
+status_live3:   #d8 TILE_STATUS_PLAYER
+status_live4:   #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_GEM
+status_gem0:    #d8 TILE_STATUS_0
+status_gem1:    #d8 TILE_STATUS_0
+status_gem2:    #d8 TILE_STATUS_0
+                #d8 TILE_STATUS_GEM
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_LEVEL1
+                #d8 TILE_STATUS_LEVEL2
+                #d8 TILE_STATUS_BLANK
+status_level:   #d8 TILE_STATUS_0
+                #d8 TILE_STATUS_BLANK
+status_end:
+
+LEVEL_PLAYER_POS=0
+LEVEL_GEMS_NEEDED=2
+LEVEL_EXIT_POS=4
+LEVEL_SIZE=6
+
+levels:         #d16 (1*4)+(25*WIDTH*4)
+                #d16 50
+                #d16 (30*4)+(1*WIDTH*4)
+
 bat_tile_match: #d8 TILE_BAT
