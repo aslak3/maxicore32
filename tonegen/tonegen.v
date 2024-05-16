@@ -22,7 +22,7 @@ module tonegen
         end else begin
             if (write) begin
                 if (duration_cs) begin
-                    duration_counter <= data_in;
+                    duration_counter <= { data_in[23:0], 8'h00 };
                 end
 
                 if (period_cs) begin

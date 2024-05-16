@@ -150,7 +150,7 @@ mainloop:       add r9,r9,1
                 branch .updatepos                                   ; move into old space held by boulder
 
 .gem:           loadi.u r1,0x1000
-                loadi.l r2,0x80000
+                loadi.u r2,0x800
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
                 branch .updatepos                                   ; move into space held by gem
@@ -224,19 +224,25 @@ gravity:        negate r5,r5                                        ; flip direc
                 branch.ne .foundcontinue                            ; done if not empty
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
-.hitplayer:     loadi.u r1,TILE_BLANK
+.hitplayer:     loadi.u r1,0x4000
+                loadi.u r2,0x4000
+                store.l TONEGEN_PERIOD_OF(r11),r1
+                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
+                loadi.u r1,TILE_BLANK
                 nop
-                store.b r0(r12),r1                                  ; clear original space
-                load.wu r0,lives_left-vars(r13)
+                store.b r3(r12),r1                                  ; clear original space
+                load.wu r1,lives_left-vars(r13)
                 nop
-                sub r0,r0,1
-                nop
-                store.w lives_left-vars(r13),r0
+                mulu r2,r1,4
+                loadi.u r3,TILE_STATUS_DEAD_PLAYER
+                sub r1,r1,1
+                store.b r2(r10),r3                                  ; update status bar
+                store.w lives_left-vars(r13),r1
                 branch.eq .nolivesleft
-                load.wu r0,new_life_pos-vars(r13)
+                load.wu r1,new_life_pos-vars(r13)
                 nop
-                store.w player_pos-vars(r13),r0                     ; reset starting position for player
-                branch .done
+                store.w player_pos-vars(r13),r1                     ; reset starting position for player
+                branch .foundcontinue
 .nolivesleft:   halt
 
 animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the bat tile we are looking for
@@ -476,7 +482,9 @@ stack:
 
 vars:
 player_pos:     #d16 0
-gems_needed:    #d16 0
+gems_needed_100:#d16 0
+gems_needed_10: #d16 0
+gems_needed_1:  #d16 0
 exit_pos:       #d16 0
 last_key:       #d16 0
 lives_left:     #d16 0
@@ -506,12 +514,16 @@ status_level:   #d8 TILE_STATUS_0
 status_end:
 
 LEVEL_PLAYER_POS=0
-LEVEL_GEMS_NEEDED=2
-LEVEL_EXIT_POS=4
-LEVEL_SIZE=6
+LEVEL_GEMS_NEEDED_HUNDREDS=2
+LEVEL_GEMS_NEEDED_TENS=4
+LEVEL_GEMS_NEEDED_UNITS=6
+LEVEL_EXIT_POS=8
+LEVEL_SIZE=10
 
 levels:         #d16 (1*4)+(25*WIDTH*4)
-                #d16 50
+                #d16 1
+                #d16 2
+                #d16 3
                 #d16 (30*4)+(1*WIDTH*4)
 
 bat_tile_match: #d8 TILE_BAT
