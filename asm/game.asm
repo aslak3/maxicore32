@@ -551,6 +551,12 @@ lives_left:     #d16 0
 current_level:  #d16 0
 new_life_pos:   #d16 0
 
+levels:         #d16 (1*4)+(25*WIDTH*4)
+                #d16 0
+                #d16 0
+                #d16 5
+                #d16 (30*4)+(1*WIDTH*4)
+
 STATUS_GEM_HUNDREDS=36
 STATUS_GEM_TENS=40
 STATUS_GEM_UNITS=44
@@ -558,24 +564,24 @@ STATUS_GEM_UNITS=44
 STATUS_LEVEL=72
 
 status_start:   #d8 TILE_STATUS_BLANK
-status_live0:   #d8 TILE_STATUS_PLAYER
-status_live1:   #d8 TILE_STATUS_PLAYER
-status_live2:   #d8 TILE_STATUS_PLAYER
-status_live3:   #d8 TILE_STATUS_PLAYER
-status_live4:   #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_PLAYER
+                #d8 TILE_STATUS_PLAYER
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_GEM
-status_gem0:    #d8 TILE_STATUS_BLANK
-status_gem1:    #d8 TILE_STATUS_BLANK
-status_gem2:    #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_GEM
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_LEVEL1
                 #d8 TILE_STATUS_LEVEL2
                 #d8 TILE_STATUS_BLANK
-status_level:   #d8 TILE_STATUS_BLANK
+                #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
 status_end:
 
@@ -585,11 +591,5 @@ LEVEL_GEMS_NEEDED_TENS=4
 LEVEL_GEMS_NEEDED_UNITS=6
 LEVEL_EXIT_POS=8
 LEVEL_SIZE=10
-
-levels:         #d16 (1*4)+(25*WIDTH*4)
-                #d16 0
-                #d16 0
-                #d16 5
-                #d16 (30*4)+(1*WIDTH*4)
 
 bat_tile_match: #d8 TILE_BAT
