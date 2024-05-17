@@ -74,7 +74,7 @@ waitloop:       sub r9,r9,1
                 branch.ne waitloop
 
                 callbranch r14,newgame
-                callbranch r14,newlevel
+startnextlevel: callbranch r14,newlevel
                 callbranch r14,loadlevel
                 callbranch r14,statusupdate
 
@@ -121,6 +121,9 @@ mainloop:       add r9,r9,1
                 compare r3,r3,TILE_GEM                              ; gems!
                 nop
                 branch.eq .gem
+                compare r3,r3,TILE_EXIT
+                nop
+                branch.eq .exit
                 compare r3,r3,TILE_WALL                             ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
@@ -154,6 +157,11 @@ mainloop:       add r9,r9,1
                 loadi.u r2,0x800
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
+                load.wu r1,exit_open-vars(r13)
+                nop
+                test r1,r1
+                nop
+                branch.ne .updatepos
                 load.wu r1,gems_needed_1-vars(r13)                  ; get units of gems left
                 nop
                 sub r1,r1,1
@@ -183,6 +191,15 @@ mainloop:       add r9,r9,1
                 nop
                 store.w gems_needed_100-vars(r13),r1
                 branch .gemupdate
+
+.exit:          load.wu r0,current_level-vars(r13)
+                nop
+                add r0,r0,1
+                nop
+                and r0,r0,0x07                                     ; only got 8 levels. :(
+                nop
+                store.w current_level-vars(r13),r0
+                branch startnextlevel
 
 .moveup:        store.b r0(r12),r1
                 sub r0,r0,WIDTH*4
@@ -520,7 +537,7 @@ newlevel:       sub r15,r15,4
                 callbranch r14,copywords
                 loadi.u r0,0
                 nop
-                store.w exit_open(r13),r0
+                store.w exit_open-vars(r13),r0
                 load.l r14,0(r15)
                 add r15,r15,4
                 jump r14
@@ -556,6 +573,12 @@ levels:         #d16 (1*4)+(25*WIDTH*4)
                 #d16 0
                 #d16 5
                 #d16 (30*4)+(1*WIDTH*4)
+
+                #d16 (1*4)+(1*WIDTH*4)
+                #d16 0
+                #d16 1
+                #d16 0
+                #d16 (1*4)+(25*WIDTH*4)
 
 STATUS_GEM_HUNDREDS=36
 STATUS_GEM_TENS=40
