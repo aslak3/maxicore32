@@ -127,7 +127,7 @@ mainloop:       add r9,r9,1
                 compare r3,r3,TILE_BOULDER                          ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
-.updatepos:     store.w player_pos-vars(r13),r0                      ;.collisions new position
+.updatepos:     store.w player_pos-vars(r13),r0                     ; new position
                 branch mainloop
 
 ; r0=new player pos, r1=new pos of boulder, r2=whats at new pos of boulder, r4=delta of player
@@ -161,6 +161,7 @@ mainloop:       add r9,r9,1
                 branch.mi .gem_unit_wrap
                 store.w gems_needed_1-vars(r13),r1
 .gemupdate:     callbranch r14,statusupdate
+                callbranch r14,gemcountcheck
                 branch .updatepos                                   ; move into space held by gem
 .gem_unit_wrap: loadi.u r1,9                                        ; 0-1 = 9
                 load.wu r2,gems_needed_10-vars(r13)                 ; get units of gems left
@@ -197,6 +198,22 @@ mainloop:       add r9,r9,1
                 store.b r0(r12),r1
                 add r0,r0,r4
                 branch .bouldercheck
+
+gemcountcheck:  load.wu r1,gems_needed_100-vars(r13)
+                load.wu r2,gems_needed_10-vars(r13)
+                load.wu r3,gems_needed_1-vars(r13)
+                add r1,r1,r2
+                nop
+                add r1,r1,r3
+                nop
+                branch.eq .allgemsfound
+                jump r14
+.allgemsfound:  loadi.u r1,1
+                load.wu r2,exit_pos-vars(r13)
+                loadi.u r3,TILE_EXIT
+                store.w exit_open-vars(r13),r1
+                store.b r2(r12),r3
+                jump r14
 
 statusupdate:   load.wu r1,gems_needed_100-vars(r13)
                 load.wu r2,gems_needed_10-vars(r13)
@@ -269,7 +286,7 @@ gravity:        negate r5,r5                                        ; flip direc
 .hitplayer:     loadi.u r1,0x4000
                 loadi.u r2,0x4000
                 store.l TONEGEN_PERIOD_OF(r11),r1
-                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
+                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound death tone
                 loadi.u r1,TILE_BLANK
                 nop
                 store.b r3(r12),r1                                  ; clear original space
@@ -307,9 +324,9 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the ba
                 branch.pl .loop
                 jump r14
 ; r0=pos, r1=original and new tile
-.gem:           add r1,r1,0x10
+.gem:           add r1,r1,0x10                                      ; next animation frame
                 nop
-                and r1,r1,0x3f
+                and r1,r1,0x3f                                      ; mask out the upper bits so add doesn't wrap
                 nop
                 store.b r0(r12),r1
                 branch .continue
@@ -489,10 +506,8 @@ newgame:        loadi.u r0,5
                 jump r14
 
 newlevel:       sub r15,r15,4
-                nop
-                store.l 0(r15),r14
                 load.wu r0,current_level-vars(r13)
-                nop
+                store.l 0(r15),r14
                 mulu r0,r0,LEVEL_SIZE
                 nop
                 add r0,r0,levels
@@ -503,7 +518,9 @@ newlevel:       sub r15,r15,4
                 loadi.u r1,player_pos
                 loadi.u r2,LEVEL_SIZE
                 callbranch r14,copywords
-
+                loadi.u r0,0
+                nop
+                store.w exit_open(r13),r0
                 load.l r14,0(r15)
                 add r15,r15,4
                 jump r14
@@ -528,6 +545,7 @@ gems_needed_100:#d16 0
 gems_needed_10: #d16 0
 gems_needed_1:  #d16 0
 exit_pos:       #d16 0
+exit_open:      #d16 0
 last_key:       #d16 0
 lives_left:     #d16 0
 current_level:  #d16 0
@@ -569,9 +587,9 @@ LEVEL_EXIT_POS=8
 LEVEL_SIZE=10
 
 levels:         #d16 (1*4)+(25*WIDTH*4)
-                #d16 1
-                #d16 2
-                #d16 3
+                #d16 0
+                #d16 0
+                #d16 5
                 #d16 (30*4)+(1*WIDTH*4)
 
 bat_tile_match: #d8 TILE_BAT
