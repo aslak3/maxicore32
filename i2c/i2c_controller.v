@@ -36,14 +36,14 @@ module i2c_controller
 	reg scl_local = 1'b1;			// Local copies of output
 	reg sda_local = 1'b1;			// Ditto
     // Non blocking
-    reg [6:0] i2c_clock_counter;
+    reg [4:0] i2c_clock_counter;
     reg clock_flip = 1'b0;
     integer bit_counter = 0;
     reg [7:0] data_to_write;    // May be a slave address or actual data
 
     always @ (posedge clock) begin
 		if (reset) begin
-			i2c_clock_counter = 7'b0;
+			i2c_clock_counter = 5'b0;
 			running <= 1'b0;
             pause_running <= 1'b0;
             clock_flip = 1'b0;
@@ -57,13 +57,13 @@ module i2c_controller
 			if (trigger) begin
 				// On a trigger, enter running state, clear the counter
 				running <= 1'b1;
-				i2c_clock_counter = 7'b0;
+				i2c_clock_counter = 5'b0;
 			end
 			if (running) begin
 				// If we are running, inc the counter && extract the MSB for 2nd process
-				i2c_clock_counter = i2c_clock_counter + 7'b1;
+				i2c_clock_counter = i2c_clock_counter + 5'b1;
 				previous_running_clock <= running_clock;
-				running_clock <= i2c_clock_counter[6];
+				running_clock <= i2c_clock_counter[4];
 			end
 			if (pause_running) begin
 				// Handle the 2nd process wanting to wait for a trigger (eg. the next byte to write)

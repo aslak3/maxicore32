@@ -42,6 +42,7 @@ module ice40updevboard
     reg ps2_scancode_cs = 1'b0;
     reg tonegen_duration_cs = 1'b0;
     reg tonegen_period_cs = 1'b0;
+    reg tonegen_status_cs = 1'b0;
     reg scroll_cs = 1'b0;
     reg i2c_address_cs = 1'b0;
     reg i2c_read_cs = 1'b0;
@@ -62,6 +63,7 @@ module ice40updevboard
         ps2_scancode_cs = 1'b0;
         tonegen_duration_cs = 1'b0;
         tonegen_period_cs = 1'b0;
+        tonegen_status_cs = 1'b0;
         scroll_cs = 1'b0;
         i2c_address_cs = 1'b0;
         i2c_read_cs = 1'b0;
@@ -69,10 +71,10 @@ module ice40updevboard
         i2c_control_cs = 1'b0;
 
         case (high_byte_address)
-            8'h00: memory_cs = 1'b1;   // Program RAM
-            8'h01: map_cs = 1'b1;      // Map RAM
+            8'h00: memory_cs = 1'b1;    // Program RAM
+            8'h01: map_cs = 1'b1;       // Map RAM
             8'h02: status_cs = 1'b1;
-            8'h03: levels_cs = 1'b1;
+            8'h03: levels_cs = 1'b1;    // 8 levels used for I2C EEPROM programming
             8'h0f: begin
                 case (low_byte_address)
                     8'h00: led_cs = 1'b1;
@@ -80,11 +82,12 @@ module ice40updevboard
                     8'h08: ps2_scancode_cs = 1'b1;
                     8'h0c: tonegen_duration_cs = 1'b1;
                     8'h10: tonegen_period_cs = 1'b1;
-                    8'h14: scroll_cs = 1'b1;
-                    8'h18: i2c_address_cs = 1'b1;                
-                    8'h1c: i2c_read_cs = 1'b1;
-                    8'h20: i2c_write_cs = 1'b1;
-                    8'h24: i2c_control_cs = 1'b1;
+                    8'h14: tonegen_status_cs = 1'b1;
+                    8'h18: scroll_cs = 1'b1;
+                    8'h1c: i2c_address_cs = 1'b1;
+                    8'h20: i2c_read_cs = 1'b1;
+                    8'h24: i2c_write_cs = 1'b1;
+                    8'h28: i2c_control_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -132,16 +135,6 @@ module ice40updevboard
         .led(leds[0])
     );
 
-    tonegen tonegen (
-        .reset(reset),
-        .clock(cpu_clock),
-        .write(write),
-        .duration_cs(tonegen_duration_cs),
-        .period_cs(tonegen_period_cs),
-        .data_in(data_out),
-        .sounder(buzzer)
-    );
-
     reg [31:0] data_in;
     wire bus_error;
     wire halted;
@@ -158,10 +151,12 @@ module ice40updevboard
     end
 
     // Asserting onto databus (reads)
-    wire [31:0] i2c_data_out;
-    wire i2c_data_out_valid;
     wire [31:0] ps2_data_out;
     wire ps2_data_out_valid;
+    wire [31:0] tonegen_data_out;
+    wire tonegen_data_out_valid;
+    wire [31:0] i2c_data_out;
+    wire i2c_data_out_valid;
     always @ (*)  begin
         if (memory_cs) begin
             data_in = ram_data_out;
@@ -169,10 +164,12 @@ module ice40updevboard
             data_in = map_data_out;
         end else if (levels_cs) begin
             data_in = levels_data_out;
-        end else if (i2c_data_out_valid) begin
-            data_in = i2c_data_out;
         end else if (ps2_data_out_valid) begin
             data_in = ps2_data_out;
+        end else if (tonegen_data_out_valid) begin
+            data_in = tonegen_data_out;
+        end else if (i2c_data_out_valid) begin
+            data_in = i2c_data_out;
         end else begin
             data_in = 32'h0;
         end
@@ -224,7 +221,7 @@ module ice40updevboard
 `endif
 
     i2c_interface i2c_interface (
-		.clock(clock),
+		.clock(cpu_clock),
 		.reset(reset),
         .read(read),
         .write(write),
@@ -240,7 +237,7 @@ module ice40updevboard
 	);
 
     ps2_interface ps2_interface (
-		.clock(clock),
+		.clock(cpu_clock),
         .read(read),
         .status_cs(ps2_status_cs),
         .scancode_cs(ps2_scancode_cs),
@@ -249,4 +246,19 @@ module ice40updevboard
         .ps2_clock(ps2a_clock),
         .ps2_data(ps2a_data)
     );
+
+    tonegen_interface tonegen_interface (
+        .reset(reset),
+		.clock(cpu_clock),
+        .read(read),
+        .write(write),
+        .duration_cs(tonegen_duration_cs),
+        .period_cs(tonegen_period_cs),
+        .status_cs(tonegen_status_cs),
+        .data_in(data_out),
+        .data_out(tonegen_data_out),
+        .data_out_valid(tonegen_data_out_valid),
+        .buzzer(buzzer)
+    );
+
 endmodule

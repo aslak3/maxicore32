@@ -1,1 +1,1 @@
-TONEGEN_V_SRC = tonegen.v
+TONEGEN_V_SRC = tonegen.v tonegen_interface.v

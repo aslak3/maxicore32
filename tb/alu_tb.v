@@ -38,11 +38,11 @@ module alu_tb;
 
             clock = 1'b1;
 
-            #period
+            #test_period
 
             clock = 1'b0;
 
-            #period
+            #test_period
 
             $display("Op: %02x Reg2: %08x Reg3: %08x CarryIn: %d", test_op, test_reg2, test_reg3, test_carry_in);
             $display("Result: %08x Carry: %d Zero: %d Neg: %d Over: %d",

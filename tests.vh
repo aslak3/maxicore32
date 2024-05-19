@@ -6,16 +6,16 @@
         $display("ASSERTION PASS in %m: test (%s)", message); \
     end
 
-localparam period = 1;
+localparam test_period = 1;
 
 `ifndef TB_NO_CLOCK
 task pulse_clock;
     begin
         clock = 1;
-        #period;
+        #test_period;
 
         clock = 0;
-        #period;
+        #test_period;
     end
 endtask
 `endif

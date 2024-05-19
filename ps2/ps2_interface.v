@@ -21,7 +21,7 @@ module ps2_interface
         end
     end
 
-    assign data_out_valid = status_cs || scancode_cs ? 1'b1 : 1'b0;
+    assign data_out_valid = read && (status_cs || scancode_cs) ? 1'b1 : 1'b0;
 
     reg scancode_ready = 1'b0;
     always @ (posedge clock) begin

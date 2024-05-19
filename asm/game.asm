@@ -10,11 +10,12 @@ PS2_STATUS_OF=0x04
 PS2_SCANCODE_OF=0x08
 TONEGEN_DURATION_OF=0x0c
 TONEGEN_PERIOD_OF=0x10
-SCROLL_OF=0x14
-I2C_ADDRESS_OF=0x18
-I2C_READ_OF=0x1c
-I2C_WRITE_OF=0x20
-I2C_CONTROL_OF=0x24
+TONEGEN_STATUS_OF=0x14
+SCROLL_OF=0x18
+I2C_ADDRESS_OF=0x1c
+I2C_READ_OF=0x20
+I2C_WRITE_OF=0x24
+I2C_CONTROL_OF=0x28
 I2C_STATUS_OF=I2C_CONTROL_OF
 
 KEY_BREAK=0xf0
@@ -63,20 +64,20 @@ DEVICE_ADDRESS=0x50
                 loadi.l r12,VIDEO_MEM_BASE
                 loadi.l r11,IO_BASE
                 loadi.l r10,STATUS_MEM_BASE
-                loadi.l r9,0x200000                                 ; frame count, backwards while waiting
                 loadi.s r5,4                                        ; direction boulder will slide
 
-                callbranch r14,scrolling
-                callbranch r14,updatestatus
-
-waitloop:       sub r9,r9,1
-                nop
-                branch.ne waitloop
+                callbranch r14,skelstatus                           ; the stuff that doesn't change
 
                 callbranch r14,newgame
 startnextlevel: callbranch r14,newlevel
+                callbranch r14,scrolling
                 callbranch r14,loadlevel
                 callbranch r14,statusupdate
+
+                loadi.l r9,0x200000                                 ; frame count, backwards while waiting
+waitloop:       sub r9,r9,1
+                nop
+                branch.ne waitloop
 
 mainloop:       add r9,r9,1
                 nop
@@ -503,7 +504,7 @@ i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the cu
                 and r0,r0,0x40                                      ; test the ack status while here
                 jump r14
 
-updatestatus:   loadi.u r1,20*4
+skelstatus:     loadi.u r1,20*4
                 loadi.u r2,status_end-vars
                 nop
 .loop:          sub r2,r2,1

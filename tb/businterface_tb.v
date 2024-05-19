@@ -55,7 +55,7 @@ module businterface_tb;
             cpu_write = test_cpu_write;
             businterface_data_in = test_businterface_data_in;
 
-            #period
+            #test_period
 
             $display("CPU address: %08x CPU cycle width: %02b CPU data out: %08x CPU read: %d CPU write: %d BusInterface data in: %08x",
                 test_cpu_address, test_cpu_cycle_width, test_cpu_data_out, test_cpu_read, test_cpu_write, test_businterface_data_in);

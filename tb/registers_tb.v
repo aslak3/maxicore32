@@ -41,9 +41,9 @@ module register_file_tb;
         read_reg1_index = 4'h0;
         read_reg2_index = 4'h1;
         read_reg3_index = 4'h2;
-        #period;
+        #test_period;
 
-        #period;
+        #test_period;
 
         write = 1'b1;
         write_index = 4'h2;
@@ -110,15 +110,15 @@ module program_counter_tb;
         jump = 0;
         inc = 0;
         jump_data = 32'h0;
-        #period;
+        #test_period;
 
         reset = 1;
-        #period;
+        #test_period;
 
         `assert(read_data == 32'h0, "PC resets");
 
         reset = 0;
-        #period;
+        #test_period;
 
         inc = 1;
         pulse_clock;

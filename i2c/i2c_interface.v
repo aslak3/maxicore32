@@ -36,7 +36,7 @@ module i2c_interface
         end
     end
 
-    assign data_out_valid = read_cs || control_cs ? 1'b1 : 1'b0;
+    assign data_out_valid = read && (read_cs || control_cs) ? 1'b1 : 1'b0;
 
     always @ (posedge clock) begin
         i2c_trigger <= 1'b0;

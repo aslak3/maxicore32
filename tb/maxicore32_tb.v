@@ -76,24 +76,24 @@ module maxicore32_tb;
         reset = 1'b1;
         clock = 1'b0;
 
-        #period;
+        #test_period;
 
         clock = 1'b1;
 
-        #period;
+        #test_period;
 
         clock = 1'b0;
 
-        #period;
+        #test_period;
 
         reset = 1'b0;
 
         forever begin
             clock = 1'b1;
-            #period;
+            #test_period;
 
             clock = 1'b0;
-            #period;
+            #test_period;
 
             $display("ADDRESS: %08x DATA_IN: %08x DATA_OUT: %08x DATA_STROBES: %04b READ: %d WRITE: %d",
                 shifted_address, data_in, data_out, data_strobes, read, write);
