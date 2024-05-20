@@ -346,7 +346,7 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the ba
                 branch.eq .gem
                 compare r2,r2,TILE_EXIT
                 nop
-                branch.eq .gem
+                branch.eq .gem                                      ; exit can be animated as well, same as gem
                 compare r2,r2,r4                                    ; looking for bats
                 nop
                 branch.eq .bat
@@ -531,7 +531,7 @@ skelstatus:     loadi.u r1,20*4
 newgame:        loadi.u r0,5
                 nop
                 store.w lives_left-vars(r13),r0
-                loadi.u r0,0
+                loadi.u r0,1
                 nop
                 store.w current_level-vars(r13),r0
                 jump r14
@@ -571,16 +571,26 @@ copywords:      sub r2,r2,2
 stack:
 
 vars:
+
+; copied from level at start of level
 player_pos:     #d16 0
 gems_needed_100:#d16 0
 gems_needed_10: #d16 0
 gems_needed_1:  #d16 0
 exit_pos:       #d16 0
+; regular variables
 exit_open:      #d16 0
 last_key:       #d16 0
 lives_left:     #d16 0
 current_level:  #d16 0
 new_life_pos:   #d16 0
+
+LEVEL_PLAYER_POS=0
+LEVEL_GEMS_NEEDED_HUNDREDS=2
+LEVEL_GEMS_NEEDED_TENS=4
+LEVEL_GEMS_NEEDED_UNITS=6
+LEVEL_EXIT_POS=8
+LEVEL_SIZE=10
 
 levels:         #d16 (1*4)+(1*WIDTH*4)
                 #d16 0
@@ -600,11 +610,11 @@ levels:         #d16 (1*4)+(1*WIDTH*4)
                 #d16 0
                 #d16 (1*4)+(1*WIDTH*4)
 
-STATUS_GEM_HUNDREDS=36
-STATUS_GEM_TENS=40
-STATUS_GEM_UNITS=44
+STATUS_GEM_HUNDREDS=9*4
+STATUS_GEM_TENS=10*4
+STATUS_GEM_UNITS=11*4
 
-STATUS_LEVEL=72
+STATUS_LEVEL=18*4
 
 status_start:   #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_PLAYER
@@ -627,12 +637,5 @@ status_start:   #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
 status_end:
-
-LEVEL_PLAYER_POS=0
-LEVEL_GEMS_NEEDED_HUNDREDS=2
-LEVEL_GEMS_NEEDED_TENS=4
-LEVEL_GEMS_NEEDED_UNITS=6
-LEVEL_EXIT_POS=8
-LEVEL_SIZE=10
 
 bat_tile_match: #d8 TILE_BAT
