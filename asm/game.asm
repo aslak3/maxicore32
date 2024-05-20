@@ -193,8 +193,18 @@ mainloop:       add r9,r9,1
                 store.w gems_needed_100-vars(r13),r1
                 branch .gemupdate
 
-.exit:          load.wu r0,current_level-vars(r13)
+.exit:          loadi.u r1,0x1000
+                loadi.u r2,0x800
+.beep_loop:     store.l TONEGEN_PERIOD_OF(r11),r1
+                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
+.beep_wait:     load.l r0,TONEGEN_STATUS_OF(r11)
                 nop
+                test r0,r0
+                nop
+                branch.mi .beep_wait                                ; wait for tone to finish
+                sub r1,r1,0x100                                     ; adjust frequency u=p
+                load.wu r0,current_level-vars(r13)                  ; while waiting, we can load level no
+                branch.ne .beep_loop
                 add r0,r0,1
                 nop
                 and r0,r0,0x07                                     ; only got 8 levels. :(
@@ -332,6 +342,9 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the ba
                 and r2,r1,0x8f
                 nop
                 compare r2,r2,TILE_GEM
+                nop
+                branch.eq .gem
+                compare r2,r2,TILE_EXIT
                 nop
                 branch.eq .gem
                 compare r2,r2,r4                                    ; looking for bats
