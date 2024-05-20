@@ -6,11 +6,12 @@ PS2_STATUS_OF=0x04
 PS2_SCANCODE_OF=0x08
 TONEGEN_DURATION_OF=0x0c
 TONEGEN_PERIOD_OF=0x10
-SCROLL_OF=0x14
-I2C_ADDRESS_OF=0x18
-I2C_READ_OF=0x1c
-I2C_WRITE_OF=0x20
-I2C_CONTROL_OF=0x24
+TONEGEN_STATUS_OF=0x14
+SCROLL_OF=0x18
+I2C_ADDRESS_OF=0x1c
+I2C_READ_OF=0x20
+I2C_WRITE_OF=0x24
+I2C_CONTROL_OF=0x28
 I2C_STATUS_OF=I2C_CONTROL_OF
 
 DEVICE_ADDRESS=0x50
@@ -65,7 +66,6 @@ writepage:      sub r15,r15,4
                 store.b I2C_WRITE_OF(r11),r3
                 callbranch r14,waitnotbusy
                 branch.ne nack
-                and r3,r3,0b1111111111                              ; mask away the level bits
                 loadi.u r4,32-1
                 mulu r3,r3,4                                        ; each tile is in a long
                 nop

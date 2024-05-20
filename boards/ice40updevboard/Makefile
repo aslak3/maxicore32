@@ -14,7 +14,7 @@ ICEPACK = icepack
 ICETIME = icetime
 ICEPROG = iceprog
 
-all: maxicore32.bin
+all: ../../levels_rom/levels.txt maxicore32.bin
 
 REL_V_SRC=$(addprefix ../../, $(CORE_V_SRC)) $(addprefix ../../vga/, $(VGA_V_SRC)) \
 	$(addprefix ../../ps2/, $(PS2_V_SRC)) $(addprefix ../../i2c/, $(I2C_V_SRC)) \

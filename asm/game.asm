@@ -582,17 +582,23 @@ lives_left:     #d16 0
 current_level:  #d16 0
 new_life_pos:   #d16 0
 
-levels:         #d16 (1*4)+(25*WIDTH*4)
+levels:         #d16 (1*4)+(1*WIDTH*4)
                 #d16 0
+                #d16 2
                 #d16 0
-                #d16 5
-                #d16 (30*4)+(1*WIDTH*4)
+                #d16 (1*4)+(30*WIDTH*4)
 
-                #d16 (1*4)+(1*WIDTH*4)
+                #d16 (1*4)+(25*WIDTH*4)
                 #d16 0
                 #d16 1
                 #d16 0
-                #d16 (1*4)+(25*WIDTH*4)
+                #d16 (30*4)+(1*WIDTH*4)
+
+                #d16 (16*4)+(16*WIDTH*4)
+                #d16 0
+                #d16 1
+                #d16 0
+                #d16 (1*4)+(1*WIDTH*4)
 
 STATUS_GEM_HUNDREDS=36
 STATUS_GEM_TENS=40
