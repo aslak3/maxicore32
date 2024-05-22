@@ -258,7 +258,10 @@ statusupdate:   load.wu r1,gems_needed_100-vars(r13)
                 jump r14
 
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
-gravity:        negate r5,r5                                        ; flip direction of sliding boulder
+gravity:        sub r15,r15,4
+                nop
+                store.l 0(r15),r14
+                negate r5,r5                                        ; flip direction of sliding boulder
                 loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at row before last
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
@@ -279,6 +282,8 @@ gravity:        negate r5,r5                                        ; flip direc
                 sub r0,r0,2*WIDTH*4                                 ; if not move back to start of prev row
                 nop
                 branch.pl .colloop                                  ; back to start the previous row
+                load.l r14,0(r15)
+                add r15,r15,4
                 jump r14
 .foundboulder:  add r3,r0,WIDTH*4                                   ; getting square below
                 nop
@@ -311,25 +316,30 @@ gravity:        negate r5,r5                                        ; flip direc
                 branch.ne .foundcontinue                            ; done if not empty
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
-.hitplayer:     loadi.u r1,0x4000
-                loadi.u r2,0x4000
-                store.l TONEGEN_PERIOD_OF(r11),r1
-                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound death tone
-                loadi.u r1,TILE_BLANK
+.hitplayer:     loadi.u r1,TILE_BLANK
                 nop
                 store.b r3(r12),r1                                  ; clear original space
+                callbranch r14,playerdead
+                branch .foundcontinue
+
+playerdead:     loadi.u r1,0x4000
+                loadi.u r2,0x4000
+                store.l TONEGEN_PERIOD_OF(r11),r1
                 load.wu r1,lives_left-vars(r13)
-                nop
+                store.l TONEGEN_DURATION_OF(r11),r2                 ; sound death tone
                 mulu r2,r1,4
+                nop
                 loadi.u r3,TILE_STATUS_DEAD_PLAYER
-                sub r1,r1,1
+                nop
                 store.b r2(r10),r3                                  ; update status bar
+                sub r1,r1,1
+                nop
                 store.w lives_left-vars(r13),r1
                 branch.eq .nolivesleft
                 load.wu r1,new_life_pos-vars(r13)
                 nop
                 store.w player_pos-vars(r13),r1                     ; reset starting position for player
-                branch .foundcontinue
+                jump r14
 .nolivesleft:   halt
 
 animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the bat tile we are looking for
@@ -380,7 +390,7 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the ba
 .batdown:       add r2,r0,WIDTH*4
                 branch .collisions
 .batright:      add r2,r0,4
-                branch .collisions
+                nop
 .collisions:    load.bu r3,r2(r12)                                  ; get whats at the new tile
                 nop
                 compare r3,r3,TILE_BLANK                            ; can only move into empty spaces
