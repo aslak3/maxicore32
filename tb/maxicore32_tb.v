@@ -73,6 +73,8 @@ module maxicore32_tb;
     integer dump_counter;
 
     initial begin
+        $dumpfile("maxicore32.vcd");
+        $dumpvars;
         reset = 1'b1;
         clock = 1'b0;
 
@@ -83,10 +85,9 @@ module maxicore32_tb;
         #test_period;
 
         clock = 1'b0;
+        reset = 1'b0;
 
         #test_period;
-
-        reset = 1'b0;
 
         forever begin
             clock = 1'b1;
