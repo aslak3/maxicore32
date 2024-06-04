@@ -56,9 +56,13 @@ BAT_DIR_LEFT=0x10
 BAT_DIR_DOWN=0x20
 BAT_DIR_RIGHT=0x30
 
-DEVICE_ADDRESS=0x50
+DEVICE_ADDRESS=0x50                                                 ; at24c64 i2c address
 
-                loadi.u r15,stack
+; fixed register usage: all other register usage is fairly adhoc
+;   r15=stack, r14=return address, r13=vars pointer, r12=video memory, r11=io base address, r10=status line
+;   r5=boulder sliding direction (TODO: this should be a variable instead)
+
+                loadi.u r15,stack                                   ; setup stack pointer
                 loadi.u r14,0                                       ; return address
                 loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
@@ -66,7 +70,7 @@ DEVICE_ADDRESS=0x50
                 loadi.l r10,STATUS_MEM_BASE
                 loadi.s r5,4                                        ; direction boulder will slide
 
-                callbranch r14,skelstatus                           ; the stuff that doesn't change
+                callbranch r14,skelstatus                           ; the status tuff that doesn't change
 
                 callbranch r14,newgame
 startnextlevel: callbranch r14,newlevel
@@ -227,27 +231,29 @@ mainloop:       add r9,r9,1
                 add r0,r0,r4
                 branch .bouldercheck
 
-gemcountcheck:  load.wu r1,gems_needed_100-vars(r13)
+; gemcountcheck - opens the door to the next level if remaning gem count is zero
+gemcountcheck:  load.wu r1,gems_needed_100-vars(r13)                ; get the decimal count spread over three words
                 load.wu r2,gems_needed_10-vars(r13)
                 load.wu r3,gems_needed_1-vars(r13)
                 add r1,r1,r2
                 nop
-                add r1,r1,r3
+                add r1,r1,r3                                        ; sum digits to see if they are all zero
                 nop
                 branch.eq .allgemsfound
-                jump r14
-.allgemsfound:  loadi.u r1,1
-                load.wu r2,exit_pos-vars(r13)
-                loadi.u r3,TILE_EXIT
-                store.w exit_open-vars(r13),r1
-                store.b r2(r12),r3
-                jump r14
+                jump r14                                            ; non zero exit
+.allgemsfound:  loadi.u r1,1                                        ; we are setting the exit_open var to one
+                load.wu r2,exit_pos-vars(r13)                       ; get the exit position for this level
+                loadi.u r3,TILE_EXIT                                ; stamping a TILE_EXIT tile
+                store.w exit_open-vars(r13),r1                      ; set the exit_open var
+                store.b r2(r12),r3                                  ; and stamp
+                jump r14                                            ; the above ordering avoids some noppage
 
-statusupdate:   load.wu r1,gems_needed_100-vars(r13)
+; statusupdate - loads the variables for lives and level and shows them in the status bar
+statusupdate:   load.wu r1,gems_needed_100-vars(r13)                ; lots of registers means no stalls
                 load.wu r2,gems_needed_10-vars(r13)
                 load.wu r3,gems_needed_1-vars(r13)
                 load.wu r4,current_level-vars(r13)
-                add r1,r1,TILE_STATUS_0
+                add r1,r1,TILE_STATUS_0                             ; offset for the "0" tile index
                 add r2,r2,TILE_STATUS_0
                 add r3,r3,TILE_STATUS_0
                 add r4,r4,TILE_STATUS_1
@@ -257,18 +263,19 @@ statusupdate:   load.wu r1,gems_needed_100-vars(r13)
                 store.b STATUS_LEVEL(r10),r4
                 jump r14
 
+; gravity - move boulders and gems if they are under fresh air (TILE_EXIT)
 ; r0=scanning position, r1=what's there, r2=what's at square below, r3=address of that square
-gravity:        sub r15,r15,4
-                nop
-                store.l 0(r15),r14
+gravity:        sub r15,r15,4                                       ; we are not a leaf sub, so make room on stack
+                nop                                                 ; routine we might call is playerdead
+                store.l 0(r15),r14                                  ; stack the return address
                 negate r5,r5                                        ; flip direction of sliding boulder
                 loadi.u r0,WIDTH*4*(HEIGHT-2)                       ; start at row before last
                 nop
 .colloop:       load.bu r1,r0(r12)                                  ; get what's in this space
                 nop
-                and r2,r1,0x0f
+                and r2,r1,0x0f                                      ; mask away upper nibble - we only want tile "type"
                 nop
-                compare r2,r2,TILE_BOULDER                          ; hunting for moulders!
+                compare r2,r2,TILE_BOULDER                          ; hunting for boulders!
                 nop
                 branch.eq .foundboulder                             ; we will move them, if we should
                 compare r2,r2,TILE_GEM                              ; we are checking for gems too
@@ -282,9 +289,9 @@ gravity:        sub r15,r15,4
                 sub r0,r0,2*WIDTH*4                                 ; if not move back to start of prev row
                 nop
                 branch.pl .colloop                                  ; back to start the previous row
-                load.l r14,0(r15)
-                add r15,r15,4
-                jump r14
+                load.l r14,0(r15)                                   ; get the return address
+                add r15,r15,4                                       ; give back to the stack
+                jump r14                                            ; and done here
 .foundboulder:  add r3,r0,WIDTH*4                                   ; getting square below
                 nop
                 load.bu r2,r3(r12)                                  ; get that into r2
@@ -301,49 +308,51 @@ gravity:        sub r15,r15,4
                 store.b r0(r12),r1                                  ; clear original space
                 add r3,r3,WIDTH*4                                   ; checking square below new pos
                 nop
-                load.bu r1,r3(r12)
+                load.bu r1,r3(r12)                                  ; get that tile
                 nop
-                compare r1,r1,TILE_PLAYER
+                compare r1,r1,TILE_PLAYER                           ; looking for a boulder or gem landing on player
                 nop
-                branch.eq .hitplayer
+                branch.eq .hitplayer                                ; boulder moved into space above player; he is dead
                 branch .foundcontinue                               ; back to look for more
 .thingonboulder:add r4,r3,r5                                        ; look at tile to the right/left
                 nop
-                load.bu r2,r4(r12)
+                load.bu r2,r4(r12)                                  ; load that tile
                 nop
                 compare r2,r2,TILE_BLANK                            ; looking for empty
                 nop
                 branch.ne .foundcontinue                            ; done if not empty
                 copy r3,r4                                          ; found an empty, so set new pos
                 branch .done
-.hitplayer:     loadi.u r1,TILE_BLANK
+.hitplayer:     loadi.u r1,TILE_BLANK                               ; clearing the space where object was
                 nop
                 store.b r3(r12),r1                                  ; clear original space
-                callbranch r14,playerdead
-                branch .foundcontinue
+                callbranch r14,playerdead                           ; player is dead now
+                branch .foundcontinue                               ; when done burying the player, back to gravity
 
+; playerdead - oh dear, sound tone, reduce the lives, update the status display and halt if lives is zero now
 playerdead:     loadi.u r1,0x4000
                 loadi.u r2,0x4000
                 store.l TONEGEN_PERIOD_OF(r11),r1
-                load.wu r1,lives_left-vars(r13)
+                load.wu r1,lives_left-vars(r13)                     ; load lives left
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound death tone
-                mulu r2,r1,4
+                mulu r2,r1,4                                        ; turn it into a long address in r2
                 nop
-                loadi.u r3,TILE_STATUS_DEAD_PLAYER
+                loadi.u r3,TILE_STATUS_DEAD_PLAYER                  ; get the crossed out player tile
                 nop
                 store.b r2(r10),r3                                  ; update status bar
-                sub r1,r1,1
+                sub r1,r1,1                                         ; reduce lives by one (r1)
                 nop
-                store.w lives_left-vars(r13),r1
-                branch.eq .nolivesleft
-                load.wu r1,new_life_pos-vars(r13)
+                store.w lives_left-vars(r13),r1                     ; save it in the global var
+                branch.eq .nolivesleft                              ; looking for now having zero lives
+                load.wu r1,new_life_pos-vars(r13)                   ; get the starting player pos for this level
                 nop
                 store.w player_pos-vars(r13),r1                     ; reset starting position for player
                 jump r14
-.nolivesleft:   halt
+.nolivesleft:   halt                                                ; TODO: currently requires a full board restart
 
-animater:       load.bu r4,bat_tile_match-vars(r13)                 ; get the bat tile we are looking for
-                nop
+; animater - called every n'th frame to make gems sparkle and move bats
+animater:       load.bu r4,bat_tile_match-vars(r13)                 ; don't animate the same bat twice; top bit is toggled
+                nop                                                 ; to make sure this can't happen
                 xor r1,r4,0x80                                      ; flip it for next time
                 loadi.u r0,(WIDTH*4*HEIGHT)-4                       ; start at bottom right
                 store.b bat_tile_match-vars(r13),r1                 ; save it
@@ -538,32 +547,33 @@ skelstatus:     loadi.u r1,20*4
                 branch.ne .loop
                 jump r14
 
+; newgame - sets lives to maximum and level number to zero
 newgame:        loadi.u r0,5
-                nop
+                loadi.u r1,0
                 store.w lives_left-vars(r13),r0
-                loadi.u r0,1
-                nop
-                store.w current_level-vars(r13),r0
+                store.w current_level-vars(r13),r1
                 jump r14
 
-newlevel:       sub r15,r15,4
-                load.wu r0,current_level-vars(r13)
-                store.l 0(r15),r14
-                mulu r0,r0,LEVEL_SIZE
+; newlevel - copies the current level table entry into the vars, stashes the new level player position from the level
+; data, and clears the exit open flag. does not: increment curernt level or load new level from eeprom.
+newlevel:       sub r15,r15,4                                       ; making room on stack for ret addr
+                load.wu r0,current_level-vars(r13)                  ; get current level number
+                store.l 0(r15),r14                                  ; saves ret addr on stack
+                mulu r0,r0,LEVEL_SIZE                               ; multiple level number by size of level struct
                 nop
-                add r0,r0,levels
+                add r0,r0,levels                                    ; add the start of the levels table to r0 (src)
                 nop
-                load.wu r1,LEVEL_PLAYER_POS(r0)
+                load.wu r1,LEVEL_PLAYER_POS(r0)                     ; get the new life player position
                 nop
-                store.w new_life_pos-vars(r13),r1                   ; save the death restart postion
-                loadi.u r1,player_pos
-                loadi.u r2,LEVEL_SIZE
-                callbranch r14,copywords
-                loadi.u r0,0
+                store.w new_life_pos-vars(r13),r1                   ; save the new live player postion
+                loadi.u r1,player_pos                               ; player_pos is the start of the vars (dst)
+                loadi.u r2,LEVEL_SIZE                               ; we need this number of bytes
+                callbranch r14,copywords                            ; copy from src to dst
+                loadi.u r0,0                                        ; clearint the exit open flag
                 nop
-                store.w exit_open-vars(r13),r0
-                load.l r14,0(r15)
-                add r15,r15,4
+                store.w exit_open-vars(r13),r0                      ; clear it
+                load.l r14,0(r15)                                   ; get ret addr
+                add r15,r15,4                                       ; shrink stack
                 jump r14
 
 ; utility
@@ -589,17 +599,18 @@ gems_needed_10: #d16 0
 gems_needed_1:  #d16 0
 exit_pos:       #d16 0
 ; regular variables
-exit_open:      #d16 0
-last_key:       #d16 0
-lives_left:     #d16 0
-current_level:  #d16 0
-new_life_pos:   #d16 0
+exit_open:      #d16 0                                              ; 1 for exit to next level is open
+last_key:       #d16 0                                              ; last scan code (used for ignoring key up)
+lives_left:     #d16 0                                              ; obviously lives left
+current_level:  #d16 0                                              ; ...
+new_life_pos:   #d16 0                                              ; where to start when dying on current level
 
-LEVEL_PLAYER_POS=0
-LEVEL_GEMS_NEEDED_HUNDREDS=2
-LEVEL_GEMS_NEEDED_TENS=4
-LEVEL_GEMS_NEEDED_UNITS=6
-LEVEL_EXIT_POS=8
+; descriptor (struct) for a level
+LEVEL_PLAYER_POS=0                                                  ; starting position for player
+LEVEL_GEMS_NEEDED_HUNDREDS=2                                        ; gems needed 100s
+LEVEL_GEMS_NEEDED_TENS=4                                            ; gems needed 10s
+LEVEL_GEMS_NEEDED_UNITS=6                                           ; gems needed 1s
+LEVEL_EXIT_POS=8                                                    ; position of exit
 LEVEL_SIZE=10
 
 levels:         #d16 (1*4)+(1*WIDTH*4)
@@ -620,12 +631,14 @@ levels:         #d16 (1*4)+(1*WIDTH*4)
                 #d16 0
                 #d16 (1*4)+(1*WIDTH*4)
 
+; position of tiles on the status row
 STATUS_GEM_HUNDREDS=9*4
 STATUS_GEM_TENS=10*4
 STATUS_GEM_UNITS=11*4
 
 STATUS_LEVEL=18*4
 
+; used to hold the look of the status line before starting play
 status_start:   #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_PLAYER
                 #d8 TILE_STATUS_PLAYER
@@ -648,4 +661,5 @@ status_start:   #d8 TILE_STATUS_BLANK
                 #d8 TILE_STATUS_BLANK
 status_end:
 
+; the next animation bat tile - the top bit is toggled on each animation frame so we don't move the same bat twice
 bat_tile_match: #d8 TILE_BAT
