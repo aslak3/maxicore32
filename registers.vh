@@ -1,5 +1,6 @@
 `ifndef REGISTERS_VH
 
+// Imediate write types
 localparam  IT_TOP = 2'b00,
             IT_BOTTOM = 2'b01,
             IT_UNSIGNED = 2'b10,

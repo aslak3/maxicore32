@@ -1,30 +1,34 @@
+// This is the normal state to enable a display; you cannot enable both of these options
 `define ENABLE_VGA 1
+// Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
 module ice40updevboard
     (
-        input clock,
+        input       clock,
 
-        output h_sync,
-        output v_sync,
-        output reg [3:0] red,
-        output reg [3:0] green,
-        output reg [3:0] blue,
-        output n_vga_blank,
-        output reg vga_clock,
+        output      h_sync,
+        output      v_sync,
+        output reg  [3:0] red,
+        output reg  [3:0] green,
+        output reg  [3:0] blue,
+        output      n_vga_blank,
+        output reg  vga_clock,
 
-        output buzzer,
-        output [2:0] leds,
+        output      buzzer,
+        output      [2:0] leds,
 
-        inout ps2a_clock,
-        inout ps2a_data,
+        inout       ps2a_clock,
+        inout       ps2a_data,
 
-        inout scl,
-        inout sda,
+        inout       scl,
+        inout       sda,
 
-        output [5:0] user
+        // For tracing signals; usually plumed into the processor
+        output      [5:0] user
     );
 
+    // Unused bits should be compiled away
     reg [15:0] clock_counter = 16'h0;
     always @ (posedge clock) begin
         clock_counter <= clock_counter + 16'h01;
@@ -33,10 +37,13 @@ module ice40updevboard
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[2];
 
+    // Memory selects
     reg memory_cs = 1'b0;
     reg map_cs = 1'b0;
     reg status_cs = 1'b0;
-    reg levels_cs = 1'b0;
+    reg levels_cs = 1'b0; // This is the EEPROM source data
+
+    // IO selects
     reg led_cs = 1'b0;
     reg ps2_status_cs = 1'b0;
     reg ps2_scancode_cs = 1'b0;
@@ -49,6 +56,7 @@ module ice40updevboard
     reg i2c_write_cs = 1'b0;
     reg i2c_control_cs = 1'b0;
 
+    // High byte: the device "class", Low byte: used to select IO device registers
     wire [31:2] address;
     wire [7:0] high_byte_address = address[31:24];
     wire [7:0] low_byte_address = { address[7:2], 2'b00 };
@@ -73,9 +81,10 @@ module ice40updevboard
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;    // Program RAM
             8'h01: map_cs = 1'b1;       // Map RAM
-            8'h02: status_cs = 1'b1;
+            8'h02: status_cs = 1'b1;    // Status map RAM
             8'h03: levels_cs = 1'b1;    // 8 levels used for I2C EEPROM programming
             8'h0f: begin
+                // IO devices
                 case (low_byte_address)
                     8'h00: led_cs = 1'b1;
                     8'h04: ps2_status_cs = 1'b1;
@@ -97,13 +106,15 @@ module ice40updevboard
         endcase
     end
 
-    wire [31:0] data_out;
-    wire [31:0] ram_data_out;
-    wire [31:0] map_data_out;
-    wire [31:0] levels_data_out;
+    // Outputs (egress) from various modules
+    wire [31:0] data_out; // Processor
     wire [3:0] data_strobes;
     wire read;
     wire write;
+    // Outputs from memories
+    wire [31:0] ram_data_out;
+    wire [31:0] map_data_out;
+    wire [31:0] levels_data_out;
 
     // This is the program memory
     memory memory (
@@ -150,7 +161,7 @@ module ice40updevboard
         end
     end
 
-    // Asserting onto databus (reads)
+    // Asserting onto databus (processor reads)
     wire [31:0] ps2_data_out;
     wire ps2_data_out_valid;
     wire [31:0] tonegen_data_out;
@@ -175,6 +186,7 @@ module ice40updevboard
         end
     end
 
+    // Signals that have no "prefix" are for the processor, eg. data_in, data_out
     maxicore32 maxicore32 (
         .reset(reset),
         .clock(cpu_clock),

@@ -11,7 +11,7 @@ module memory
         input       write
     );
 
-    wire [8:0] low_byte_address = address [10:2];
+    wire [8:0] low_address = address [10:2];
 
     reg [31:0] contents [512];
 
@@ -22,22 +22,23 @@ module memory
     always @ (negedge clock) begin
         if (cs) begin
             if (write) begin
+                // Only overwrite the selected bytes
                 if (data_strobes [3]) begin
-                    contents[low_byte_address][31:24] <= data_in[31:24];
+                    contents[low_address][31:24] <= data_in[31:24];
                 end
                 if (data_strobes [2]) begin
-                    contents[low_byte_address][23:16] <= data_in[23:16];
+                    contents[low_address][23:16] <= data_in[23:16];
                 end
                 if (data_strobes [1]) begin
-                    contents [low_byte_address][15:8] <= data_in[15:8];
+                    contents [low_address][15:8] <= data_in[15:8];
                 end
                 if (data_strobes [0]) begin
-                    contents [low_byte_address][7:0] <= data_in[7:0];
+                    contents [low_address][7:0] <= data_in[7:0];
                 end
             end
 
             if (read) begin
-                data_out <= contents[low_byte_address];
+                data_out <= contents[low_address];
             end
         end
     end

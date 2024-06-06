@@ -3,6 +3,7 @@
 module register_file
     (
         input   clock,
+
         input   [3:0] write_index,
         input   write,
         input   [31:0] write_data,
@@ -27,14 +28,14 @@ module register_file
             $display("Writing immediate %04x type %02b into reg %01x", write_immediate_data,
                 write_immediate_type, write_index);
             case (write_immediate_type)
-                IT_BOTTOM:
-                    register_file[write_index][15:0] <= write_immediate_data;
                 IT_TOP:
                     register_file[write_index][31:16] <= write_immediate_data;
-                IT_UNSIGNED:
-                    register_file[write_index] <= { 16'h0, write_immediate_data };
+                IT_BOTTOM:
+                    register_file[write_index][15:0] <= write_immediate_data;
                 IT_SIGNED:
                     register_file[write_index] <= { { 16 { write_immediate_data[15] }}, write_immediate_data };
+                IT_UNSIGNED:
+                    register_file[write_index] <= { 16'h0, write_immediate_data };
             endcase
         end
     end
@@ -44,6 +45,7 @@ module program_counter
     (
         input   reset,
         input   clock,
+
         input   jump,
         input   inc,
         input   [31:0] jump_data,
@@ -73,6 +75,7 @@ module status_register
     (
         input   reset,
         input   clock,
+
         input   write,
         input   carry_data, zero_data, neg_data, over_data,
         output  read_carry, read_zero, read_neg, read_over

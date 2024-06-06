@@ -10,7 +10,6 @@ module registersstage2
 
         input       [31:0] return_address,
         input       [31:0] inbound_instruction,
-        output reg  [31:0] outbound_instruction,
         input       [31:0] data_in,
         output reg  [3:0] write_index,
         output reg  write,
@@ -28,6 +27,8 @@ module registersstage2
     wire [3:0] alu_condition = inbound_instruction[15:12];
     reg cond_true;
 
+    // Combinationally work out if the currently selected condition is true, using the state from the
+    // status register. Very narly the same as ARM's logic.
     always @ (*) begin
         case (alu_condition)
             COND_AL:
@@ -67,7 +68,6 @@ module registersstage2
 
     always @ (posedge clock) begin
         if (reset) begin
-            outbound_instruction <= { OPCODE_NOP, 27'h0 };
             write_index <= 4'h0;
             write_immediate_type <= IT_UNSIGNED;
             write_immediate_data <= 16'h0;
@@ -86,6 +86,7 @@ module registersstage2
             case (opcode)
                 OPCODE_LOADI: begin
                     $display("STAGE2: OPCODE_LOADI - Immediate load");
+                    // Immediate type is signed, unsigned, top or bottom (word)
                     write_immediate_type <= inbound_instruction[26:25];
                     write_immediate_data <= inbound_instruction[15:0];
                     write_immediate <= 1'b1;
@@ -94,7 +95,8 @@ module registersstage2
                 OPCODE_LOADR: begin
                     $display("STAGE2: OPCODE_LOAD[R] - Memory load");
                     write <= 1'b1;
-                    // Sign and zero extend the data for the register.
+                    // Sign and zero extend the data for the register. I still wonder if this wouldn't be better
+                    // done in the register_file itself...
                     case (inbound_instruction[26:25])
                         CW_BYTE: begin
                             if (inbound_instruction[24]) begin
@@ -167,9 +169,6 @@ module registersstage2
             endcase
 
             write_index <= inbound_instruction[23:20];
-
-            $display("STAGE2: Passing forward %08x", inbound_instruction);
-            outbound_instruction <= inbound_instruction;
         end
     end
 endmodule

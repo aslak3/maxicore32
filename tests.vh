@@ -1,3 +1,5 @@
+// General purpose preprocessor stuff for testbenches.
+
 `define assert(test, message) \
     if (!(test)) begin \
         $display("ASSERTION FAILED in %m: test (%s)", message); \

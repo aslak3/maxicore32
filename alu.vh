@@ -1,6 +1,7 @@
 `ifndef ALU_VH
 
-localparam [4:0]    OP_ADD =                { 1'b0, 4'h0 },
+localparam [4:0]    // two operands
+                    OP_ADD =                { 1'b0, 4'h0 },
                     OP_ADDC =               { 1'b0, 4'h1 },
                     OP_SUB =                { 1'b0, 4'h2 },
                     OP_SUBC =               { 1'b0, 4'h3 },
@@ -12,6 +13,7 @@ localparam [4:0]    OP_ADD =                { 1'b0, 4'h0 },
                     OP_MULU =               { 1'b0, 4'h9 },
                     OP_MULS =               { 1'b0, 4'ha },
 
+                    // one operand
                     OP_NOT =                { 1'b1, 4'h0 },
                     OP_LOGIC_LEFT =         { 1'b1, 4'h1 },
                     OP_LOGIC_RIGHT =        { 1'b1, 4'h2 },

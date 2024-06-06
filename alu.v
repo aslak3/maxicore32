@@ -15,17 +15,22 @@ module alu
     reg [32:0] temp_reg2;
     reg [32:0] temp_reg3;
     reg [32:0] temp_result;
-    reg [31:0] temp_short_result;
+    reg [31:0] temp_mul_result;
     reg give_result;
 
     always @ (posedge clock) begin
         if (reset) begin
+            result <= 32'h0;
+            carry_out <= 1'b0;
+            zero_out <= 1'b0;
+            neg_out <= 1'b0;
+            over_out <= 1'b0;
         end else begin
             $display("ALU: op: %02x reg2: %08x reg3: %08x", op, reg2, reg3);
             temp_reg2 = { 1'b0, reg2 };
             temp_reg3 = { 1'b0, reg3 };
             temp_result = { 1'b0, 32'h0 };
-            temp_short_result = 32'h0;
+            temp_mul_result = 32'h0;
             give_result = 1'b1;
 
             case (op)
@@ -52,12 +57,12 @@ module alu
                     give_result = 1'b0;
                 end
                 OP_MULU: begin
-                    temp_short_result = temp_reg2[15:0] * temp_reg3[15:0];
-                    temp_result = { 1'b0, temp_short_result };
+                    temp_mul_result = temp_reg2[15:0] * temp_reg3[15:0];
+                    temp_result = { 1'b0, temp_mul_result };
                 end
                 OP_MULS: begin
-                    temp_short_result = $signed(temp_reg2[15:0]) * $signed(temp_reg3[15:0]);
-                    temp_result = { 1'b0, temp_short_result };
+                    temp_mul_result = $signed(temp_reg2[15:0]) * $signed(temp_reg3[15:0]);
+                    temp_result = { 1'b0, temp_mul_result };
                 end
 
                 OP_NOT:
@@ -66,6 +71,7 @@ module alu
                     temp_result = { temp_reg2[31:0], 1'b0 };
                 OP_LOGIC_RIGHT:
                     temp_result = { temp_reg2[0], 1'b0, temp_reg2[31:1] };
+                // Byte left and right always set to carry to zero
                 OP_BYTE_LEFT:
                     temp_result = { 1'b0, temp_reg2[23:0], 8'h00 };
                 OP_BYTE_RIGHT:
@@ -100,6 +106,8 @@ module alu
             if (give_result) begin
                 result <= temp_result[31:0];
             end else begin
+                // If we are doing a test or comparison, then output what was input. This will still
+                // get written into a register, so possibly "give_result" is not the right name...
                 result <= reg2;
             end
 

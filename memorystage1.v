@@ -5,8 +5,8 @@
 
 module memorystage1
     (
-        input reset,
-        input clock,
+        input       reset,
+        input       clock,
 
         input       [31:0] inbound_instruction,
         output reg  [31:0] outbound_instruction,
@@ -96,6 +96,7 @@ module memorystage1
                 OPCODE_ALUMI: begin
                     $display("STAGE1: OPCODE_ALUMI");
                     alu_op <= { 1'b0, inbound_instruction[15:12] };
+                    // Sign extend the immediate to 16 bits from 15 bits
                     immediate <= { inbound_instruction[26],
                         inbound_instruction[26:24], inbound_instruction[11:0] };
                     alu_immediate_cycle <= 1'b1;
@@ -124,6 +125,8 @@ module memorystage1
                 end
             endcase
 
+            // We always extract the cycle width, selected registers, and setup the forwarder for the next
+            // pipeline stage
             memory_cycle_width <= inbound_instruction[26:25];
 
             reg_data_index <= inbound_instruction[23:20];

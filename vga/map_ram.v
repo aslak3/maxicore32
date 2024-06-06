@@ -15,6 +15,8 @@ module map_ram
         output reg [7:0] b_out
     );
 
+    // We need two, as the iCE40 does not have proper dual port RAM (like the Cyclones, for example). So
+    // port A reads out of A, and port B reads out of B but writes into both A and B.
     reg [7:0] a_map_mem [32*32];
     reg [7:0] b_map_mem [32*32];
 
@@ -56,6 +58,7 @@ module status_ram
         input [7:0] b_in
     );
 
+    // iCE40UP5: Force this little RAM to be implemented in logic, as we have room there but not in block RAM
     (* ram_style = "logic" *)
     reg [7:0] status_mem [32];
 

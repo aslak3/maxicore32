@@ -150,7 +150,6 @@ module maxicore32
         .halting(memorystage1_halting)
     );
 
-    wire [31:0] registersstage2_outbound_instruction;
     wire [31:0] registerstage2_write_data;
     wire registerstage2_alu_cycle;
     registersstage2 registersstage2 (
@@ -159,7 +158,6 @@ module maxicore32
 
         .return_address(program_counter_read_data),
         .inbound_instruction(memorystage1_outbound_instruction),
-        .outbound_instruction(registersstage2_outbound_instruction),
         .data_in(cpu_data_in),
         .write_index(register_file_write_index),
         .write(register_file_write),
@@ -174,6 +172,7 @@ module maxicore32
         .status_register_write(status_register_write)
     );
 
+    // Simple counter that delays full system halt until the pipeline is empty
     reg [1:0] halting_counter;
     always @ (posedge clock) begin
         if (reset) begin
@@ -191,8 +190,9 @@ module maxicore32
         end
     end
 
+    // Used to delay for two cycles after a branch/jump, so the delay slot is filled without use of any
+    // program code
     reg last_control_flow_start_cycle;
-
     always @ (posedge clock) begin
         last_control_flow_start_cycle <= memorystage1_control_flow_start_cycle;
     end
@@ -200,29 +200,38 @@ module maxicore32
     wire insert_nops = memorystage1_memory_access_cycle | memorystage1_control_flow_start_cycle |
         last_control_flow_start_cycle | memorystage1_halting;
 
+    // Stage 1 inbound instruction is either the CPU data bus, or a NOP if one of the NOP modes is set
     assign memorystage1_inbound_instruction =
         insert_nops == 1'b0 ? cpu_data_in : { OPCODE_NOP, 27'b0 };
 
+    // CPU address is usually the programmer counter, but on memory access cycles is the AGU result
     assign cpu_address = memorystage1_memory_access_cycle == 1'b0 ?
         program_counter_read_data :
         agu_result;
+    // The only state which causes the processor to present data is a store, in which case the value is routed
+    // from the register file, reg1
     assign cpu_data_out = memorystage1_memory_access_cycle == 1'b0 ?
         32'h0 :
         register_file_read_reg1_data;
+    // CPU reads are set to high when not running a memory cycle, so the PC can load the instruction
     assign cpu_read = memorystage1_memory_access_cycle == 1'b0 ?
         1'b1 :
         memory_read;
     assign cpu_write = memorystage1_memory_access_cycle == 1'b0 ?
         1'b0 :
         memory_write;
+    // Instructions are always longs
     assign cpu_cycle_width = memorystage1_memory_access_cycle == 1'b0 ?
         CW_LONG :
         memory_cycle_width;
 
+    // If inserting NOPs, then don't increment PC
     assign program_counter_inc = insert_nops == 1'b0 ?
-        ( memorystage1_halting == 1'b0 ? 1'b1 : 1'b0 ) :
+        1'b1 :
         1'b0;
 
+    // What is written to the register file depends if this is an ALU cycle - if it is, the data comes from
+    // the ALU
     assign register_file_write_data = registerstage2_alu_cycle == 1'b0 ?
         registerstage2_write_data :
         alu_result;

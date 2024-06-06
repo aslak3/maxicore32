@@ -17,6 +17,7 @@ module businterface
     );
 
     always @ (*) begin
+        // assume there is an error state
         businterface_bus_error = 1'b1;
         businterface_address = cpu_address[31:2];
         businterface_data_strobes = 4'b0000;
@@ -25,6 +26,7 @@ module businterface
 
         case (cpu_cycle_width)
             CW_BYTE: begin
+                // byte operations can't be unaligned
                 businterface_bus_error = 1'b0;
                 case (cpu_address[1:0])
                     2'b00: begin
@@ -89,8 +91,8 @@ module businterface
             end
         endcase
 
-        // Could short these in the upper level, but will need them when multi-
-        // cycle operation is implemented.
+        // could short these in the upper level, but will need them when multi-
+        // cycle operation is implemented
         businterface_read = cpu_read;
         businterface_write = cpu_write;
     end

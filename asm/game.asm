@@ -23,6 +23,7 @@ KEY_W=0x1d
 KEY_S=0x1b
 KEY_A=0x1c
 KEY_D=0x23
+KEY_ESC=0x76
 KEY_SPACE=0x29
 
 TILE_BLANK=0x00
@@ -62,7 +63,7 @@ DEVICE_ADDRESS=0x50                                                 ; at24c64 i2
 ;   r15=stack, r14=return address, r13=vars pointer, r12=video memory, r11=io base address, r10=status line
 ;   r5=boulder sliding direction (TODO: this should be a variable instead)
 
-                loadi.u r15,stack                                   ; setup stack pointer
+startnewgame:   loadi.u r15,stack                                   ; setup stack pointer
                 loadi.u r14,0                                       ; return address
                 loadi.u r13,vars                                    ; base of global variables
                 loadi.l r12,VIDEO_MEM_BASE
@@ -78,18 +79,18 @@ startnextlevel: callbranch r14,newlevel
                 callbranch r14,loadlevel
                 callbranch r14,statusupdate
 
-                loadi.l r9,0x200000                                 ; frame count, backwards while waiting
+                loadi.l r9,0x100000                                 ; frame count, backwards while waiting
 waitloop:       sub r9,r9,1
                 nop
                 branch.ne waitloop
 
 mainloop:       add r9,r9,1
                 nop
-                bit r9,r9,0x3fff                                    ; every 2^14 loops
+                bit r9,r9,0x3fff                                    ; every 2^14 loops move boulders
                 nop
                 callbranch.eq r14,gravity
 
-                bit r9,r9,0x1fff                                    ; every 2^12 loops
+                bit r9,r9,0x1fff                                    ; every 2^12 loops animate
                 nop
                 callbranch.eq r14,animater
 
@@ -118,6 +119,9 @@ mainloop:       add r9,r9,1
                 compare r2,r2,KEY_D
                 nop
                 branch.eq .moveright
+                compare r2,r2,KEY_ESC
+                nop
+                branch.eq startnewgame                              ; escape will restart the game, if not halted
 
 .collisions:    load.bu r2,r0(r12)                                  ; get whats at new space, maybe again
                 nop
@@ -201,9 +205,9 @@ mainloop:       add r9,r9,1
                 loadi.u r2,0x800
 .beep_loop:     store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
-.beep_wait:     load.l r0,TONEGEN_STATUS_OF(r11)
+.beep_wait:     load.l r0,TONEGEN_STATUS_OF(r11)                    ; get the status of the tone generator
                 nop
-                test r0,r0
+                test r0,r0                                          ; top bit is the "sounding" bit
                 nop
                 branch.mi .beep_wait                                ; wait for tone to finish
                 sub r1,r1,0x100                                     ; adjust frequency u=p
@@ -211,10 +215,10 @@ mainloop:       add r9,r9,1
                 branch.ne .beep_loop
                 add r0,r0,1
                 nop
-                and r0,r0,0x07                                     ; only got 8 levels. :(
+                and r0,r0,0x07                                      ; only got 8 levels. :( well, 3 actually...
                 nop
-                store.w current_level-vars(r13),r0
-                branch startnextlevel
+                store.w current_level-vars(r13),r0                  ; save the new current level
+                branch startnextlevel                               ; to the top, but skip the new game bit
 
 .moveup:        store.b r0(r12),r1
                 sub r0,r0,WIDTH*4
@@ -222,11 +226,11 @@ mainloop:       add r9,r9,1
 .movedown:      store.b r0(r12),r1
                 add r0,r0,WIDTH*4
                 branch .collisions
-.moveleft:      loadi.s r4,-4
+.moveleft:      loadi.s r4,-4                                       ; r4 has direction, which is used later
                 store.b r0(r12),r1
                 add r0,r0,r4
                 branch .bouldercheck
-.moveright:     loadi.u r4,4                                        ; r4 has direction
+.moveright:     loadi.u r4,4                                        ; r4 has direction, ...
                 store.b r0(r12),r1
                 add r0,r0,r4
                 branch .bouldercheck
@@ -336,13 +340,10 @@ playerdead:     loadi.u r1,0x4000
                 load.wu r1,lives_left-vars(r13)                     ; load lives left
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound death tone
                 mulu r2,r1,4                                        ; turn it into a long address in r2
-                nop
-                loadi.u r3,TILE_STATUS_DEAD_PLAYER                  ; get the crossed out player tile
-                nop
-                store.b r2(r10),r3                                  ; update status bar
                 sub r1,r1,1                                         ; reduce lives by one (r1)
-                nop
-                store.w lives_left-vars(r13),r1                     ; save it in the global var
+                loadi.u r3,TILE_STATUS_DEAD_PLAYER                  ; get the crossed out player tile
+                store.w lives_left-vars(r13),r1                     ; save lives in the global var
+                store.b r2(r10),r3                                  ; update status bar
                 branch.eq .nolivesleft                              ; looking for now having zero lives
                 load.wu r1,new_life_pos-vars(r13)                   ; get the starting player pos for this level
                 nop
@@ -536,16 +537,16 @@ i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the cu
                 and r0,r0,0x40                                      ; test the ack status while here
                 jump r14
 
-skelstatus:     loadi.u r1,20*4
-                loadi.u r2,status_end-vars
+; skelstatus - fill in a basic status line
+skelstatus:     loadi.u r2,status_end-vars                          ; source of tile data
+                loadi.u r1,20*4                                     ; counting down on this
+.loop:          sub r2,r2,1                                         ; move down source
+                sub r1,r1,4                                         ; move down destination
+                load.bu r0,r2(r13)                                  ; get byte from source using r13 (vars) as base
                 nop
-.loop:          sub r2,r2,1
-                sub r1,r1,4
-                load.bu r0,r2(r13)
-                nop
-                store.b r1(r10),r0
-                branch.ne .loop
-                jump r14
+                store.b r1(r10),r0                                  ; save byte into status using r10 (status) as base
+                branch.ne .loop                                     ; back for more?
+                jump r14                                            ; return
 
 ; newgame - sets lives to maximum and level number to zero
 newgame:        loadi.u r0,5

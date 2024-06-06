@@ -1,19 +1,20 @@
 module i2c_interface
     (
-        input reset,
-        input clock,
-        input read,
-        input write,
-        input address_cs,
-        input read_cs,
-        input write_cs,
-        input control_cs,
-        input [31:0] data_in,
-        output reg [31:0] data_out,
-        output reg data_out_valid,
+        input       reset,
+        input       clock,
 
-        inout scl,
-        inout sda
+        input       read,
+        input       write,
+        input       address_cs,
+        input       read_cs,
+        input       write_cs,
+        input       control_cs,
+        input       [31:0] data_in,
+        output reg  [31:0] data_out,
+        output reg  data_out_valid,
+
+        inout       scl,
+        inout       sda
     );
 
     reg i2c_trigger;
@@ -58,7 +59,7 @@ module i2c_interface
             end
         end
     end
-    
+
     i2c_controller i2c_controller (
 		.clock(clock),
 		.reset(reset),
