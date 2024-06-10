@@ -32,6 +32,7 @@ main:           loadi.u r1,0
                 branch.ne .pageloop
                 add r1,r1,1
                 nop
+                ; Set to size of ROM in KBytes
                 compare r1,r1,8
                 nop
                 branch.ne .levelloop
