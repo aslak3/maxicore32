@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP4CE115F29) Path("/home/lawrence/github-aslak3/softcore/maxicore32/boards/terasic-de2-110/quartus/") File("terasic-de2-110.sof") MfrSpec(OpMask(1));
+		Device PartName(EP4CE115F29) Path("/home/lawrence/github-aslak3/softcore/maxicore32/boards/terasic-de2-115/quartus/") File("terasic-de2-115.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

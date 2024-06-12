@@ -1,6 +1,6 @@
 # A very crude makefile...
 
-PROJECT=terasic-de2-110
+PROJECT=terasic-de2-115
 
 default: all
 

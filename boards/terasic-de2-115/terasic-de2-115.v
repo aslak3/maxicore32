@@ -3,7 +3,7 @@
 // Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
-module terasicde2110
+module terasicde2115
     (
         input       CLOCK_50,
 

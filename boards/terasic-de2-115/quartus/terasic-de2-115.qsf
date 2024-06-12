@@ -4,7 +4,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE115F29C7
-set_global_assignment -name TOP_LEVEL_ENTITY terasicde2110
+set_global_assignment -name TOP_LEVEL_ENTITY terasicde2115
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 9.1
 set_global_assignment -name LAST_QUARTUS_VERSION "23.1std.0 Lite Edition"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "14:02:28 JANUARY 27,2010"
@@ -1184,7 +1184,7 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
 set_global_assignment -name VERILOG_SHOW_LMF_MAPPING_MESSAGES OFF
 set_global_assignment -name VERILOG_FILE ../../../levels_rom/levels_rom.v
-set_global_assignment -name VERILOG_FILE "../terasic-de2-110.v"
+set_global_assignment -name VERILOG_FILE "../terasic-de2-115.v"
 set_global_assignment -name VERILOG_FILE ../../../vga/vga.v
 set_global_assignment -name VERILOG_FILE ../../../vga/tile_rom.v
 set_global_assignment -name VERILOG_FILE ../../../vga/palette_lookup.v
