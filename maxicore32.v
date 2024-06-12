@@ -126,7 +126,6 @@ module maxicore32
     wire [1:0] memory_cycle_width;
     wire memorystage1_alu_immediate_cycle;
     wire memorystage1_branch_cycle;
-    wire memorystage1_jump_cycle;
     memorystage1 memorystage1 (
         .reset(reset),
         .clock(clock),
@@ -146,7 +145,6 @@ module maxicore32
         .alu_op(alu_op),
         .alu_immediate_cycle(memorystage1_alu_immediate_cycle),
         .branch_cycle(memorystage1_branch_cycle),
-        .jump_cycle(memorystage1_jump_cycle),
         .halting(memorystage1_halting)
     );
 

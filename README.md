@@ -1,29 +1,27 @@
-# Random scribblings, for now
-
-This is a dumping ground, nothing more. Eventually it will become the core's main documentation.
+# MaxiCore32
 
 This document is for the processor core only. The VGA and specific board level integration bits will be documented in their own documents.
 
 # Two stage pipeline
 
-This processor features a two stage pipelined design. Generally, the first stage is used for setting up memory operations and setting up the (clocked) ALU, and the second stage is used for register writes and control flow.
+This processor features a two stage pipelined design. The first stage is used for setting up memory operations and setting up the (clocked) ALU (including when branching), and the second stage is used for register writes and control flow.
 
-In the current implementation, NOPs must be inserted by the programmer if a register write or condition status register write needs to be completed before that value is used, for example a decrement to zero style loop requires a NOP or other instruction before the conditional branch. Branch delay slots are automatically inserted in order to improve code density. Two are currently required, one to calculate the target address and one to write to the program counter.
+In the current implementation, NOPs must be inserted by the programmer if a register write or condition register write needs to be completed before that value is used, for example a decrement to zero style loop requires a NOP or other instruction before the conditional branch. Branch delay slots are automatically inserted in order to improve code density. Two are currently required.
 
 # ISA design
 
 * 5 bit opcode field, 32 top level opcodes
-* 16 by 32bit registers
-* 3 lots of 4 bits for register indexes in the top level instruction encoding
+* 16 by 32 bit registers
 * All instructions are one 32 bit word - no trailing words
 * NOP (0x00000000)
 * Halt
-* Load immediate 16 bit quantity into 32 but signed, unsigned, bottom half or top half
+* Load immediate 16 bit quantity into 32 bit sign extended, zero extended, 16 bit load into bottom half or top half
 * Load/Store from/to register rD from/to rM with 16 bit displacement, 3 bit transfer type
+  * Transfer type: long, word or byte with loads being optionally sign exteded
 * Same as above but with a register as the displacement
 * No stacking opcodes
 * ALU: r1<-r2,r3 or r1<-r2 or r1<-r2,imm
-  * imm is 12+3 bits
+  * imm is 12+3 bits sign extended to 32 bits
   * Condition codes modified only by ALU
 * Branch on 4 bit test, source PC with 16 bit displacement, saving PC in rPC
 * Branch on 4 bit test, source PC with 16 bit displacement
@@ -41,7 +39,7 @@ Predictable again. Supports jump and increment (+4).
 
 ## Status Register
 
-(Should probably be renamed to Condition Code Register) This is the holder of the carry, zero, negative and overlfow flags. All are treated as individual signals but with one write signal. 
+(Should probably be renamed to Condition Code Register) This is the holder of the carry, zero, negative and overlfow flags. All are treated as individual signals but with one write signal.
 
 ## Bus Interface
 

@@ -233,8 +233,8 @@ module ice40updevboard
 `endif
 
     i2c_interface i2c_interface (
-		.clock(cpu_clock),
-		.reset(reset),
+        .clock(cpu_clock),
+        .reset(reset),
         .read(read),
         .write(write),
         .address_cs(i2c_address_cs),
@@ -244,12 +244,12 @@ module ice40updevboard
         .data_in(data_out),
         .data_out(i2c_data_out),
         .data_out_valid(i2c_data_out_valid),
-		.scl(scl),
-		.sda(sda)
-	);
+        .scl(scl),
+        .sda(sda)
+    );
 
     ps2_interface ps2_interface (
-		.clock(cpu_clock),
+        .clock(cpu_clock),
         .read(read),
         .status_cs(ps2_status_cs),
         .scancode_cs(ps2_scancode_cs),
@@ -261,7 +261,7 @@ module ice40updevboard
 
     tonegen_interface tonegen_interface (
         .reset(reset),
-		.clock(cpu_clock),
+        .clock(cpu_clock),
         .read(read),
         .write(write),
         .duration_cs(tonegen_duration_cs),

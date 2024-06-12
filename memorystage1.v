@@ -23,7 +23,6 @@ module memorystage1
         output reg  [4:0] alu_op,
         output reg  alu_immediate_cycle,
         output reg  branch_cycle,
-        output reg  jump_cycle,
         output reg  halting
     );
 
@@ -37,7 +36,6 @@ module memorystage1
             control_flow_start_cycle <= 1'b0;
             alu_immediate_cycle <= 1'b0;
             branch_cycle <= 1'b0;
-            jump_cycle <= 1'b0;
             halting <= 1'b0;
         end else begin
             memory_access_cycle <= 1'b0;
@@ -46,7 +44,6 @@ module memorystage1
             memory_write <= 1'b0;
             alu_immediate_cycle <= 1'b0;
             branch_cycle <= 1'b0;
-            jump_cycle <= 1'b0;
 
             $display("STAGE1: Got instruction %08x", inbound_instruction);
 
@@ -118,7 +115,6 @@ module memorystage1
                 OPCODE_JUMP: begin
                     $display("STAGE1: OPCODE_JUMP");
                     alu_op <= { OP_COPY };
-                    jump_cycle <= 1'b1;
                     control_flow_start_cycle <= 1'b1;
                 end
                 default: begin

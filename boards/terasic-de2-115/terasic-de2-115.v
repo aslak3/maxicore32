@@ -199,13 +199,13 @@ module terasicde2115
         .halted(halted),
         .user(LEDG[5:0])
     );
-	
-	assign LEDG[7:6] = 2'b0;
+    
+    assign LEDG[7:6] = 2'b0;
 
     // On my "beta" board these are active low.
     assign LEDR[1] = bus_error;
     assign LEDR[2] = halted;
-	assign LEDR[17:3] = 15'b0;
+    assign LEDR[17:3] = 15'b0;
 
     vga_clock_gen vga_clock_gen (
         .clock(CLOCK_50),
@@ -234,13 +234,13 @@ module terasicde2115
     );
 `endif
 
-	assign VGA_R[3:0] = 4'h0;
-	assign VGA_G[3:0] = 4'h0;
-	assign VGA_B[3:0] = 4'h0;
+    assign VGA_R[3:0] = 4'h0;
+    assign VGA_G[3:0] = 4'h0;
+    assign VGA_B[3:0] = 4'h0;
 
     i2c_interface i2c_interface (
-		.clock(cpu_clock),
-		.reset(reset),
+        .clock(cpu_clock),
+        .reset(reset),
         .read(read),
         .write(write),
         .address_cs(i2c_address_cs),
@@ -250,12 +250,12 @@ module terasicde2115
         .data_in(data_out),
         .data_out(i2c_data_out),
         .data_out_valid(i2c_data_out_valid),
-		.scl(EEP_I2C_SCLK),
-		.sda(EEP_I2C_SDAT)
-	);
+        .scl(EEP_I2C_SCLK),
+        .sda(EEP_I2C_SDAT)
+    );
 
     ps2_interface ps2_interface (
-		.clock(cpu_clock),
+        .clock(cpu_clock),
         .read(read),
         .status_cs(ps2_status_cs),
         .scancode_cs(ps2_scancode_cs),
@@ -265,10 +265,10 @@ module terasicde2115
         .ps2_data(PS2_DAT)
     );
 
-	wire buzzer;
+    wire buzzer;
     tonegen_interface tonegen_interface (
         .reset(reset),
-		.clock(cpu_clock),
+        .clock(cpu_clock),
         .read(read),
         .write(write),
         .duration_cs(tonegen_duration_cs),
