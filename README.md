@@ -4,38 +4,38 @@ This document is for the processor core only. The VGA and specific board level i
 
 # Two stage pipeline
 
-This processor features a two stage pipelined design. The first stage is used for setting up memory operations and setting up the (clocked) ALU (including when branching), and the second stage is used for register writes and control flow.
+This processor features a two stage pipelined design. The first stage is used for setting up memory operations and setting up the ALU (including when branching), and the second stage is used for register writes and control flow.
 
 In the current implementation, NOPs must be inserted by the programmer if a register write or condition register write needs to be completed before that value is used, for example a decrement to zero style loop requires a NOP or other instruction before the conditional branch. Branch delay slots are automatically inserted in order to improve code density. Two are currently required.
 
 # ISA design
 
-* 5 bit opcode field, 32 top level opcodes
 * 16 by 32 bit registers
 * All instructions are one 32 bit word - no trailing words
+* 5 bit opcode field, 32 top level opcodes
 * NOP (0x00000000)
 * Halt
-* Load immediate 16 bit quantity into 32 bit sign extended, zero extended, 16 bit load into bottom half or top half
-* Load/Store from/to register rD from/to rM with 16 bit displacement, 3 bit transfer type
-  * Transfer type: long, word or byte with loads being optionally sign exteded
+* Load immediate 16 bit quantity into 32 bit register sign extended, zero extended, 16 bit load into bottom half or top half
+* Load/Store from/to register from/to register with 16 bit displacement, 3 bit transfer type
+  * Transfer type: long, word or byte with word or byte loads being optionally sign extended
 * Same as above but with a register as the displacement
 * No stacking opcodes
 * ALU: r1<-r2,r3 or r1<-r2 or r1<-r2,imm
   * imm is 12+3 bits sign extended to 32 bits
   * Condition codes modified only by ALU
-* Branch on 4 bit test, source PC with 16 bit displacement, saving PC in rPC
+* Branch on 4 bit test, source PC with 16 bit displacement, saving PC into register (Jump-And-Link)
 * Branch on 4 bit test, source PC with 16 bit displacement
-* Jump on 4 bit test to rS
+* Jump on 4 bit test to register
 
 # Modules
 
 ## Register File
 
-This is fairly standard stuff with continuous assignment for the read-out of the 3 registers. The regular 32 bit write operation is joined by a 16 bit write that carries out signed extension etc as selected. There is no reset signal on this module since in hardware it is expensive to reset the register file.
+This is fairly standard stuff with continuous assignment for the read-out of 3 registers. The regular 32 bit write operation is joined by a 16 bit write that carries out signed extension etc as selected. There is no reset signal on this module since the register file is only concerned with data and not control.
 
 ## Program Counter
 
-Predictable again. Supports jump and increment (+4).
+Predictable again. Continuous read-out. Supports jump and increment (+4).
 
 ## Status Register
 
@@ -43,16 +43,16 @@ Predictable again. Supports jump and increment (+4).
 
 ## Bus Interface
 
-The external bus connections route through here. It will map byte, word and long operations onto the 32bit external bus, for in and out data paths. It does not handle unaligned access and will generate a bus error signal if this is attempted. The 32 bit byte-addressable address space is turned into a 30 bit long addressable space here.
+The external bus connections route through here. It will map byte, word and long operations onto the 32 bit external bus, for in and out data paths. It does not handle unaligned access and will generate a bus error signal if this is attempted. The 32 bit byte-addressable address space is turned into a 30 bit long addressable space here. This is not clocked.
 
 ## ALU
 
-The ALU is totally predicatable except that it is (currently) a clocked process. This was done to try to increase the fMax on the iCE40 FPGA I'm using. It may yet change (back) to being a combinational part.
+The ALU is predictable except that it is (currently) a clocked process. This was done to try to increase the fMax on the iCE40 FPGA I'm using. It may yet change (back) to being a combinatorial part. It supports a few unusual operations, such as byte shifting and signed/unsigned extensions.
 
 ## AGU
 
 This calculates the final address as needed by the load/store/loadr/storer instructions. It will sign extend a 16 bit
-offset, or use a 32 bit register's value directly.
+offset, or use a 32 bit register's value directly. It is combinatorial.
 
 ## MemoryStage1
 
@@ -99,7 +99,7 @@ loadi.b r0,0x5678
 (r0 is now 0x12345678)
 
 ```
-loadil. r0,0x12345678
+loadi.l r0,0x12345678
 ```
 
 (This is identical to the above, but the assembler will provide this extra macro for
@@ -107,6 +107,7 @@ loading a long in two instructions)
 
 ```
 loadi.u r1,0x21
+(nop)
 store.bu 666(r0),r1
 ```
 
@@ -165,17 +166,15 @@ TBD when design is stable.
 - 19:16 - reg for operand 1 (rA) (2)
 - 11:8 - reg for operand 2 (rO) (3)
 
-## nop
+## NOP
 
 Opcode 5'b00000.
 
-## halt
+## Halt
 
 Self explanatory. An external signal is asserted to indicate when the preceding instructions in the pipeline have completed.
 
-## load immediate, top and bottom
-
-### Encoding
+## Load Immediate, top and bottom
 
 - 31:27 - opcode (5)
 - 26:25 - immediate type (2)
@@ -193,9 +192,7 @@ localparam  IT_TOP = 2'b00,
 
 Top and Bottom will leave the other portion intact.
 
-## load/store
-
-### Encoding
+## Load/Store
 
 - 31:27 - opcode (load/store)
 - 26:25 - cycle width (2)
@@ -213,9 +210,7 @@ localparam  CW_LONG = 2'b00,
             CW_NULL = 2'b11;
 ```
 
-## loadr/storer
-
-### Encoding
+## LoadR/StoreR
 
 - 31:27 - opcode (loadr/storer)
 - 26:25 - cycle width (2)
@@ -225,8 +220,6 @@ localparam  CW_LONG = 2'b00,
 - 11:8 - reg for offset [read]
 
 ## ALU
-
-### Encoding
 
 - 31:27 - opcode
 - 23:20 - reg for destination data (rD) [write]
@@ -238,7 +231,7 @@ Operations:
 
 TBC when finalised.
 
-## Encoding for ALUI
+## ALU with Immediate
 
 - 31:27 - opcode
 - 26:24 - top 3 bits of immediate
@@ -287,3 +280,11 @@ localparam [3:0]    COND_AL = 4'h0, // always
 - 23:20 - reg for old pc (rD) [write]
 - 19:16 - reg to use for new PC
 - 15:12 - condition
+
+Notes:
+
+rD is only updated if the call flag is set.
+
+Conditions:
+
+See above.
