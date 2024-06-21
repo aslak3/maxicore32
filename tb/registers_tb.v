@@ -183,8 +183,6 @@ module program_counter_tb;
 
         pulse_clock;
 
-        reset = 1'b0;
-
         `assert(read_data_valid == 1'b1, "Read data now valid");
         `assert(read_data == 32'h0, "PC resets");
 
@@ -220,6 +218,118 @@ module program_counter_tb;
         pulse_clock;
 
         `assert(read_data == 32'hdeadbeef, "PC jump");
+    end
+
+endmodule
+
+module status_register_tb;
+    `include "tests.vh"
+
+    reg reset;
+    reg clock;
+    reg read;
+    wire read_carry, read_zero, read_neg, read_over;
+    wire read_data_valid;
+    reg write;
+    reg carry_data, zero_data, neg_data, over_data;
+
+    status_register dut (
+        .reset(reset),
+        .clock(clock),
+        .read(read),
+        .read_carry(read_carry),
+        .read_zero(read_zero),
+        .read_neg(read_neg),
+        .read_over(read_over),
+        .read_data_valid(read_data_valid),
+        .write(write),
+        .carry_data(carry_data),
+        .zero_data(zero_data),
+        .neg_data(neg_data),
+        .over_data(over_data)
+    );
+
+    initial begin
+        reset = 1'b0;
+        clock = 1'b0;
+        read = 1'b0;
+        write = 1'b0;
+        carry_data = 1'b0;
+        zero_data = 1'b0;
+        neg_data = 1'b0;
+        over_data = 1'b0;
+
+        #test_period;
+
+        reset = 1'b1;
+
+        pulse_clock;
+
+        reset = 1'b0;
+
+        pulse_clock;
+
+        `assert(read_data_valid == 1'b0, "Read data not valid");
+
+        read = 1'b1;
+
+        pulse_clock;
+
+        reset = 1'b0;
+
+        `assert(read_data_valid == 1'b1, "Read data now valid");
+        `assert(read_carry == 1'b0, "Carry is 0");
+        `assert(read_zero == 1'b0, "Zero is 0");
+        `assert(read_neg == 1'b0, "Neg is 0");
+        `assert(read_over == 1'b0, "Over is 0");
+        
+        pulse_clock;
+
+        read = 1'b0;
+
+        pulse_clock;
+
+        `assert(read_data_valid == 1'b0, "Read data now not valid");
+
+        carry_data = 1'b1;
+        zero_data = 1'b0;
+        neg_data = 1'b1;
+        over_data = 1'b0;
+        write = 1'b1;
+        read = 1'b0;
+
+        pulse_clock;
+
+        write = 1'b0;
+        read = 1'b1;
+
+        pulse_clock;
+
+        `assert(read_data_valid == 1'b1, "Read data now valid");
+        `assert(carry_data == 1'b1, "Carry is now 1");
+        `assert(zero_data == 1'b0, "Zero is still 0");
+        `assert(neg_data == 1'b1, "Neg is now 1");
+        `assert(over_data == 1'b0, "Over is still 0");
+
+        carry_data = 1'b0;
+        zero_data = 1'b1;
+        neg_data = 1'b0;
+        over_data = 1'b1;
+        write = 1'b1;
+        read = 1'b0;
+
+        pulse_clock;
+
+        write = 1'b0;
+        read = 1'b1;
+
+        pulse_clock;
+
+        `assert(read_data_valid == 1'b1, "Read data now valid");
+        `assert(carry_data == 1'b0, "Carry is now 0");
+        `assert(zero_data == 1'b1, "Zero is now 1");
+        `assert(neg_data == 1'b0, "Neg is now 0");
+        `assert(over_data == 1'b1, "Over is now 1");
     end
 
 endmodule

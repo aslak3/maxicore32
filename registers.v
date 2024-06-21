@@ -92,7 +92,7 @@ module program_counter
                 program_counter <= jump_data;
             end else if (inc) begin
                 $display("Program Counter inc");
-                program_counter <= program_counter + 4;
+                program_counter <= program_counter + 32'h4;
             end
         end
     end
@@ -131,7 +131,7 @@ module status_register
 
             if (write) begin
                 $display("Setting status register: CARRY: %01b ZERO: %01b NEG: %01b OVER: %01b",
-                    carry, zero, neg, over);
+                    carry_data, zero_data, neg_data, over_data);
                 carry <= carry_data;
                 zero <= zero_data;
                 neg <= neg_data;

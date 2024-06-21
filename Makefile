@@ -12,8 +12,10 @@ ICEPROG = iceprog
 
 VERILATOR_LINT = verilator --lint-only --timing
 
-ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb businterface_tb \
-	maxicore32_tb tonegen_tb i2c_controller_tb
+ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb registers-status_register_tb \
+	alu_tb businterface_tb \
+	maxicore32_tb \
+	tonegen_tb i2c_controller_tb
 
 CORE_V_SRC = maxicore32.v businterface.v registers.v alu.v agu.v \
 	memorystage1.v registersstage2.v \
@@ -27,6 +29,10 @@ registers-register_file_tb: registers.v tb/registers_tb.v
 registers-program_counter_tb: registers.v tb/registers_tb.v
 	$(VERILATOR_LINT) --top-module program_counter_tb $^
 	$(IVERILOG) -s program_counter_tb -o $@ $^
+registers-status_register_tb: registers.v tb/registers_tb.v
+	$(VERILATOR_LINT) --top-module status_register_tb $^
+	$(IVERILOG) -s status_register_tb -o $@ $^
+
 alu_tb: alu.v tb/alu_tb.v
 	$(VERILATOR_LINT) --top alu_tb $^
 	$(IVERILOG) -s alu_tb -o $@ $^
