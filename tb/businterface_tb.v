@@ -1,8 +1,10 @@
 `include "businterface.vh"
 
 module businterface_tb;
-    `define TB_NO_CLOCK 1
-    `include "tests.vh" // For period only
+    `include "tests.vh"
+
+    reg reset;
+    reg clock;
 
     reg [31:0] cpu_address;
     reg [1:0] cpu_cycle_width;
@@ -18,6 +20,9 @@ module businterface_tb;
     wire businterface_read, businterface_write;
 
     businterface dut (
+        .reset(reset),
+        .clock(clock),
+
         .cpu_address(cpu_address),
         .cpu_cycle_width(cpu_cycle_width),
         .cpu_data_out(cpu_data_out),
@@ -55,7 +60,7 @@ module businterface_tb;
             cpu_write = test_cpu_write;
             businterface_data_in = test_businterface_data_in;
 
-            #test_period
+            pulse_clock;
 
             $display("CPU address: %08x CPU cycle width: %02b CPU data out: %08x CPU read: %d CPU write: %d BusInterface data in: %08x",
                 test_cpu_address, test_cpu_cycle_width, test_cpu_data_out, test_cpu_read, test_cpu_write, test_businterface_data_in);
@@ -86,10 +91,21 @@ module businterface_tb;
                     $display("BusInterface write got %08x, expected %08x", businterface_write, exp_businterface_write); $fatal;
                 end
             end
+            $display("PASS");
         end
     endtask
 
     initial begin
+        reset = 1'b0;
+
+        #test_period;
+
+        reset = 1'b1;
+
+        pulse_clock;
+
+        reset = 1'b0;
+
         run_test(32'h00000000, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
             32'hffffff12, 32'h00000000, 32'habffffff, 4'b1000, 1'b0, 1'b1, 1'b0);
         run_test(32'h00000001, CW_BYTE, 32'h000000ab, 1'b1, 1'b0, 32'h12345678,
