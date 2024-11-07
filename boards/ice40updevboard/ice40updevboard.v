@@ -35,7 +35,7 @@ module ice40updevboard
     end
 
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
-    wire cpu_clock = clock_counter[2];
+    wire cpu_clock = clock_counter[1];
 
     // Memory selects
     reg memory_cs = 1'b0;

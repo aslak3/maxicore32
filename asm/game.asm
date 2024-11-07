@@ -162,7 +162,7 @@ mainloop:       add r9,r9,1
                 store.b r1(r12),r2                                  ; move boulder
                 branch .updatepos                                   ; move into old space held by boulder
 
-.gem:           loadi.u r1,0x1000
+.gem:           loadi.u r1,0x2000
                 loadi.u r2,0x800
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
@@ -201,7 +201,7 @@ mainloop:       add r9,r9,1
                 store.w gems_needed_100-vars(r13),r1
                 branch .gemupdate
 
-.exit:          loadi.u r1,0x1000
+.exit:          loadi.u r1,0x2000
                 loadi.u r2,0x800
 .beep_loop:     store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
@@ -334,7 +334,7 @@ gravity:        sub r15,r15,4                                       ; we are not
                 branch .foundcontinue                               ; when done burying the player, back to gravity
 
 ; playerdead - oh dear, sound tone, reduce the lives, update the status display and halt if lives is zero now
-playerdead:     loadi.u r1,0x4000
+playerdead:     loadi.u r1,0x8000
                 loadi.u r2,0x4000
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 load.wu r1,lives_left-vars(r13)                     ; load lives left
