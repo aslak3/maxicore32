@@ -1,10 +1,10 @@
 `include "registers.vh"
 
 module register_file_tb;
+    reg clock;
     `include "tests.vh"
 
     reg reset;
-    reg clock;
     reg [3:0] write_index;
     reg write;
     reg [31:0] write_data;
@@ -87,10 +87,10 @@ module register_file_tb;
 endmodule
 
 module program_counter_tb;
+    reg clock;
     `include "tests.vh"
 
     reg reset;
-    reg clock;
     reg jump, inc, branch;
     reg [31:0] jump_data;
     reg [15:0] branch_data;

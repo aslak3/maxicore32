@@ -1,8 +1,8 @@
 module maxicore32_tb;
+    reg clock;
     `include "tests.vh"
 
     reg reset;
-    reg clock;
 
     reg [1:0] decoder_outputs;
     wire memory_cs = decoder_outputs[1];

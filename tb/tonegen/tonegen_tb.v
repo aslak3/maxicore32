@@ -1,8 +1,8 @@
 module tonegen_tb;
+    reg clock;
     `include "tests.vh"
 
     reg reset;
-    reg clock;
     reg write;
     reg [31:0] duration;
     reg [31:0] period;
