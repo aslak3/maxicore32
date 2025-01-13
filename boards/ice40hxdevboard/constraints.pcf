@@ -1,0 +1,43 @@
+set_io --warn-no-port clock 128         # MASTERCLK
+set_io --warn-no-port button 93         # BUTTON0
+set_io --warn-no-port buzzer 117        # BUZZER
+
+set_io --warn-no-port vga_clock 33      # EXP25
+set_io --warn-no-port h_sync 32         # EXP24
+set_io --warn-no-port v_sync 31         # EXP23
+set_io --warn-no-port n_vga_blank 29    # EXP22
+
+set_io --warn-no-port red[3] 141        # EXP3
+set_io --warn-no-port red[2] 139        # EXP2
+set_io --warn-no-port red[1] 138        # EXP1
+set_io --warn-no-port red[0] 137        # EXP0
+
+set_io --warn-no-port green[3] 60       # EXP7
+set_io --warn-no-port green[2] 144      # EXP6
+set_io --warn-no-port green[1] 143      # EXP5
+set_io --warn-no-port green[0] 142      # EXP4
+
+set_io --warn-no-port blue[3] 12        # EXP11
+set_io --warn-no-port blue[2] 11        # EXP10
+set_io --warn-no-port blue[1] 62        # EXP9
+set_io --warn-no-port blue[0] 61        # EXP8
+
+set_io --warn-no-port leds[2] 134       # LED2
+set_io --warn-no-port leds[1] 135       # LED1
+set_io --warn-no-port leds[0] 136       # LED0
+
+set_io --warn-no-port ps2a_data 114     # PS2ADATA
+set_io --warn-no-port ps2a_clock 112    # PS2ACLK
+set_io --warn-no-port ps2b_data 113     # PS2ADATA
+set_io --warn-no-port ps2b_clock 110    # PS2ACLK
+
+set_io --warn-no-port scl 115           # I2CSCL
+set_io --warn-no-port sda 116           # I2CSDA
+
+set_io --warn-no-port user[5] 8         # USER5
+set_io --warn-no-port user[4] 7         # USER4
+set_io --warn-no-port user[3] 4         # USER3
+set_io --warn-no-port user[2] 3         # USER2
+set_io --warn-no-port user[1] 2         # USER1
+set_io --warn-no-port user[0] 1         # USER0
+
