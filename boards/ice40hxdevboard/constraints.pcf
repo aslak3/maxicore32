@@ -1,43 +1,61 @@
 set_io --warn-no-port clock 128         # MASTERCLK
-set_io --warn-no-port button 93         # BUTTON0
-set_io --warn-no-port buzzer 117        # BUZZER
+set_io --warn-no-port button 94         # BUTTON0
+set_io --warn-no-port buzzer 135        # BUZZER
 
-set_io --warn-no-port vga_clock 33      # EXP25
-set_io --warn-no-port h_sync 32         # EXP24
-set_io --warn-no-port v_sync 31         # EXP23
-set_io --warn-no-port n_vga_blank 29    # EXP22
+set_io --warn-no-port vga_clock 97      # EXP25
+set_io --warn-no-port h_sync 99         # EXP24
+set_io --warn-no-port v_sync 102        # EXP23
+set_io --warn-no-port n_vga_blank 105   # EXP22
 
-set_io --warn-no-port red[3] 141        # EXP3
-set_io --warn-no-port red[2] 139        # EXP2
-set_io --warn-no-port red[1] 138        # EXP1
-set_io --warn-no-port red[0] 137        # EXP0
+set_io --warn-no-port red[3] 117        # EXP3
+set_io --warn-no-port red[2] 119        # EXP2
+set_io --warn-no-port red[1] 121        # EXP1
+set_io --warn-no-port red[0] 124        # EXP0
 
-set_io --warn-no-port green[3] 60       # EXP7
-set_io --warn-no-port green[2] 144      # EXP6
-set_io --warn-no-port green[1] 143      # EXP5
-set_io --warn-no-port green[0] 142      # EXP4
+set_io --warn-no-port green[3] 106      # EXP7
+set_io --warn-no-port green[2] 110      # EXP6
+set_io --warn-no-port green[1] 113      # EXP5
+set_io --warn-no-port green[0] 115      # EXP4
 
-set_io --warn-no-port blue[3] 12        # EXP11
-set_io --warn-no-port blue[2] 11        # EXP10
-set_io --warn-no-port blue[1] 62        # EXP9
-set_io --warn-no-port blue[0] 61        # EXP8
+set_io --warn-no-port blue[3] 96        # EXP11
+set_io --warn-no-port blue[2] 98        # EXP10
+set_io --warn-no-port blue[1] 101       # EXP9
+set_io --warn-no-port blue[0] 104       # EXP8
 
-set_io --warn-no-port leds[2] 134       # LED2
-set_io --warn-no-port leds[1] 135       # LED1
-set_io --warn-no-port leds[0] 136       # LED0
+set_io --warn-no-port leds[2] 125       # LED2
+set_io --warn-no-port leds[1] 130       # LED1
+set_io --warn-no-port leds[0] 134       # LED0
 
-set_io --warn-no-port ps2a_data 114     # PS2ADATA
-set_io --warn-no-port ps2a_clock 112    # PS2ACLK
-set_io --warn-no-port ps2b_data 113     # PS2ADATA
-set_io --warn-no-port ps2b_clock 110    # PS2ACLK
+set_io --warn-no-port ps2a_data 10      # PS2ADATA
+set_io --warn-no-port ps2a_clock 9      # PS2ACLK
+set_io --warn-no-port ps2b_data 7       # PS2ADATA
+set_io --warn-no-port ps2b_clock 8      # PS2ACLK
 
-set_io --warn-no-port scl 115           # I2CSCL
-set_io --warn-no-port sda 116           # I2CSDA
+set_io --warn-no-port scl 22            # I2CSCL
+set_io --warn-no-port sda 19            # I2CSDA
 
-set_io --warn-no-port user[5] 8         # USER5
-set_io --warn-no-port user[4] 7         # USER4
-set_io --warn-no-port user[3] 4         # USER3
-set_io --warn-no-port user[2] 3         # USER2
-set_io --warn-no-port user[1] 2         # USER1
-set_io --warn-no-port user[0] 1         # USER0
+set_io --warn-no-port user[7] 137       # USER7
+set_io --warn-no-port user[6] 136       # USER6
+set_io --warn-no-port user[5] 139       # USER5
+set_io --warn-no-port user[4] 138       # USER4
+set_io --warn-no-port user[3] 142       # USER3
+set_io --warn-no-port user[2] 141       # USER2
+set_io --warn-no-port user[1] 144       # USER1
+set_io --warn-no-port user[0] 143       # USER0
 
+set_io --warn-no-port exp[12] 95        # EXP12
+set_io --warn-no-port exp[13] 91        # EXP13
+set_io --warn-no-port exp[14] 90        # EXP14
+set_io --warn-no-port exp[15] 122       # EXP15
+set_io --warn-no-port exp[16] 120       # EXP16
+set_io --warn-no-port exp[17] 118       # EXP17
+set_io --warn-no-port exp[18] 116       # EXP18
+set_io --warn-no-port exp[19] 114       # EXP19
+set_io --warn-no-port exp[20] 112       # EXP20
+set_io --warn-no-port exp[21] 107       # EXP21
+
+set_io --warn-no-port expcbsel[0] 63    # CBSEL0
+set_io --warn-no-port expcbsel[1] 64    # CBSEL1
+
+set_io --warn-no-port expgbin[0] 20     # GBIN0
+set_io --warn-no-port expgbin[1] 21     # GBIN1

@@ -3,7 +3,7 @@
 // Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
-module ice40updevboard
+module ice40hxdevboard
     (
         input       clock,
 
@@ -25,7 +25,11 @@ module ice40updevboard
         inout       sda,
 
         // For tracing signals; usually plumed into the processor
-        output      [5:0] user
+        output      [7:0] user,
+
+        inout       [21:12] exp,
+        inout       [1:0] expcbsel,
+        input       [1:0] expgbin
     );
 
     // Unused bits should be compiled away
@@ -198,8 +202,11 @@ module ice40updevboard
         .write(write),
         .bus_error(bus_error),
         .halted(halted),
-        .user(user)
+        .user(user[5:0])
     );
+
+    assign exp[21:12] = 10'b0;
+    assign expcbsel = expgbin;
 
     // On my "beta" board these are active low.
     assign leds[1] = ~bus_error;
