@@ -41,23 +41,23 @@ module ice40updevboard
     wire [31:2] address;
 
     // Memory selects
-    wire memory_cs; 
-    wire map_cs; 
-    wire status_cs; 
+    wire memory_cs;
+    wire map_cs;
+    wire status_cs;
     wire levels_cs;  // This is the EEPROM source data
 
     // IO selects
-    wire led_cs; 
-    wire ps2_status_cs; 
-    wire ps2_scancode_cs; 
-    wire tonegen_duration_cs; 
-    wire tonegen_period_cs; 
-    wire tonegen_status_cs; 
-    wire scroll_cs; 
-    wire i2c_address_cs; 
-    wire i2c_read_cs; 
-    wire i2c_write_cs; 
-    wire i2c_control_cs;;
+    wire led_cs;
+    wire ps2_status_cs;
+    wire ps2_scancode_cs;
+    wire tonegen_duration_cs;
+    wire tonegen_period_cs;
+    wire tonegen_status_cs;
+    wire scroll_cs;
+    wire i2c_address_cs;
+    wire i2c_read_cs;
+    wire i2c_write_cs;
+    wire i2c_control_cs;
 
     addr_decode addr_decode (
         .address(address),

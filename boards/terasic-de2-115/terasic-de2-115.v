@@ -36,74 +36,46 @@ module terasicde2115
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[2];
 
-    // Memory selects
-    reg memory_cs = 1'b0;
-    reg map_cs = 1'b0;
-    reg status_cs = 1'b0;
-    reg levels_cs = 1'b0; // This is the EEPROM source data
-
-    // IO selects
-    reg led_cs = 1'b0;
-    reg ps2_status_cs = 1'b0;
-    reg ps2_scancode_cs = 1'b0;
-    reg tonegen_duration_cs = 1'b0;
-    reg tonegen_period_cs = 1'b0;
-    reg tonegen_status_cs = 1'b0;
-    reg scroll_cs = 1'b0;
-    reg i2c_address_cs = 1'b0;
-    reg i2c_read_cs = 1'b0;
-    reg i2c_write_cs = 1'b0;
-    reg i2c_control_cs = 1'b0;
-
     // High byte: the device "class", Low byte: used to select IO device registers
     wire [31:2] address;
-    wire [7:0] high_byte_address = address[31:24];
-    wire [7:0] low_byte_address = { address[7:2], 2'b00 };
 
-    always @ (*) begin
-        memory_cs = 1'b0;
-        map_cs = 1'b0;
-        status_cs = 1'b0;
-        levels_cs = 1'b0;
-        led_cs = 1'b0;
-        ps2_status_cs = 1'b0;
-        ps2_scancode_cs = 1'b0;
-        tonegen_duration_cs = 1'b0;
-        tonegen_period_cs = 1'b0;
-        tonegen_status_cs = 1'b0;
-        scroll_cs = 1'b0;
-        i2c_address_cs = 1'b0;
-        i2c_read_cs = 1'b0;
-        i2c_write_cs = 1'b0;
-        i2c_control_cs = 1'b0;
+    // Memory selects
+    wire memory_cs;
+    wire map_cs;
+    wire status_cs;
+    wire levels_cs;  // This is the EEPROM source data
 
-        case (high_byte_address)
-            8'h00: memory_cs = 1'b1;    // Program RAM
-            8'h01: map_cs = 1'b1;       // Map RAM
-            8'h02: status_cs = 1'b1;    // Status map RAM
-            8'h03: levels_cs = 1'b1;    // 8 levels used for I2C EEPROM programming
-            8'h0f: begin
-                // IO devices
-                case (low_byte_address)
-                    8'h00: led_cs = 1'b1;
-                    8'h04: ps2_status_cs = 1'b1;
-                    8'h08: ps2_scancode_cs = 1'b1;
-                    8'h0c: tonegen_duration_cs = 1'b1;
-                    8'h10: tonegen_period_cs = 1'b1;
-                    8'h14: tonegen_status_cs = 1'b1;
-                    8'h18: scroll_cs = 1'b1;
-                    8'h1c: i2c_address_cs = 1'b1;
-                    8'h20: i2c_read_cs = 1'b1;
-                    8'h24: i2c_write_cs = 1'b1;
-                    8'h28: i2c_control_cs = 1'b1;
-                    default: begin
-                    end
-                endcase
-            end
-            default: begin
-            end
-        endcase
-    end
+    // IO selects
+    wire led_cs;
+    wire ps2_status_cs;
+    wire ps2_scancode_cs;
+    wire tonegen_duration_cs;
+    wire tonegen_period_cs;
+    wire tonegen_status_cs;
+    wire scroll_cs;
+    wire i2c_address_cs;
+    wire i2c_read_cs;
+    wire i2c_write_cs;
+    wire i2c_control_cs;
+
+    addr_decode addr_decode (
+        .address(address),
+        .memory_cs(memory_cs),
+        .map_cs(map_cs),
+        .status_cs(status_cs),
+        .levels_cs(levels_cs),
+        .led_cs(led_cs),
+        .ps2_status_cs(ps2_status_cs),
+        .ps2_scancode_cs(ps2_scancode_cs),
+        .tonegen_duration_cs(tonegen_duration_cs),
+        .tonegen_period_cs(tonegen_period_cs),
+        .tonegen_status_cs(tonegen_status_cs),
+        .scroll_cs(scroll_cs),
+        .i2c_address_cs(i2c_address_cs),
+        .i2c_read_cs(i2c_read_cs),
+        .i2c_write_cs(i2c_write_cs),
+        .i2c_control_cs(i2c_control_cs)
+    );
 
     // Outputs (egress) from various modules
     wire [31:0] data_out; // Processor
@@ -149,57 +121,25 @@ module terasicde2115
     wire bus_error;
     wire halted;
 
-    reg reset = 1'b0;
-    reg [7:0] reset_counter;
-    always @ (posedge cpu_clock) begin
-        if (reset_counter != 8'hff) begin
-            reset <= 1'b1;
-            reset_counter <= reset_counter + 8'h01;
-        end else begin
-            reset <= 1'b0;
-        end
-    end
-
     // Asserting onto databus (processor reads)
-    wire [31:0] ps2_data_out;
-    wire ps2_data_out_valid;
-    wire [31:0] tonegen_data_out;
-    wire tonegen_data_out_valid;
-    wire [31:0] i2c_data_out;
-    wire i2c_data_out_valid;
-    always @ (*)  begin
-        if (memory_cs) begin
-            data_in = ram_data_out;
-        end else if (map_cs) begin
-            data_in = map_data_out;
-        end else if (levels_cs) begin
-            data_in = levels_data_out;
-        end else if (ps2_data_out_valid) begin
-            data_in = ps2_data_out;
-        end else if (tonegen_data_out_valid) begin
-            data_in = tonegen_data_out;
-        end else if (i2c_data_out_valid) begin
-            data_in = i2c_data_out;
-        end else begin
-            data_in = 32'h0;
-        end
-    end
+    data_in_mux data_in_mux (
+        .memory_cs(memory_cs),
+        .ram_data_out(ram_data_out),
+        .map_cs(map_cs),
+        .map_data_out(map_data_out),
+        .levels_cs(levels_cs),
+        .levels_data_out(levels_data_out),
 
-    // Signals that have no "prefix" are for the processor, eg. data_in, data_out
-    maxicore32 maxicore32 (
-        .reset(reset),
-        .clock(cpu_clock),
-        .address(address),
-        .data_in(data_in),
-        .data_out(data_out),
-        .data_strobes(data_strobes),
-        .read(read),
-        .write(write),
-        .bus_error(bus_error),
-        .halted(halted),
-        .user(LEDG[5:0])
+        .ps2_data_out_valid(ps2_data_out_valid),
+        .ps2_data_out(ps2_data_out),
+        .tonegen_data_out_valid(tonegen_data_out_valid),
+        .tonegen_data_out(tonegen_data_out),
+        .i2c_data_out_valid(i2c_data_out_valid),
+        .i2c_data_out(i2c_data_out),
+
+        .data_in(data_in)
     );
-    
+   
     assign LEDG[7:6] = 2'b0;
 
     // On my "beta" board these are active low.
@@ -238,6 +178,14 @@ module terasicde2115
     assign VGA_G[3:0] = 4'h0;
     assign VGA_B[3:0] = 4'h0;
 
+    wire reset;
+    reset_gen reset_gen (
+        .clock(cpu_clock),
+        .reset(reset)
+    );
+
+    wire [31:0] i2c_data_out;
+    wire i2c_data_out_valid;
     i2c_interface i2c_interface (
         .clock(cpu_clock),
         .reset(reset),
@@ -254,6 +202,8 @@ module terasicde2115
         .sda(EEP_I2C_SDAT)
     );
 
+    wire [31:0] ps2_data_out;
+    wire ps2_data_out_valid;
     ps2_interface ps2_interface (
         .clock(cpu_clock),
         .read(read),
@@ -265,19 +215,19 @@ module terasicde2115
         .ps2_data(PS2_DAT)
     );
 
-    wire buzzer;
-    tonegen_interface tonegen_interface (
+    // Signals that have no "prefix" are for the processor, eg. data_in, data_out
+    maxicore32 maxicore32 (
         .reset(reset),
         .clock(cpu_clock),
+        .address(address),
+        .data_in(data_in),
+        .data_out(data_out),
+        .data_strobes(data_strobes),
         .read(read),
         .write(write),
-        .duration_cs(tonegen_duration_cs),
-        .period_cs(tonegen_period_cs),
-        .status_cs(tonegen_status_cs),
-        .data_in(data_out),
-        .data_out(tonegen_data_out),
-        .data_out_valid(tonegen_data_out_valid),
-        .buzzer(buzzer)
+        .bus_error(bus_error),
+        .halted(halted),
+        .user(LEDG[5:0])
     );
 
 endmodule
