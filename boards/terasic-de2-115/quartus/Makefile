@@ -11,4 +11,4 @@ all:
 	quartus_sta $(PROJECT)
 
 program_fpga:
-	quartus_pgm  -m jtag -o p\;$(PROJECT).sof
+	quartus_pgm --mode JTAG --operation p\;$(PROJECT).sof
