@@ -33,7 +33,7 @@ main:           loadi.u r1,0
                 add r1,r1,1
                 nop
                 ; Set to size of ROM in KBytes
-                compare r1,r1,8
+                compare r1,r1,4
                 nop
                 branch.ne .levelloop
                 loadi.s r0,-1

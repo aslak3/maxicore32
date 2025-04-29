@@ -1,12 +1,12 @@
-module vga
+module video
     (
-        input vga_clock,
+        input video_clock,
         output h_sync,
         output v_sync,
-        output n_vga_blank,
-        output reg [3:0] red,
-        output reg [3:0] green,
-        output reg [3:0] blue,
+        output data_enable,
+        output reg [7:0] red,
+        output reg [7:0] green,
+        output reg [7:0] blue,
 
         input cpu_clock,
         input read,
@@ -24,8 +24,8 @@ module vga
     reg [9:0] h_count;
     reg [9:0] v_count;
     reg [9:0] frame_count;
-    vga_sync vga_sync (
-        .clock(vga_clock),
+    video_sync video_sync (
+        .clock(video_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
         .h_visible(h_visible),
@@ -37,6 +37,8 @@ module vga
     wire [9:0] viewable_h_count = h_count - 10'd16;
     wire [4:0] internal_tile_count = 5'b00000 - viewable_h_count[4:0];
 
+    assign data_enable = h_visible & v_visible;
+
     wire [7:0] map_tile_index;
     // This is the byte address (not tile address) of the top left tile, 5 bits for row and 5 for column
     reg [11:2] scroll = 10'b0000000000;
@@ -44,7 +46,7 @@ module vga
     // processor, which is read and write via two copies of the map, since the iCE40 does not have true
     // dual port block RAM.
     map_ram map_ram (
-        .a_clock(vga_clock),
+        .a_clock(video_clock),
         // Scanning beam is in vertical visual range, we are not in the top tile row (for status row),
         // and we are the right most position of the tile
         .a_read(v_visible && v_count[9:5] != 5'b00000 && viewable_h_count[4:0] == 5'b11111),
@@ -65,7 +67,7 @@ module vga
 
     wire [7:0] status_tile_index;
     status_ram status_ram (
-        .a_clock(vga_clock),
+        .a_clock(video_clock),
         // Scanning beam is in vertical visual range, we are the top tile row, and we are at the right most
         // position of the tile
         .a_read(v_visible && v_count[9:5] == 5'b00000 && viewable_h_count[4:0] == 5'b11111),
@@ -93,9 +95,9 @@ module vga
     // tile_data is a row of tile, ie 16*4 bits per pixel bits
     wire [16*4-1:0] tile_data;
     tile_rom tile_rom (
-        .clock(vga_clock),
+        .clock(video_clock),
         .read(v_visible),
-        .tile_index(tile_index[5:0]),
+        .tile_index(tile_index[4:0]),
         .row_index(v_count[4:1]),
         .dout(tile_data)
     );
@@ -108,37 +110,20 @@ module vga
         .rgb_out(rgb_data)
     );
 
-    always @ (posedge vga_clock) begin
+    always @ (posedge video_clock) begin
         if (h_visible == 1 && v_visible == 1) begin
-            red <= rgb_data[11:8];
-            green <= rgb_data[7:4];
-            blue <= rgb_data[3:0];
+            red <= { rgb_data[11:8], 4'h0 };
+            green <= { rgb_data[7:4], 4'h0 };
+            blue <= { rgb_data[3:0], 4'h0 };
         end else begin
-            red <= 4'h0;
-            green <= 4'h0;
-            blue <= 4'h0;
+            red <= 8'h00;
+            green <= 8'h00;
+            blue <= 8'h00;
         end
     end
-
-    assign n_vga_blank = 1;
 endmodule
 
-module vga_clock_gen
-    (
-        input clock,
-        output vga_clock
-    );
-
-    reg t = 0;
-
-    always @ (posedge clock) begin
-        t = ~t;
-    end
-
-    assign vga_clock = t;
-endmodule
-
-module vga_sync
+module video_sync
     (
         input clock,
         output reg h_sync,

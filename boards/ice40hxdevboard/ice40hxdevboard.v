@@ -1,5 +1,5 @@
 // This is the normal state to enable a display; you cannot enable both of these options
-`define ENABLE_VGA 1
+`define ENABLE_VIDEO 1
 // Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
@@ -7,16 +7,10 @@ module ice40hxdevboard
     (
         input       clock,
 
-        output      h_sync,
-        output      v_sync,
-        output reg  [3:0] red,
-        output reg  [3:0] green,
-        output reg  [3:0] blue,
-        output      n_vga_blank,
-        output reg  vga_clock,
-
         output      buzzer,
         output      [2:0] leds,
+
+        input       [3:0] buttons,
 
         inout       ps2a_clock,
         inout       ps2a_data,
@@ -27,16 +21,47 @@ module ice40hxdevboard
         // For tracing signals; usually plumed into the processor
         output      [7:0] user,
 
-        inout       [21:12] exp,
+        inout       [25:0] exp,
         inout       [1:0] expcbsel,
-        input       [1:0] expgbin
+
+        inout       [15:0] sdramd,
+        output      [12:0] sdrama,
+        output      n_sdramcs,
+        output      sdramcke,
+        output      sdramclk,
+        output      sdramdqml,
+        output      sdramdqmh,
+        output      n_sdramwe,
+        output      n_sdramcas,
+        output      n_sdramras,
+
+        input       uartrx,
+        output      uarttx,
+        input       uartdtr
     );
 
+    assign sdramd = 16'h1234;
+    assign sdrama = 13'b0;
+
+    assign n_sdramcs = 1'b1;
+    assign sdramcke = 1'b0;
+    assign sdramclk = 1'b0;
+    assign sdramdqml = 1'b0;
+    assign sdramdqmh = 1'b0;
+    assign n_sdramwe = 1'b1;
+    assign n_sdramcas = 1'b1;
+    assign n_sdramras = 1'b1;
+
+    assign uarttx = 1'b0;
+
     // Unused bits should be compiled away
-    reg [15:0] clock_counter = 16'h0;
+    reg [31:0] clock_counter = 32'h0;
     always @ (posedge clock) begin
-        clock_counter <= clock_counter + 16'h01;
+        clock_counter <= clock_counter + 32'h1;
     end
+
+    assign leds = clock_counter[25:23];
+    assign user = 8'h00;//clock_counter[23:16];
 
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[1];
@@ -114,14 +139,6 @@ module ice40hxdevboard
     );
 `endif
 
-    led led (
-        .clock(cpu_clock),
-        .write(write),
-        .cs(led_cs),
-        .data_in(data_out),
-        .led(leds[0])
-    );
-
     reg [31:0] data_in;
     wire bus_error;
     wire halted;
@@ -144,23 +161,24 @@ module ice40hxdevboard
         .data_in(data_in)
     );
 
-    assign exp[21:12] = 10'b0;
-    assign expcbsel = expgbin;
+    wire video_clock;
+    wire h_sync, v_sync;
+    wire data_enable;
+    wire [7:0] red;
+    wire [7:0] green;
+    wire [7:0] blue;
 
-    assign leds[1] = ~bus_error;
-    assign leds[2] = ~halted;
-
-    vga_clock_gen vga_clock_gen (
+    video_clock_gen video_clock_gen (
         .clock(clock),
-        .vga_clock(vga_clock)
+        .video_clock(video_clock)
     );
 
-`ifdef ENABLE_VGA
-    vga vga (
-        .vga_clock(vga_clock),
+`ifdef ENABLE_VIDEO
+    video video (
+        .video_clock(video_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
-        .n_vga_blank(n_vga_blank),
+        .data_enable(data_enable),
         .red(red),
         .green(green),
         .blue(blue),
@@ -176,6 +194,32 @@ module ice40hxdevboard
         .map_data_out(map_data_out)
     );
 `endif
+
+    assign exp[7] = video_clock;
+    assign exp[10] = h_sync;
+    assign exp[11] = v_sync;
+    assign exp[25] = data_enable;
+
+    assign exp[17] = red[2];
+    assign exp[2] = red[3];
+    assign exp[16] = red[4];
+    assign exp[1] = red[5];
+    assign exp[15] = red[6];
+    assign exp[0] = red[7];
+
+    assign exp[20] = green[2];
+    assign exp[5] = green[3];
+    assign exp[19] = green[4];
+    assign exp[4] = green[5];
+    assign exp[18] = green[6];
+    assign exp[3] = green[7];
+
+    assign exp[9] = blue[2];
+    assign exp[23] = blue[3];
+    assign exp[8] = blue[4];
+    assign exp[22] = blue[5];
+    assign exp[21] = blue[6];
+    assign exp[6] = blue[7];
 
     wire reset;
     reset_gen reset_gen (
@@ -241,7 +285,20 @@ module ice40hxdevboard
         .read(read),
         .write(write),
         .bus_error(bus_error),
-        .halted(halted),
-        .user(user[5:0])
+        .halted(halted)
     );
+endmodule
+
+module video_clock_gen
+    (
+        input clock,
+        output video_clock
+    );
+
+    reg [1:0] counter;
+    always @ (posedge clock) begin
+        counter = counter + 2'b01;
+    end
+
+    assign video_clock = counter[1];
 endmodule

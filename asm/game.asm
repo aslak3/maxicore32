@@ -26,38 +26,47 @@ KEY_D=0x23
 KEY_ESC=0x76
 KEY_SPACE=0x29
 
-TILE_BLANK=0x00
-TILE_WALL=0x01
-TILE_DIRT=0x02
-TILE_BOULDER=0x03
-TILE_PLAYER=0x04
-TILE_STATUS_GEM=0x0b
-TILE_GEM=0x0c
-TILE_EXIT=0xd
-TILE_BAT=0x0e
-TILE_STAR=0x0f
-TILE_STATUS_BLANK=0x10
-TILE_STATUS_PLAYER=0x11
-TILE_STATUS_DEAD_PLAYER=0x12
-TILE_STATUS_LEVEL1=0x13
-TILE_STATUS_LEVEL2=0x14
-TILE_STATUS_0=0x20
-TILE_STATUS_1=0x21
-TILE_STATUS_2=0x22
-TILE_STATUS_3=0x23
-TILE_STATUS_4=0x24
-TILE_STATUS_5=0x25
-TILE_STATUS_6=0x26
-TILE_STATUS_7=0x27
-TILE_STATUS_8=0x28
-TILE_STATUS_9=0x29
+TILE_BLANK=0x00                 ; TILE_BLANK=0x00
+TILE_WALL=0x01                  ; TILE_WALL=0x01
+TILE_DIRT=0x02                  ; TILE_DIRT=0x02
+TILE_BOULDER=0x03               ; TILE_BOULDER=0x03
+TILE_EXIT=0x04                  ; TILE_EXIT=0x*d
+TILE_PLAYER=0x05
+
+TILE_GEM=0x08                   ; TILE_GEM=0x*c
+TILE_GEM_1=0x09
+TILE_GEM_2=0x0a
+TILE_GEM_3=0x0b
+TILE_BAT=0x0c                   ; TILE_BAT=0x*e
+TILE_BAT_1=0x0d
+TILE_BAT_2=0x0e
+TILE_BAT_3=0x0f
+
+TILE_STATUS_0=0x10
+TILE_STATUS_1=0x11
+TILE_STATUS_2=0x12
+TILE_STATUS_3=0x13
+TILE_STATUS_4=0x14
+TILE_STATUS_5=0x15
+TILE_STATUS_6=0x16
+TILE_STATUS_7=0x17
+TILE_STATUS_8=0x18
+TILE_STATUS_9=0x19
+
+TILE_STATUS_GEM=0x1a
+TILE_STATUS_BLANK=0x1b
+TILE_STATUS_PLAYER=0x1c
+TILE_STATUS_DEAD_PLAYER=0x1d
+TILE_STATUS_LEVEL1=0x1e
+TILE_STATUS_LEVEL2=0x1f
 
 BAT_DIR_UP=0x00
-BAT_DIR_LEFT=0x10
-BAT_DIR_DOWN=0x20
-BAT_DIR_RIGHT=0x30
+BAT_DIR_LEFT=0x01
+BAT_DIR_DOWN=0x02
+BAT_DIR_RIGHT=0x03
 
-DEVICE_ADDRESS=0x50                                                 ; at24c64 i2c address
+EEPROM_DEVICE_ADDRESS=0x50                                                 ; at24c64 i2c address
+TFP410_DEVICE_ADDRESS=0x38
 
 ; fixed register usage: all other register usage is fairly adhoc
 ;   r15=stack, r14=return address, r13=vars pointer, r12=video memory, r11=io base address, r10=status line
@@ -70,6 +79,8 @@ startnewgame:   loadi.u r15,stack                                   ; setup stac
                 loadi.l r11,IO_BASE
                 loadi.l r10,STATUS_MEM_BASE
                 loadi.s r5,4                                        ; direction boulder will slide
+
+                callbranch r14,tfp410_init
 
                 callbranch r14,skelstatus                           ; the status tuff that doesn't change
 
@@ -90,7 +101,7 @@ mainloop:       add r9,r9,1
                 nop
                 callbranch.eq r14,gravity
 
-                bit r9,r9,0x1fff                                    ; every 2^12 loops animate
+                bit r9,r9,0x3fff                                    ; every 2^13 loops animate
                 nop
                 callbranch.eq r14,animater
 
@@ -123,13 +134,9 @@ mainloop:       add r9,r9,1
                 nop
                 branch.eq startnewgame                              ; escape will restart the game, if not halted
 
-.collisions:    load.bu r2,r0(r12)                                  ; get whats at new space, maybe again
+
+.collisions:    load.bu r3,r0(r12)                                  ; get whats at new space, maybe again
                 nop
-                and r3,r2,0x0f
-                nop
-                compare r3,r3,TILE_GEM                              ; gems!
-                nop
-                branch.eq .gem
                 compare r3,r3,TILE_EXIT
                 nop
                 branch.eq .exit
@@ -139,13 +146,16 @@ mainloop:       add r9,r9,1
                 compare r3,r3,TILE_BOULDER                          ; see if we can't walk into it
                 nop
                 branch.eq mainloop                                  ; if we can't, skip updating
+                and r3,r3,0x1c                                      ; mask away anim bits
+                nop
+                compare r3,r3,TILE_GEM                              ; gems!
+                nop
+                branch.eq .gem
 .updatepos:     store.w player_pos-vars(r13),r0                     ; new position
                 branch mainloop
 
 ; r0=new player pos, r1=new pos of boulder, r2=whats at new pos of boulder, r4=delta of player
 .bouldercheck:  load.bu r2,r0(r12)
-                nop
-                and r2,r2,0x0f
                 nop
                 compare r2,r2,TILE_BOULDER
                 nop
@@ -162,8 +172,8 @@ mainloop:       add r9,r9,1
                 store.b r1(r12),r2                                  ; move boulder
                 branch .updatepos                                   ; move into old space held by boulder
 
-.gem:           loadi.u r1,0x2000
-                loadi.u r2,0x800
+.gem:           loadi.u r1,0x4000
+                loadi.u r2,0x1000
                 store.l TONEGEN_PERIOD_OF(r11),r1
                 store.l TONEGEN_DURATION_OF(r11),r2                 ; sound tone
                 load.wu r1,exit_open-vars(r13)
@@ -359,14 +369,11 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; don't anim
                 store.b bat_tile_match-vars(r13),r1                 ; save it
 .loop:          load.bu r1,r0(r12)
                 nop
-                and r2,r1,0x8f
+                and r2,r1,0xfc                                      ; mask out lower (anim frame) bits
                 nop
                 compare r2,r2,TILE_GEM
                 nop
                 branch.eq .gem
-                compare r2,r2,TILE_EXIT
-                nop
-                branch.eq .gem                                      ; exit can be animated as well, same as gem
                 compare r2,r2,r4                                    ; looking for bats
                 nop
                 branch.eq .bat
@@ -375,14 +382,14 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; don't anim
                 branch.pl .loop
                 jump r14
 ; r0=pos, r1=original and new tile
-.gem:           add r1,r1,0x10                                      ; next animation frame
+.gem:           add r1,r1,0x01                                      ; next animation frame
                 nop
-                and r1,r1,0x3f                                      ; mask out the upper bits so add doesn't wrap
+                and r1,r1,TILE_GEM|0x03                             ; mask out so it doesn't wrap
                 nop
                 store.b r0(r12),r1
                 branch .continue
 ; r0=original pos, r1=tile, r2=bat direction, r3=whats at new tile/what we are writing, r4=
-.bat:           and r2,r1,0x30                                      ; get direction
+.bat:           and r2,r1,0x03                                      ; get direction
                 nop
                 compare r2,r2,BAT_DIR_LEFT
                 nop
@@ -413,9 +420,11 @@ animater:       load.bu r4,bat_tile_match-vars(r13)                 ; don't anim
                 nop
                 store.b r2(r12),r3
                 branch .continue
-.rotate:        add r1,r1,0x10                                      ; rotate!
+.rotate:        add r1,r1,0x01                                      ; rotate!
                 copy r2,r0                                          ; not moving
-                and r1,r1,0b10111111
+                and r1,r1,0x03
+                nop
+                or r1,r1,TILE_BAT
                 branch .draw
 
 scrolling:      load.wu r0,player_pos-vars(r13)                      ; get current position in tile memory
@@ -481,7 +490,7 @@ loadlevel:      sub r15,r15,4
                 loadi.u r0,0
                 nop
                 store.b I2C_CONTROL_OF(r11),r0                      ; clear last byte
-                loadi.u r0,DEVICE_ADDRESS
+                loadi.u r0,EEPROM_DEVICE_ADDRESS
                 nop
                 store.b I2C_ADDRESS_OF(r11),r0
                 callbranch r14,i2cwaitnotbusy
@@ -496,7 +505,7 @@ loadlevel:      sub r15,r15,4
                 store.b I2C_WRITE_OF(r11),r1
                 callbranch r14,i2cwaitnotbusy
                 branch.ne nack
-                loadi.u r0,DEVICE_ADDRESS | 0x80                    ; read
+                loadi.u r0,EEPROM_DEVICE_ADDRESS | 0x80             ; read
                 nop
                 store.b I2C_ADDRESS_OF(r11),r0
                 callbranch r14,i2cwaitnotbusy
@@ -527,6 +536,47 @@ loadlevel:      sub r15,r15,4
                 jump r14
 
 nack:           halt
+
+tfp410_init:    sub r15,r15,4
+                nop
+                store.l 0(r15),r14                                  ; save current return address
+
+                loadi.u r1,tfp_reg_start
+                loadi.u r2,tfp_reg_end-tfp_reg_start
+
+.loop:          loadi.u r0,0
+                nop
+                store.b I2C_CONTROL_OF(r11),r0                      ; clear last byte
+                loadi.u r0,TFP410_DEVICE_ADDRESS
+                nop
+                store.b I2C_ADDRESS_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                load.bu r0,(r1)
+                nop
+                add r1,r1,1
+                nop
+                store.b I2C_WRITE_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+                loadi.u r0,0x80
+                nop
+                store.b I2C_CONTROL_OF(r11),r0                     ; set last byte
+                load.bu r0,(r1)
+                nop
+                add r1,r1,1
+                nop
+                store.b I2C_WRITE_OF(r11),r0
+                callbranch r14,i2cwaitnotbusy
+                branch.ne nack
+
+                sub r2,r2,2
+                nop
+                branch.ne .loop
+
+                load.l r14,0(r15)
+                add r15,r15,4
+                jump r14
 
 ; returns with zero clear if nack'd
 i2cwaitnotbusy: load.bs r0,I2C_STATUS_OF(r11)                       ; get the current status
@@ -603,7 +653,7 @@ exit_pos:       #d16 0
 exit_open:      #d16 0                                              ; 1 for exit to next level is open
 last_key:       #d16 0                                              ; last scan code (used for ignoring key up)
 lives_left:     #d16 0                                              ; obviously lives left
-current_level:  #d16 0                                              ; ...
+current_level:  #d16 0                                             ; ...
 new_life_pos:   #d16 0                                              ; where to start when dying on current level
 
 ; descriptor (struct) for a level
@@ -664,3 +714,16 @@ status_end:
 
 ; the next animation bat tile - the top bit is toggled on each animation frame so we don't move the same bat twice
 bat_tile_match: #d8 TILE_BAT
+
+tfp_reg_start:
+                #d8 0x08
+                #d8 0b00110101                                      ; ctl_1_mode
+                #d8 0x09
+                #d8 0b00111000                                      ; ctl_2_mode
+                #d8 0x0a
+                #d8 0b10000000                                      ; ctl_3_mode
+                #d8 0x32
+                #d8 0b00000000                                     ; de_dly
+                #d8 0x33
+                #d8 0b00000000                                     ; de_ctl
+tfp_reg_end:

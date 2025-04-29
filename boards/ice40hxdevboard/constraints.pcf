@@ -1,30 +1,24 @@
-set_io --warn-no-port clock 128         # MASTERCLK
-set_io --warn-no-port button 94         # BUTTON0
+set_io --warn-no-port clock 129         # MASTERCLK
+
 set_io --warn-no-port buzzer 135        # BUZZER
 
-set_io --warn-no-port vga_clock 97      # EXP25
-set_io --warn-no-port h_sync 99         # EXP24
-set_io --warn-no-port v_sync 102        # EXP23
-set_io --warn-no-port n_vga_blank 105   # EXP22
-
-set_io --warn-no-port red[3] 117        # EXP3
-set_io --warn-no-port red[2] 119        # EXP2
-set_io --warn-no-port red[1] 121        # EXP1
-set_io --warn-no-port red[0] 124        # EXP0
-
-set_io --warn-no-port green[3] 106      # EXP7
-set_io --warn-no-port green[2] 110      # EXP6
-set_io --warn-no-port green[1] 113      # EXP5
-set_io --warn-no-port green[0] 115      # EXP4
-
-set_io --warn-no-port blue[3] 96        # EXP11
-set_io --warn-no-port blue[2] 98        # EXP10
-set_io --warn-no-port blue[1] 101       # EXP9
-set_io --warn-no-port blue[0] 104       # EXP8
+set_io --warn-no-port user[7] 144       # USER7
+set_io --warn-no-port user[6] 142       # USER6
+set_io --warn-no-port user[5] 139       # USER5
+set_io --warn-no-port user[4] 137       # USER4
+set_io --warn-no-port user[3] 143       # USER3
+set_io --warn-no-port user[2] 141       # USER2
+set_io --warn-no-port user[1] 138       # USER1
+set_io --warn-no-port user[0] 136       # USER0
 
 set_io --warn-no-port leds[2] 125       # LED2
 set_io --warn-no-port leds[1] 130       # LED1
 set_io --warn-no-port leds[0] 134       # LED0
+
+set_io --warn-no-port buttons[3] 52     # BUTTON3
+set_io --warn-no-port buttons[2] 49     # BUTTON2
+set_io --warn-no-port buttons[1] 93     # BUTTON1
+set_io --warn-no-port buttons[0] 94     # BUTTON0
 
 set_io --warn-no-port ps2a_data 10      # PS2ADATA
 set_io --warn-no-port ps2a_clock 9      # PS2ACLK
@@ -34,28 +28,76 @@ set_io --warn-no-port ps2b_clock 8      # PS2ACLK
 set_io --warn-no-port scl 22            # I2CSCL
 set_io --warn-no-port sda 19            # I2CSDA
 
-set_io --warn-no-port user[7] 137       # USER7
-set_io --warn-no-port user[6] 136       # USER6
-set_io --warn-no-port user[5] 139       # USER5
-set_io --warn-no-port user[4] 138       # USER4
-set_io --warn-no-port user[3] 142       # USER3
-set_io --warn-no-port user[2] 141       # USER2
-set_io --warn-no-port user[1] 144       # USER1
-set_io --warn-no-port user[0] 143       # USER0
+set_io --warn-no-port sdramd[15] 55     # SDRAMD15
+set_io --warn-no-port sdramd[14] 56     # SDRAMD14
+set_io --warn-no-port sdramd[13] 60     # SDRAMD13
+set_io --warn-no-port sdramd[12] 61     # SDRAMD12
+set_io --warn-no-port sdramd[11] 62     # SDRAMD11
+set_io --warn-no-port sdramd[10] 73     # SDRAMD10
+set_io --warn-no-port sdramd[9] 74      # SDRAMD9
+set_io --warn-no-port sdramd[8] 75      # SDRAMD8
+set_io --warn-no-port sdramd[7] 39      # SDRAMD7
+set_io --warn-no-port sdramd[6] 41      # SDRAMD6
+set_io --warn-no-port sdramd[5] 42      # SDRAMD5
+set_io --warn-no-port sdramd[4] 43      # SDRAMD4
+set_io --warn-no-port sdramd[3] 44      # SDRAMD3
+set_io --warn-no-port sdramd[2] 45      # SDRAMD2
+set_io --warn-no-port sdramd[1] 47      # SDRAMD1
+set_io --warn-no-port sdramd[0] 48      # SDRAMD0
 
-set_io --warn-no-port exp[12] 95        # EXP12
-set_io --warn-no-port exp[13] 91        # EXP13
-set_io --warn-no-port exp[14] 90        # EXP14
-set_io --warn-no-port exp[15] 122       # EXP15
-set_io --warn-no-port exp[16] 120       # EXP16
-set_io --warn-no-port exp[17] 118       # EXP17
-set_io --warn-no-port exp[18] 116       # EXP18
-set_io --warn-no-port exp[19] 114       # EXP19
-set_io --warn-no-port exp[20] 112       # EXP20
+set_io --warn-no-port sdrama[12] 80     # SDRAMA12
+set_io --warn-no-port sdrama[11] 81     # SDRAMA11
+set_io --warn-no-port sdrama[10] 28     # SDRAMA10
+set_io --warn-no-port sdrama[9] 82      # SDRAMA9
+set_io --warn-no-port sdrama[8] 83      # SDRAMA8
+set_io --warn-no-port sdrama[7] 84      # SDRAMA7
+set_io --warn-no-port sdrama[6] 85      # SDRAMA6
+set_io --warn-no-port sdrama[5] 87      # SDRAMA5
+set_io --warn-no-port sdrama[4] 88      # SDRAMA4
+set_io --warn-no-port sdrama[3] 23      # SDRAMA3
+set_io --warn-no-port sdrama[2] 24      # SDRAMA2
+set_io --warn-no-port sdrama[1] 25      # SDRAMA1
+set_io --warn-no-port sdrama[0] 26      # SDRAMA0
+
+set_io --warn-no-port n_sdramcs 32      # /SDRAMCS
+set_io --warn-no-port sdramcke 79       # SDRAMCKE
+set_io --warn-no-port sdramclk 78       # SDRAMCLK
+set_io --warn-no-port sdramdqml 38      # SDRAMDQML
+set_io --warn-no-port sdramdqmh 76      # SDRAMDQMH
+set_io --warn-no-port n_sdramwe 37      # /SDRAMWE
+set_io --warn-no-port n_sdramcas 34     # /SDRAMCAS
+set_io --warn-no-port n_sdramras 33     # /SDRAMRAS
+
+set_io --warn-no-port uarttx 1          # UARTTX
+set_io --warn-no-port uartrx 4          # UARTRX
+set_io --warn-no-port uartdtr 2         # UARTDTR
+
+set_io --warn-no-port exp[25] 97        # EXP25
+set_io --warn-no-port exp[24] 99        # EXP24
+set_io --warn-no-port exp[23] 102       # EXP23
+set_io --warn-no-port exp[22] 105       # EXP22
 set_io --warn-no-port exp[21] 107       # EXP21
+set_io --warn-no-port exp[20] 112       # EXP20
+set_io --warn-no-port exp[19] 114       # EXP19
+set_io --warn-no-port exp[18] 116       # EXP18
+set_io --warn-no-port exp[17] 118       # EXP17
+set_io --warn-no-port exp[16] 120       # EXP16
+set_io --warn-no-port exp[15] 122       # EXP15
+set_io --warn-no-port exp[14] 90        # EXP14
+set_io --warn-no-port exp[13] 91        # EXP13
+set_io --warn-no-port exp[12] 95        # EXP12
+set_io --warn-no-port exp[11] 96        # EXP11
+set_io --warn-no-port exp[10] 98        # EXP10
+set_io --warn-no-port exp[9] 101        # EXP9
+set_io --warn-no-port exp[8] 104        # EXP8
+set_io --warn-no-port exp[7] 106        # EXP7
+set_io --warn-no-port exp[6] 110        # EXP6
+set_io --warn-no-port exp[5] 113        # EXP5
+set_io --warn-no-port exp[4] 115        # EXP4
+set_io --warn-no-port exp[3] 117        # EXP3
+set_io --warn-no-port exp[2] 119        # EXP2
+set_io --warn-no-port exp[1] 121        # EXP1
+set_io --warn-no-port exp[0] 124        # EXP0
 
 set_io --warn-no-port expcbsel[0] 63    # CBSEL0
 set_io --warn-no-port expcbsel[1] 64    # CBSEL1
-
-set_io --warn-no-port expgbin[0] 20     # GBIN0
-set_io --warn-no-port expgbin[1] 21     # GBIN1

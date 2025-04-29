@@ -15,8 +15,7 @@ module maxicore32
         output  read,
         output  write,
         output  bus_error,
-        output  reg halted,
-        output  [5:0] user
+        output  reg halted
     );
 
     wire [31:0] cpu_address;
@@ -240,11 +239,4 @@ module maxicore32
     assign alu_reg3 = memorystage1_alu_immediate_cycle == 1'b0 ?
         register_file_read_reg3_data :
         {{ 16 { memorystage1_immediate[15] }}, memorystage1_immediate };
-
-    assign user[0] = clock;
-    assign user[1] = read;
-    assign user[2] = write;
-    assign user[3] = reset;
-    assign user[4] = memorystage1_halting;
-    assign user[5] = memorystage1_control_flow_start_cycle;
 endmodule

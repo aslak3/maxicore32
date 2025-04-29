@@ -62,8 +62,8 @@ module maxicore32_tb;
         .read(read),
         .write(write),
         .bus_error(bus_error),
-        .halted(halted),
-        .user(user)
+        .halted(halted)
+        // .user(user)
     );
 
     wire [31:0] shifted_address = { address, 2'b00 };

@@ -1,5 +1,5 @@
 // This is the normal state to enable a display; you cannot enable both of these options
-`define ENABLE_VGA 1
+`define ENABLE_VIDEO 1
 // Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
@@ -140,17 +140,23 @@ module ice40updevboard
         .data_in(data_in)
     );
 
-    vga_clock_gen vga_clock_gen (
+`ifdef ENABLE_VIDEO
+    wire video_clock;
+
+    video_clock_gen video_clock_gen (
         .clock(clock),
-        .vga_clock(vga_clock)
+        .video_clock(video_clock)
     );
 
-`ifdef ENABLE_VGA
-    vga vga (
-        .vga_clock(vga_clock),
+    assign vga_clock = video_clock;
+
+    wire dummy;
+
+    video video (
+        .video_clock(video_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
-        .n_vga_blank(n_vga_blank),
+        .data_enable(dummy),
         .red(red),
         .green(green),
         .blue(blue),
@@ -165,6 +171,8 @@ module ice40updevboard
         .data_in(data_out),
         .map_data_out(map_data_out)
     );
+
+    assign n_vga_blank = 1'b1;
 `endif
 
     wire reset;
@@ -231,11 +239,26 @@ module ice40updevboard
         .read(read),
         .write(write),
         .bus_error(bus_error),
-        .halted(halted),
-        .user(user)
+        .halted(halted)
     );
 
     // On my "beta" board these are active low.
     assign leds[1] = ~bus_error;
     assign leds[2] = ~halted;
+endmodule
+
+module video_clock_gen
+    (
+        input clock,
+        output video_clock
+    );
+
+    reg t = 0;
+
+    reg [0:0] counter;
+    always @ (posedge clock) begin
+        counter = counter + 1'b1;
+    end
+
+    assign video_clock = counter[0];
 endmodule
