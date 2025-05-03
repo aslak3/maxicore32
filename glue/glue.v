@@ -19,7 +19,9 @@ module addr_decode
         output reg i2c_address_cs,
         output reg i2c_read_cs,
         output reg i2c_write_cs,
-        output reg i2c_control_cs
+        output reg i2c_control_cs,
+        output reg uart_status_cs,
+        output reg uart_data_cs
     );
 
     // High byte: the device "class", Low byte: used to select IO device registers
@@ -42,6 +44,8 @@ module addr_decode
         i2c_read_cs = 1'b0;
         i2c_write_cs = 1'b0;
         i2c_control_cs = 1'b0;
+        uart_status_cs = 1'b0;
+        uart_data_cs = 1'b0;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;    // Program RAM
@@ -62,6 +66,8 @@ module addr_decode
                     8'h20: i2c_read_cs = 1'b1;
                     8'h24: i2c_write_cs = 1'b1;
                     8'h28: i2c_control_cs = 1'b1;
+                    8'h2c: uart_status_cs = 1'b1;
+                    8'h30: uart_data_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -87,6 +93,8 @@ module data_in_mux
         input [31:0] tonegen_data_out,
         input i2c_data_out_valid,
         input [31:0] i2c_data_out,
+        input uart_data_out_valid,
+        input [31:0] uart_data_out,
 
         output reg [31:0] data_in
     );
@@ -104,6 +112,8 @@ module data_in_mux
             data_in = tonegen_data_out;
         end else if (i2c_data_out_valid) begin
             data_in = i2c_data_out;
+        end else if (uart_data_out_valid) begin
+            data_in = uart_data_out;
         end else begin
             data_in = 32'h0;
         end

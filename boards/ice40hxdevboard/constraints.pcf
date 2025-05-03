@@ -15,8 +15,8 @@ set_io --warn-no-port leds[2] 125       # LED2
 set_io --warn-no-port leds[1] 130       # LED1
 set_io --warn-no-port leds[0] 134       # LED0
 
-set_io --warn-no-port buttons[3] 52     # BUTTON3
-set_io --warn-no-port buttons[2] 49     # BUTTON2
+#set_io --warn-no-port buttons[3] 52     # BUTTON3
+#set_io --warn-no-port buttons[2] 49     # BUTTON2
 set_io --warn-no-port buttons[1] 93     # BUTTON1
 set_io --warn-no-port buttons[0] 94     # BUTTON0
 
@@ -68,9 +68,9 @@ set_io --warn-no-port n_sdramwe 37      # /SDRAMWE
 set_io --warn-no-port n_sdramcas 34     # /SDRAMCAS
 set_io --warn-no-port n_sdramras 33     # /SDRAMRAS
 
-set_io --warn-no-port uarttx 1          # UARTTX
-set_io --warn-no-port uartrx 4          # UARTRX
-set_io --warn-no-port uartdtr 2         # UARTDTR
+set_io --warn-no-port uart_tx 1         # UARTTX
+set_io --warn-no-port uart_rx 4         # UARTRX
+set_io --warn-no-port uart_dtr 2        # UARTDTR
 
 set_io --warn-no-port exp[25] 97        # EXP25
 set_io --warn-no-port exp[24] 99        # EXP24

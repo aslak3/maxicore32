@@ -12,7 +12,7 @@ module maxicore32_tb;
     always @ (address[31:24]) begin
         case (address[31:24])
             8'h00: decoder_outputs = { 1'b1, 1'b0 }; 
-            8'hff: decoder_outputs = { 1'b0, 1'b1 };
+            8'h0f: decoder_outputs = { 1'b0, 1'b1 };
             default: begin
                 decoder_outputs = { 1'b0, 1'b0 };
                 $display("Something else selected");
@@ -37,13 +37,15 @@ module maxicore32_tb;
         .write(write)
     );
 
-    wire dummy_led;
+    wire [2:0] dummy_leds;
     led led (
+        .reset(reset),
         .clock(clock),
+
         .cs(display_cs),
         .write(write),
         .data_in(data_out),
-        .led(dummy_led)
+        .leds(dummy_leds)
     );
 
     wire [31:0] data_in;
@@ -63,7 +65,6 @@ module maxicore32_tb;
         .write(write),
         .bus_error(bus_error),
         .halted(halted)
-        // .user(user)
     );
 
     wire [31:0] shifted_address = { address, 2'b00 };

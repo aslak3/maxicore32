@@ -1,5 +1,5 @@
 // This is the normal state to enable a display; you cannot enable both of these options
-`define ENABLE_VIDEO 1
+// `define ENABLE_VIDEO 1
 // Enable this and disable the above when programming the 8 levels into the EEPROM
 // `define ENABLE_LEVELS_ROM 1
 
@@ -10,7 +10,7 @@ module ice40hxdevboard
         output      buzzer,
         output      [2:0] leds,
 
-        input       [3:0] buttons,
+        // input       [3:0] buttons,
 
         inout       ps2a_clock,
         inout       ps2a_data,
@@ -35,9 +35,9 @@ module ice40hxdevboard
         output      n_sdramcas,
         output      n_sdramras,
 
-        input       uartrx,
-        output      uarttx,
-        input       uartdtr
+        input       uart_rx,
+        output      uart_tx,
+        input       uart_dtr
     );
 
     assign sdramd = 16'h1234;
@@ -52,16 +52,13 @@ module ice40hxdevboard
     assign n_sdramcas = 1'b1;
     assign n_sdramras = 1'b1;
 
-    assign uarttx = 1'b0;
-
     // Unused bits should be compiled away
     reg [31:0] clock_counter = 32'h0;
     always @ (posedge clock) begin
         clock_counter <= clock_counter + 32'h1;
     end
 
-    assign leds = clock_counter[25:23];
-    assign user = 8'h00;//clock_counter[23:16];
+    // assign leds = clock_counter[25:23];
 
     // From 50Mhz/2 to 50Mhz/256; current fMax is just under 12MHz, but /4 seems fine.
     wire cpu_clock = clock_counter[1];
@@ -87,6 +84,8 @@ module ice40hxdevboard
     wire i2c_read_cs;
     wire i2c_write_cs;
     wire i2c_control_cs;
+    wire uart_data_cs;
+    wire uart_status_cs;
 
     addr_decode addr_decode (
         .address(address),
@@ -104,7 +103,9 @@ module ice40hxdevboard
         .i2c_address_cs(i2c_address_cs),
         .i2c_read_cs(i2c_read_cs),
         .i2c_write_cs(i2c_write_cs),
-        .i2c_control_cs(i2c_control_cs)
+        .i2c_control_cs(i2c_control_cs),
+        .uart_data_cs(uart_data_cs),
+        .uart_status_cs(uart_status_cs)
     );
 
     // Outputs (egress) from various modules
@@ -139,6 +140,16 @@ module ice40hxdevboard
     );
 `endif
 
+    led led (
+        .reset(reset),
+        .clock(cpu_clock),
+
+        .write(write),
+        .cs(led_cs),
+        .data_in(data_out),
+        .leds(leds)
+    );
+
     reg [31:0] data_in;
     wire bus_error;
     wire halted;
@@ -157,6 +168,8 @@ module ice40hxdevboard
         .tonegen_data_out(tonegen_data_out),
         .i2c_data_out_valid(i2c_data_out_valid),
         .i2c_data_out(i2c_data_out),
+        .uart_data_out_valid(uart_data_out_valid),
+        .uart_data_out(uart_data_out),
 
         .data_in(data_in)
     );
@@ -168,13 +181,9 @@ module ice40hxdevboard
     wire [7:0] green;
     wire [7:0] blue;
 
-    video_clock_gen video_clock_gen (
-        .clock(clock),
-        .video_clock(video_clock)
-    );
-
 `ifdef ENABLE_VIDEO
     video video (
+        .clock(clock),
         .video_clock(video_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
@@ -274,6 +283,26 @@ module ice40hxdevboard
         .buzzer(buzzer)
     );
 
+    wire [31:0] uart_data_out;
+    wire uart_data_out_valid;
+    uart_interface uart_interface (
+        .reset(reset),
+        .clock(cpu_clock),
+
+        .read(read),
+        .write(write),
+
+        .data_cs(uart_data_cs),
+        .status_cs(uart_status_cs),
+        .data_in(data_out),
+        .data_out(uart_data_out),
+        .data_out_valid(uart_data_out_valid),
+
+        .tx(uart_tx),
+        .rx(uart_rx)
+    );
+
+
     // Signals that have no "prefix" are for the processor, eg. data_in, data_out
     maxicore32 maxicore32 (
         .reset(reset),
@@ -289,16 +318,34 @@ module ice40hxdevboard
     );
 endmodule
 
-module video_clock_gen
+module pll #(
+        parameter DIVR = 0,
+        parameter DIVF = 0,
+        parameter DIVQ = 0
+    )
     (
-        input clock,
-        output video_clock
+        input in_clock,
+        output out_clock,
+        output locked
     );
 
-    reg [1:0] counter;
-    always @ (posedge clock) begin
-        counter = counter + 2'b01;
-    end
+    wire internal_clock;
 
-    assign video_clock = counter[1];
+`ifndef VERILATOR
+    SB_PLL40_CORE #(
+        .FEEDBACK_PATH("SIMPLE"),
+
+        .DIVR(DIVR),
+        .DIVF(DIVF),
+        .DIVQ(DIVQ),
+
+        .FILTER_RANGE(3'b001)   // FILTER_RANGE = 1
+    ) uut (
+        .LOCK(locked),
+        .RESETB(1'b1),
+        .BYPASS(1'b0),
+        .REFERENCECLK(in_clock),
+        .PLLOUTCORE(out_clock)
+    );
+`endif
 endmodule
