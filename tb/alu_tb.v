@@ -49,7 +49,7 @@ module alu_tb;
                 result, carry_out, zero_out, neg_out, over_out);
 
             if (exp_result != result) begin
-                $display("Result got %08x, expected %0832", result, exp_result); $fatal;
+                $display("Result got %08x, expected %08x", result, exp_result); $fatal;
             end
             if (exp_carry_out != carry_out) begin
                 $display("Carry got %d, expected %d", carry_out, exp_carry_out); $fatal;
@@ -61,7 +61,7 @@ module alu_tb;
                 $display("Neg got %d, expected %d", neg_out, exp_neg_out); $fatal;
             end
             if (exp_over_out != over_out) begin
-                $display("Overut got %d, expected %d", over_out, exp_over_out); $fatal;
+                $display("Over got %d, expected %d", over_out, exp_over_out); $fatal;
             end
         end
     endtask
@@ -124,28 +124,30 @@ module alu_tb;
         run_test(OP_MULS,           32'h00007fff, 32'h00007fff, 1'b0,  32'h3fff0001, 1'b0, 1'b0, 1'b0, 1'b0);
         run_test(OP_MULS,           32'h00007fff, 32'h00008000, 1'b0,  32'hc0008000, 1'b0, 1'b0, 1'b1, 1'b0);
 
+        run_test(OP_LOGIC_LEFT,     32'h80808080, 32'h00000001, 1'b0, 32'h01010100, 1'b1, 1'b0, 1'b0, 1'b0);
+        run_test(OP_LOGIC_LEFT,     32'hffffffff, 32'h00000001, 1'b0, 32'hfffffffe, 1'b1, 1'b0, 1'b1, 1'b0);
+        run_test(OP_LOGIC_LEFT,     32'h00000000, 32'h00000001, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
+        run_test(OP_LOGIC_LEFT,     32'h00000001, 32'h00000001, 1'b0, 32'h00000002, 1'b0, 1'b0, 1'b0, 1'b0);
+        run_test(OP_LOGIC_LEFT,     32'h80808080, 32'h00000004, 1'b0, 32'h08080800, 1'b0, 1'b0, 1'b0, 1'b0);
+        run_test(OP_LOGIC_LEFT,     32'h80808080, 32'h00000018, 1'b0, 32'h80000000, 1'b0, 1'b0, 1'b1, 1'b0);
+
+        run_test(OP_LOGIC_RIGHT,    32'h80808080, 32'h00000001, 1'b0, 32'h40404040, 1'b0, 1'b0, 1'b0, 1'b0);
+        run_test(OP_LOGIC_RIGHT,    32'hffffffff, 32'h00000001, 1'b0, 32'h7fffffff, 1'b1, 1'b0, 1'b0, 1'b0);
+        run_test(OP_LOGIC_RIGHT,    32'h00000000, 32'h00000001, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
+
+        run_test(OP_ARITH_LEFT,     32'h80808080, 32'h00000001, 1'b0, 32'h01010100, 1'b1, 1'b0, 1'b0, 1'b1);
+        run_test(OP_ARITH_LEFT,     32'hffffffff, 32'h00000001, 1'b0, 32'hfffffffe, 1'b1, 1'b0, 1'b1, 1'b0);
+        run_test(OP_ARITH_LEFT,     32'h00000000, 32'h00000001, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
+        run_test(OP_ARITH_LEFT,     32'h00000001, 32'h00000001, 1'b0, 32'h00000002, 1'b0, 1'b0, 1'b0, 1'b0);
+
+        run_test(OP_ARITH_RIGHT,    32'h80808080, 32'h00000001, 1'b0, 32'hc0404040, 1'b0, 1'b0, 1'b1, 1'b0);
+        run_test(OP_ARITH_RIGHT,    32'hffffffff, 32'h00000001, 1'b0, 32'hffffffff, 1'b1, 1'b0, 1'b1, 1'b0);
+        run_test(OP_ARITH_RIGHT,    32'h00000000, 32'h00000001, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
+
         // no operand
         run_test(OP_NOT,            32'h80808080, 32'h00000000, 1'b0, 32'h7f7f7f7f, 1'b0, 1'b0, 1'b0, 1'b0);
         run_test(OP_NOT,            32'hffffffff, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
         run_test(OP_NOT,            32'h00000000, 32'h00000000, 1'b0, 32'hffffffff, 1'b0, 1'b0, 1'b1, 1'b0);
-
-        run_test(OP_LOGIC_LEFT,     32'h80808080, 32'h00000000, 1'b0, 32'h01010100, 1'b1, 1'b0, 1'b0, 1'b0);
-        run_test(OP_LOGIC_LEFT,     32'hffffffff, 32'h00000000, 1'b0, 32'hfffffffe, 1'b1, 1'b0, 1'b1, 1'b0);
-        run_test(OP_LOGIC_LEFT,     32'h00000000, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
-        run_test(OP_LOGIC_LEFT,     32'h00000001, 32'h00000000, 1'b0, 32'h00000002, 1'b0, 1'b0, 1'b0, 1'b0);
-
-        run_test(OP_LOGIC_RIGHT,    32'h80808080, 32'h00000000, 1'b0, 32'h40404040, 1'b0, 1'b0, 1'b0, 1'b0);
-        run_test(OP_LOGIC_RIGHT,    32'hffffffff, 32'h00000000, 1'b0, 32'h7fffffff, 1'b1, 1'b0, 1'b0, 1'b0);
-        run_test(OP_LOGIC_RIGHT,    32'h00000000, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
-
-        run_test(OP_ARITH_LEFT,     32'h80808080, 32'h00000000, 1'b0, 32'h01010100, 1'b1, 1'b0, 1'b0, 1'b1);
-        run_test(OP_ARITH_LEFT,     32'hffffffff, 32'h00000000, 1'b0, 32'hfffffffe, 1'b1, 1'b0, 1'b1, 1'b0);
-        run_test(OP_ARITH_LEFT,     32'h00000000, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
-        run_test(OP_ARITH_LEFT,     32'h00000001, 32'h00000000, 1'b0, 32'h00000002, 1'b0, 1'b0, 1'b0, 1'b0);
-
-        run_test(OP_ARITH_RIGHT,    32'h80808080, 32'h00000000, 1'b0, 32'hc0404040, 1'b0, 1'b0, 1'b1, 1'b0);
-        run_test(OP_ARITH_RIGHT,    32'hffffffff, 32'h00000000, 1'b0, 32'hffffffff, 1'b1, 1'b0, 1'b1, 1'b0);
-        run_test(OP_ARITH_RIGHT,    32'h00000000, 32'h00000000, 1'b0, 32'h00000000, 1'b0, 1'b1, 1'b0, 1'b0);
 
         run_test(OP_NEG,            32'h00000001, 32'h00000000, 1'b0,  32'hffffffff, 1'b1, 1'b0, 1'b1, 1'b0);
         run_test(OP_NEG,            32'hffffffff, 32'h00000000, 1'b0,  32'h00000001, 1'b1, 1'b0, 1'b0, 1'b0);

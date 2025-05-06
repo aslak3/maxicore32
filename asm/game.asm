@@ -497,7 +497,7 @@ loadlevel:      sub r15,r15,4
                 branch.ne nack
                 mulu r1,r1,1024
                 nop
-                byteright r0,r1                                     ; take bits 15:8
+                logicright r0,r1,8                                  ; take bits 15:8
                 nop
                 store.b I2C_WRITE_OF(r11),r0
                 callbranch r14,i2cwaitnotbusy

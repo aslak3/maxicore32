@@ -70,35 +70,34 @@
 }
 #subruledef twoargalu
 {
-    add     => 0x0
-    addc    => 0x1
-    sub     => 0x2
-    subc    => 0x3
-    and     => 0x4
-    or      => 0x5
-    xor     => 0x6
-    compare => 0x7
-    bit     => 0x8
-    mulu    => 0x9
-    muls    => 0xa
+    add         => 0x0
+    addc        => 0x1
+    sub         => 0x2
+    subc        => 0x3
+    and         => 0x4
+    or          => 0x5
+    xor         => 0x6
+    compare     => 0x7
+    bit         => 0x8
+    mulu        => 0x9
+    muls        => 0xa
+    logicleft   => 0xb
+    logicright  => 0xc
+    arithleft   => 0xd
+    arithright  => 0xe
+
 }
 #subruledef oneargalu
 {
     not        => 0x0
-    logicleft  => 0x1
-    logicright => 0x2
-    byteleft   => 0x3
-    byteright  => 0x4
-    arithleft  => 0x5
-    arithright => 0x6
-    negate     => 0x7
-    swap       => 0x8
-    test       => 0x9
-    signextb   => 0xa
-    signextw   => 0xb
-    unsignextb => 0xc
-    unsignextw => 0xd
-    copy       => 0xe
+    negate     => 0x1
+    swap       => 0x2
+    test       => 0x3
+    signextb   => 0x4
+    signextw   => 0x5
+    unsignextb => 0x6
+    unsignextw => 0x7
+    copy       => 0x8
 }
 
 ; - 31:27 - opcode

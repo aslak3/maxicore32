@@ -12,23 +12,21 @@ localparam [4:0]    // two operands
                     OP_BIT =                { 1'b0, 4'h8 },
                     OP_MULU =               { 1'b0, 4'h9 },
                     OP_MULS =               { 1'b0, 4'ha },
+                    OP_LOGIC_LEFT =         { 1'b0, 4'hb },
+                    OP_LOGIC_RIGHT =        { 1'b0, 4'hc },
+                    OP_ARITH_LEFT =         { 1'b0, 4'hd },
+                    OP_ARITH_RIGHT =        { 1'b0, 4'he },
 
                     // one operand
                     OP_NOT =                { 1'b1, 4'h0 },
-                    OP_LOGIC_LEFT =         { 1'b1, 4'h1 },
-                    OP_LOGIC_RIGHT =        { 1'b1, 4'h2 },
-                    OP_BYTE_LEFT =          { 1'b1, 4'h3 },
-                    OP_BYTE_RIGHT =         { 1'b1, 4'h4 },
-                    OP_ARITH_LEFT =         { 1'b1, 4'h5 },
-                    OP_ARITH_RIGHT =        { 1'b1, 4'h6 },
-                    OP_NEG =                { 1'b1, 4'h7 },
-                    OP_SWAP =               { 1'b1, 4'h8 },
-                    OP_TEST =               { 1'b1, 4'h9 },
-                    OP_SIGN_EXT_B =         { 1'b1, 4'ha },
-                    OP_SIGN_EXT_W =         { 1'b1, 4'hb },
-                    OP_UNSIGN_EXT_B =       { 1'b1, 4'hc },
-                    OP_UNSIGN_EXT_W =       { 1'b1, 4'hd },
-                    OP_COPY =               { 1'b1, 4'he };
+                    OP_NEG =                { 1'b1, 4'h1 },
+                    OP_SWAP =               { 1'b1, 4'h2 },
+                    OP_TEST =               { 1'b1, 4'h3 },
+                    OP_SIGN_EXT_B =         { 1'b1, 4'h4 },
+                    OP_SIGN_EXT_W =         { 1'b1, 4'h5 },
+                    OP_UNSIGN_EXT_B =       { 1'b1, 4'h6 },
+                    OP_UNSIGN_EXT_W =       { 1'b1, 4'h7 },
+                    OP_COPY =               { 1'b1, 4'h8 };
 
 localparam [3:0]    COND_AL = 4'h0, // always
                     COND_EQ = 4'h1, // equal AKA zero set

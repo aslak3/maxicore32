@@ -12,8 +12,9 @@ module alu
         output reg carry_out, zero_out, neg_out, over_out
     );
 
-    reg [32:0] temp_reg2;
-    reg [32:0] temp_reg3;
+    wire [32:0] temp_reg2 = { 1'b0, reg2 };
+    wire [32:0] temp_reg3 = { 1'b0, reg3 };
+    wire [4:0] shift_amount = reg3[4:0];
     reg [32:0] temp_result;
     reg [31:0] temp_mul_result;
     reg give_result;
@@ -27,8 +28,6 @@ module alu
             over_out <= 1'b0;
         end else begin
             $display("ALU: op: %02x reg2: %08x reg3: %08x", op, reg2, reg3);
-            temp_reg2 = { 1'b0, reg2 };
-            temp_reg3 = { 1'b0, reg3 };
             temp_result = { 1'b0, 32'h0 };
             temp_mul_result = 32'h0;
             give_result = 1'b1;
@@ -64,22 +63,22 @@ module alu
                     temp_mul_result = $signed(temp_reg2[15:0]) * $signed(temp_reg3[15:0]);
                     temp_result = { 1'b0, temp_mul_result };
                 end
+                OP_LOGIC_LEFT:
+                    temp_result = temp_reg2 << shift_amount;
+                OP_LOGIC_RIGHT: begin
+                    temp_result[31:0] = reg2 >> shift_amount;
+                    temp_result[32] = reg2[shift_amount - 5'b00001];
+                end
+                OP_ARITH_LEFT:
+                    // Identical except for overflow handling.
+                    temp_result = temp_reg2 << shift_amount;
+                OP_ARITH_RIGHT: begin
+                    temp_result[31:0] = $signed(reg2) >>> shift_amount;
+                    temp_result[32] = reg2[shift_amount - 5'b00001];
+                end
 
                 OP_NOT:
                     temp_result = ~{ 1'b1, temp_reg2[31:0]};
-                OP_LOGIC_LEFT:
-                    temp_result = { temp_reg2[31:0], 1'b0 };
-                OP_LOGIC_RIGHT:
-                    temp_result = { temp_reg2[0], 1'b0, temp_reg2[31:1] };
-                // Byte left and right always set to carry to zero
-                OP_BYTE_LEFT:
-                    temp_result = { 1'b0, temp_reg2[23:0], 8'h00 };
-                OP_BYTE_RIGHT:
-                    temp_result = { 1'b0, 8'h00, temp_reg2[31:8] };
-                OP_ARITH_LEFT:
-                    temp_result = { temp_reg2[31:0], 1'b0 };
-                OP_ARITH_RIGHT:
-                    temp_result = { temp_reg2[0], temp_reg2[31], temp_reg2[31:1] };
                 OP_NEG:
                     temp_result = ~temp_reg2 + { 31'b0, 1'b1 };
                 OP_SWAP:
