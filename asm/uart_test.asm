@@ -15,25 +15,46 @@ I2C_STATUS_OF=I2C_CONTROL_OF
 UART_STATUS_OF=0x2c
 UART_DATA_OF=0x30
 
+ASCII_a=0x61
+ASCII_0=0x30
+
 ; fixed register usage: all other register usage is fairly adhoc
 ;   r15=stack, r14=return address, r13=vars pointer, r11=io base address
+;   r8, r9 and r10 are scratch and neither saved or restored
 
 start:          loadi.u r15,stack                                   ; setup stack pointer
                 loadi.u r14,0                                       ; return address
                 loadi.l r11,IO_BASE
 
-.loop:          loadi.u r0,prompt
-                callbranch r14,putstring
-                loadi.u r0,buffer
-                callbranch r14,getstring
-                loadi.u r0,youtyped
-                callbranch r14,putstring
-                loadi.u r0,buffer
-                callbranch r14,putstring
+; .loop:          loadi.u r0,prompt
+;                 callbranch r14,putstring
+;                 loadi.u r0,buffer
+;                 callbranch r14,getstring
+;                 loadi.u r0,youtyped
+;                 callbranch r14,putstring
+;                 loadi.u r0,buffer
+;                 callbranch r14,putstring
+;
+;                 branch .loop
 
+                loadi.l r8,0xfffff
+.loop:          loadi.u r1,buffer
+                copy r0,r8
+                callbranch r14,longtoascii
+                loadi.u r0,0
+                nop
+                store.b (r1),r0
+                loadi.u r0,buffer
+                callbranch r14,putstring
+                loadi.u r0,crlf
+                callbranch r14,putstring
+                test r8,r8
+                nop
+                branch.eq .done
+                sub r8,r8,0x1
                 branch .loop
 
-                halt
+.done:          halt
 
 ; outputs the null terminated at r0 to the terminal
 putstring:      sub r15,r15,4
@@ -93,9 +114,68 @@ getchar:        load.bu r1,UART_STATUS_OF(r11)                      ; get the cu
                 load.bu r0,UART_DATA_OF(r11)
                 jump r14
 
+nybbletoascii:  compare r0,r0,10                                    ; <10?
+                nop
+                branch.lt .lt_10                                    ; yes, only add 0
+                add r0,r0,ASCII_a-ASCII_0-10                        ; add past 'a', but less '0'
+                nop
+.lt_10:         add r0,r0,ASCII_0                                   ; add '0' too
+                nop
+                store.b (r1),r0                                     ; save that nybble
+                add r1,r1,1
+                jump r14
+
+; convert the byte in r0 to hex, writing it into r1 and advancing it 2 bytes
+bytetoascii:    sub r15,r15,8
+                nop
+                store.l 0(r15),r8
+                store.l 4(r15),r14                                  ; save current return address
+                unsignextb r8,r0                                          ; save original
+                logicright r0,r0,4                                  ; get the left most nybble
+                callbranch r14,nybbletoascii
+                and r0,r8,0x0f                                      ; mask off the left nybble
+                callbranch r14,nybbletoascii
+                copy r0,r8                                    ; restore r0
+                load.l r14,4(r15)
+                load.l r8,0(r15)
+                add r15,r15,8
+                jump r14
+
+; convert the word in r0 to hex, writing it into r1 and advancing it 4 bytes
+wordtoascii:    sub r15,r15,8
+                nop
+                store.l 4(r15),r8
+                store.l 0(r15),r14                                  ; save current return address
+                unsignextw r8,r0
+                logicright r0,r0,8                                  ; get the top byte
+                callbranch r14,bytetoascii
+                unsignextb r0,r8
+                callbranch r14,bytetoascii
+                copy r0,r8                                          ; restore r0
+                load.l r14,0(r15)
+                load.l r8,4(r15)
+                add r15,r15,8
+                jump r14
+
+longtoascii:    sub r15,r15,8
+                nop
+                store.l 4(r15),r8
+                store.l 0(r15),r14                                  ; save current return address
+                copy r8,r0
+                logicright r0,r0,16
+                callbranch r14,wordtoascii
+                unsignextw r0,r8
+                callbranch r14,wordtoascii
+                copy r0,r8                                          ; restore r0
+                load.l r14,0(r15)
+                load.l r8,4(r15)
+                add r15,r15,8
+                jump r14
+
                 #res 32
 stack:
 
 prompt:         #d "\r\n\r\nHello! Type a message: \0"
 buffer:         #res 80
 youtyped:       #d "\r\nYou typed: \0"
+crlf:           #d "\r\n\0"
