@@ -17,10 +17,13 @@ UART_DATA_OF=0x30
 
 ASCII_SP=0x20
 ASCII_EXP=0x21
+ASCII_PERIOD=0x2e
 ASCII_0=0x30
 ASCII_COLON=0x3a
 ASCII_A=0x41
 ASCII_a=0x61
+
+VARARG=0x80
 
 ; fixed register usage: all other register usage is fairly adhoc
 ;   r15=stack, r14=return address, r13=vars pointer, r11=io base address
@@ -30,7 +33,7 @@ start:          loadi.u r15,stack                                   ; setup stac
                 loadi.u r14,0                                       ; return address
                 loadi.l r11,IO_BASE
 
-.loop:          loadi.u r8,prompt
+mainloop:       loadi.u r8,prompt
                 callbranch r14,putstring
 
                 loadi.u r8,inputbuffer
@@ -47,7 +50,27 @@ start:          loadi.u r15,stack                                   ; setup stac
                 callbranch r14,putstring
 
                 loadi.u r8,inputbuffer
+                loadi.u r9,commandbuffer
+.cmd_loop:      load.bu r0,(r8)
+                add r8,r8,1
+                test r0,r0
+                nop
+                branch.eq .cmd_done
+                compare r0,r0,ASCII_SP
+                nop
+                branch.eq .cmd_done
+                store.b (r9),r0
+                add r9,r9,1
+                branch .cmd_loop
+
+.cmd_done:      loadi.u r0,0
                 loadi.u r10,parsedbuffer
+                store.b (r9),r0                             ; add a null to command
+                loadi.u r1,0
+                loadi.u r0,0
+                store.l 0(r10),r1                           ; type
+                store.l 4(r10),r0                           ; value
+
 .parse_loop:    load.bu r0,(r8)
                 nop
                 test r0,r0
@@ -72,13 +95,23 @@ start:          loadi.u r15,stack                                   ; setup stac
                 store.l 0(r10),r1                           ; type
                 store.l 4(r10),r0                           ; value
 
+                loadi.u r8,outputbuffer
+                loadi.u r9,command
+                callbranch r14,concatstr
+                loadi.u r9,commandbuffer
+                callbranch r14,concatstr
+                loadi.u r9,crlf
+                callbranch r14,concatstr
+                loadi.u r8,outputbuffer
+                callbranch r14,putstring
+
                 loadi.u r10,parsedbuffer
                 nop
 .print_loop:    load.l r0,0(r10)
                 nop
                 test r0,r0
                 nop
-                branch.eq .print_out
+                branch.eq .cmdtab_search
 
                 loadi.u r8,outputbuffer
                 loadi.u r9,type
@@ -104,9 +137,141 @@ start:          loadi.u r15,stack                                   ; setup stac
 
                 branch .print_loop
 
-.print_out:     branch .loop
+.cmdtab_search: loadi.u r10,commandtable                            ; top of command table
+                loadi.u r12,parsedbuffer
+.cmdtab_loop:   loadi.u r8,commandbuffer
+                load.l r9,(r10)
+                nop
+                test r9,r9
+                nop
+                branch.eq .no_such_cmd
+                callbranch r14,stringcomp
+                load.l r0,8(r10)
+                jump.eq r0                                          ; run handler?
 
-.done:          halt
+.cmdtab_next:   add r10,r10,3*4
+
+                branch .cmdtab_loop
+
+.no_such_cmd:   loadi.u r8,nosuchcmd
+                callbranch r14,putstring
+                branch mainloop
+
+readbyte:       load.l r0,4(r12)                                ; get the address
+                loadi.u r8,outputbuffer
+                load.bu r0,(r0)                                 ; get the byte at that address
+                callbranch r14,bytetoascii
+                branch readmemorytail
+readword:       load.l r0,4(r12)                                ; get the address
+                loadi.u r8,outputbuffer
+                load.wu r0,(r0)                                 ; get the word at that address
+                callbranch r14,wordtoascii
+                branch readmemorytail
+readlong:       load.l r0,4(r12)                                ; get the address
+                loadi.u r8,outputbuffer
+                load.l r0,(r0)                                  ; get the long at that address
+                callbranch r14,longtoascii
+                branch readmemorytail
+
+readmemorytail: loadi.u r9,crlf
+                callbranch r14,concatstr
+                loadi.u r8,outputbuffer
+                callbranch r14,putstring
+                branch mainloop
+
+writebytes:     load.l r0,4(r12)                                ; get the long at that address
+                add r12,r12,8
+                nop
+.loop:          load.l r1,0(r12)                                ; get type
+                add r0,r0,1                                     ; add early
+                test r1,r1
+                nop
+                branch.eq mainloop
+                load.l r1,4(r12)                                ; get the word we are writing
+                nop
+                store.b -1(r0),r1
+                add r12,r12,8
+                branch .loop
+
+writelongs:     load.l r0,4(r12)                                ; get the long at that address
+                add r12,r12,8
+                nop
+.loop:          load.l r1,0(r12)                                ; get type
+                add r0,r0,4                                     ; add early
+                test r1,r1
+                nop
+                branch.eq mainloop
+                load.l r1,4(r12)                                ; get the word we are writing
+                nop
+                store.l -4(r0),r1
+                add r12,r12,8
+                branch .loop
+
+writewords:     load.l r0,4(r12)                                ; get the long at that address
+                add r12,r12,8
+                nop
+.loop:          load.l r1,0(r12)                                ; get type
+                add r0,r0,2                                     ; add early
+                test r1,r1
+                nop
+                branch.eq mainloop
+                load.l r1,4(r12)                                ; get the word we are writing
+                nop
+                store.w -2(r0),r1
+                add r12,r12,8
+                branch .loop
+
+dump:           loadi.l r0,0xfffffff0
+                load.l r6,4(r12)                                ; start address
+                load.l r7,(2*4)+4(r12)                          ; number of byts
+                and r6,r0,r6                                    ; round start to whole line
+                and r7,r0,r7                                    ; round length to whole line
+.line_loop:     copy r0,r6                                      ; get start of line addr
+                loadi.u r8,outputbuffer
+                callbranch r14,longtoascii
+                loadi.u r9,spacespace
+                callbranch r14,concatstr
+
+                loadi.u r2,0
+                loadi.u r1,8
+.word_loop:     load.wu r0,r2(r6)
+                callbranch r14,wordtoascii
+                loadi.u r9,space
+                callbranch r14,concatstr
+                compare r2,r2,6
+                nop
+                branch.ne .skip_space
+                loadi.u r9,space
+                callbranch r14,concatstr
+.skip_space:    add r2,r2,2
+                sub r1,r1,1
+                nop
+                branch.ne .word_loop
+
+                loadi.u r9,asciistart
+                callbranch r14,concatstr
+
+                loadi.u r2,0
+                loadi.u r1,16
+
+.ascii_loop:    load.bu r0,r2(r6)
+                callbranch r14,printableascii
+                add r2,r2,1
+                sub r1,r1,1
+                nop
+                branch.ne .ascii_loop
+
+                loadi.u r9,asciiend
+                callbranch r14,concatstr
+                loadi.u r8,outputbuffer
+                callbranch r14,putstring
+
+                add r6,r6,16
+                sub r7,r7,16
+                nop
+                branch.ne .line_loop
+
+                branch mainloop
 
 ; general guidance:
 ; r8 = string pointer
@@ -244,6 +409,20 @@ longtoascii:    sub r15,r15,8
                 add r15,r15,8
                 jump r14
 
+; output the char if printable; if not output a period
+printableascii: bit r0,r0,0b11100000                            ; < space
+                nop
+                branch.eq .unprintable
+                bit r0,r0,0b10000000
+                nop
+                branch.ne .unprintable
+.out:           store.b (r8),r0
+                nop
+                add r8,r8,1
+                jump r14
+.unprintable:   loadi.u r0,ASCII_PERIOD
+                branch .out
+
 datatypetable:  #d8 0                                               ; 0
 
                 #d8 1                                               ; 1
@@ -280,7 +459,7 @@ asciitoint:     sub r15,r15,4
                 sub r3,r3,ASCII_A-ASCII_COLON                       ; subtract diff A - :
                 nop
                 branch.lt .bad                                      ; <0? bad
-                compare r3,r3,0x10                                 ; see if it is uppercase
+                compare r3,r3,0x10                                  ; see if it is uppercase
                 nop
                 branch.lt .next_nyb                                 ; was uppercase
                 sub r3,r3,ASCII_a-ASCII_A                           ; was lowercase
@@ -311,17 +490,72 @@ asciitoint:     sub r15,r15,4
                 add r15,r15,4
                 jump r14
 
+; compares the string in r8 (left) with r9 (right), returning r0 with 0 if the same
+stringcomp:     load.bu r0,(r8)                                     ; get left char
+                add r8,r8,1                                         ; next position for left
+                test r0,r0                                          ; looking for null
+                nop
+                branch.eq .tail_check                               ; need to check end of r9 string too
+                load.bu r1,(r9)                                     ; get the right char
+                add r9,r9,1                                         ; next position for right
+                compare r0,r0,r1                                       ; seeing if they are the same
+                nop
+                branch.eq stringcomp                                ; next char
+.no_match:      loadi.u r0,1                                        ; bad match
+                branch .exit
+.tail_check:    load.bu r1,(r9)                                     ; still next to check right is a null
+                nop
+                test r1,r1
+                nop
+                branch.ne .no_match                                 ; it isn't, so bad
+                loadi.u r0,0                                        ; match result
+.exit:          test r0,r0                                          ; set flags on exit
+                jump r14
+
                 #res 32
 stack:
 
 inputbuffer:    #res 64
 outputbuffer:   #res 64
+commandbuffer:  #res 16
 parsedbuffer:   #res 128
 
-prompt:         #d "\r\n\r\nHello! Type a number: \0"
+prompt:         #d "\r\n> \0"
 youtyped:       #d "\r\nYou typed: \0"
+command:        #d "\r\nCommand: \0"
 type:           #d "Type: \0"
 value:          #d "Value: \0"
 crlf:           #d "\r\n\0"
 
-test_numbers:   #d "CABBA6e\0"
+; command strings and maximum param sizes (1=byte, 2=word, 3=long, 0=end)
+readbytestr:    #d "readbyte\0"
+readwordstr:    #d "readword\0"
+readlongstr:    #d "readlong\0"
+readmemoryprm:  #d8 3, 0
+
+writebytesstr:  #d "writebytes\0"
+writebytesprm:  #d8 3, 1+VARARG, 0
+writewordsstr:  #d "writewords\0"
+writewordsprm:  #d8 3, 2+VARARG, 0
+writelongsstr:  #d "writelongs\0"
+writelongsprm:  #d8 3, 3+VARARG, 0
+
+dumpstr:        #d "dump\0"
+dumpprm:        #d8 3, 2,0
+
+#align 32
+; pointer to string, pointer to param list, pointer to subroutine
+commandtable:   #d32 readbytestr, readmemoryprm, readbyte
+                #d32 readwordstr, readmemoryprm, readword
+                #d32 readlongstr, readmemoryprm, readlong
+                #d32 writebytesstr, writebytesprm, writebytes
+                #d32 writewordsstr, writewordsprm, writewords
+                #d32 writelongsstr, writelongsprm, writelongs
+                #d32 dumpstr, dumpprm, dump
+                #d32 0
+
+nosuchcmd:      #d "No such command\r\n\0"
+space:          #d " \0"
+spacespace:     #d "  \0"
+asciistart:     #d "  [\0"
+asciiend:       #d "]\r\n\0"
