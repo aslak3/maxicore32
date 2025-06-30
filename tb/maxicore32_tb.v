@@ -72,6 +72,7 @@ module maxicore32_tb;
     assign data_in = ram_data_out;
 
     integer dump_counter;
+    integer run_counter;
 
     initial begin
         $dumpfile("maxicore32.vcd");
@@ -90,7 +91,7 @@ module maxicore32_tb;
 
         #test_period;
 
-        forever begin
+        for (run_counter = 0; run_counter < 1000; run_counter++) begin
             clock = 1'b1;
             #test_period;
 
@@ -123,8 +124,15 @@ module maxicore32_tb;
                 end
                 $display("=== ERROR OUTPUTS ===");
                 $display("Bus Error = %01b\tHalted = %01b", bus_error, halted);
-                $fatal;
+                if (bus_error) begin
+                    $fatal;
+                end else if (halted) begin
+                    $finish;
+                end
             end
         end
+
+        $display("Execution took too long; fatal error");
+        $fatal;
     end
 endmodule
