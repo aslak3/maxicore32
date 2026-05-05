@@ -4,6 +4,7 @@ module addr_decode
 
         // Memory selects
         output reg memory_cs,
+        output reg samples_cs,
         output reg map_cs,
         output reg status_cs,
         output reg levels_cs, // This is the EEPROM source data
@@ -21,7 +22,9 @@ module addr_decode
         output reg i2c_write_cs,
         output reg i2c_control_cs,
         output reg uart_status_cs,
-        output reg uart_data_cs
+        output reg uart_data_cs,
+        output reg i2s_data_cs,
+        output reg i2s_status_cs
     );
 
     // High byte: the device "class", Low byte: used to select IO device registers
@@ -30,6 +33,7 @@ module addr_decode
 
     always @ (*) begin
         memory_cs = 1'b0;
+        samples_cs = 1'b0;
         map_cs = 1'b0;
         status_cs = 1'b0;
         levels_cs = 1'b0;
@@ -46,12 +50,15 @@ module addr_decode
         i2c_control_cs = 1'b0;
         uart_status_cs = 1'b0;
         uart_data_cs = 1'b0;
+        i2s_data_cs = 1'b0;
+        i2s_status_cs = 1'b0;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;    // Program RAM
-            8'h01: map_cs = 1'b1;       // Map RAM
-            8'h02: status_cs = 1'b1;    // Status map RAM
-            8'h03: levels_cs = 1'b1;    // 8 levels used for I2C EEPROM programming
+            8'h01: samples_cs = 1'b1;   // (Sound) Samples RAM
+            8'h02: map_cs = 1'b1;       // Map RAM
+            8'h03: status_cs = 1'b1;    // Status map RAM
+            8'h04: levels_cs = 1'b1;    // 8 levels used for I2C EEPROM programming
             8'h0f: begin
                 // IO devices
                 case (low_byte_address)
@@ -68,6 +75,8 @@ module addr_decode
                     8'h28: i2c_control_cs = 1'b1;
                     8'h2c: uart_status_cs = 1'b1;
                     8'h30: uart_data_cs = 1'b1;
+                    8'h34: i2s_data_cs = 1'b1;
+                    8'h38: i2s_status_cs = 1'b1;
                     default: begin
                     end
                 endcase
@@ -81,7 +90,9 @@ endmodule
 module data_in_mux
     (
         input memory_cs,
-        input [31:0] ram_data_out,
+        input [31:0] memory_data_out,
+        input samples_cs,
+        input [31:0] samples_data_out,
         input map_cs,
         input [31:0] map_data_out,
         input levels_cs,
@@ -95,13 +106,17 @@ module data_in_mux
         input [31:0] i2c_data_out,
         input uart_data_out_valid,
         input [31:0] uart_data_out,
+        input i2s_data_out_valid,
+        input [31:0] i2s_data_out,
 
         output reg [31:0] data_in
     );
 
     always @ (*)  begin
         if (memory_cs) begin
-            data_in = ram_data_out;
+            data_in = memory_data_out;
+        end else if (samples_cs) begin
+            data_in = samples_data_out;
         end else if (map_cs) begin
             data_in = map_data_out;
         end else if (levels_cs) begin
@@ -114,6 +129,8 @@ module data_in_mux
             data_in = i2c_data_out;
         end else if (uart_data_out_valid) begin
             data_in = uart_data_out;
+        end else if (i2s_data_out_valid) begin
+            data_in = i2s_data_out;
         end else begin
             data_in = 32'h0;
         end

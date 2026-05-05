@@ -68,6 +68,7 @@ module ice40hxdevboard
 
     // Memory selects
     wire memory_cs;
+    wire samples_cs;
     wire map_cs;
     wire status_cs;
     wire levels_cs;  // This is the EEPROM source data
@@ -86,10 +87,13 @@ module ice40hxdevboard
     wire i2c_control_cs;
     wire uart_data_cs;
     wire uart_status_cs;
+    wire i2s_data_cs;
+    wire i2s_status_cs;
 
     addr_decode addr_decode (
         .address(address),
         .memory_cs(memory_cs),
+        .samples_cs(samples_cs),
         .map_cs(map_cs),
         .status_cs(status_cs),
         .levels_cs(levels_cs),
@@ -105,7 +109,9 @@ module ice40hxdevboard
         .i2c_write_cs(i2c_write_cs),
         .i2c_control_cs(i2c_control_cs),
         .uart_data_cs(uart_data_cs),
-        .uart_status_cs(uart_status_cs)
+        .uart_status_cs(uart_status_cs),
+        .i2s_data_cs(i2s_data_cs),
+        .i2s_status_cs(i2s_status_cs)
     );
 
     // Outputs (egress) from various modules
@@ -114,7 +120,7 @@ module ice40hxdevboard
     wire read;
     wire write;
     // Outputs from memories
-    wire [31:0] ram_data_out;
+    wire [31:0] memory_data_out;
     wire [31:0] map_data_out;
     wire [31:0] levels_data_out;
 
@@ -124,10 +130,20 @@ module ice40hxdevboard
         .cs(memory_cs),
         .address(address),
         .data_in(data_out),
-        .data_out(ram_data_out),
+        .data_out(memory_data_out),
         .data_strobes(data_strobes),
         .read(read),
         .write(write)
+    );
+
+    wire [31:0] samples_data_out;
+
+    samples_rom samples_rom (
+        .clock(cpu_clock),
+        .cs(samples_cs),
+        .read(read),
+        .address(address),
+        .dout(samples_data_out[31:24])
     );
 
 `ifdef ENABLE_LEVELS_ROM
@@ -156,7 +172,9 @@ module ice40hxdevboard
 
     data_in_mux data_in_mux (
         .memory_cs(memory_cs),
-        .ram_data_out(ram_data_out),
+        .memory_data_out(memory_data_out),
+        .samples_cs(samples_cs),
+        .samples_data_out(samples_data_out),
         .map_cs(map_cs),
         .map_data_out(map_data_out),
         .levels_cs(levels_cs),
@@ -170,6 +188,8 @@ module ice40hxdevboard
         .i2c_data_out(i2c_data_out),
         .uart_data_out_valid(uart_data_out_valid),
         .uart_data_out(uart_data_out),
+        .i2s_data_out_valid(i2s_data_out_valid),
+        .i2s_data_out(i2s_data_out),
 
         .data_in(data_in)
     );
@@ -183,7 +203,7 @@ module ice40hxdevboard
 
 `ifdef ENABLE_VIDEO
     video video (
-        .clock(clock),
+        // .clock(clock),
         .video_clock(video_clock),
         .h_sync(h_sync),
         .v_sync(v_sync),
@@ -302,6 +322,33 @@ module ice40hxdevboard
         .rx(uart_rx)
     );
 
+    wire [31:0] i2s_data_out;
+    wire i2s_data_out_valid;
+    i2s_interface i2s_interface (
+        .reset(reset),
+        .clock(cpu_clock),
+
+        .read(read),
+        .write(write),
+
+        .data_cs(i2s_data_cs),
+        .status_cs(i2s_status_cs),
+        .data_in(data_out),
+        .data_out(i2s_data_out),
+        .data_out_valid(i2s_data_out_valid),
+
+        .lrclk(i2s_lrclk),
+        .bclk(i2s_bclk),
+        .sd(i2s_sd)
+    );
+
+    wire i2s_lrclk;
+    wire i2s_bclk;
+    wire i2s_sd;
+
+    assign exp[14] = i2s_lrclk;
+    assign exp[12] = i2s_bclk;
+    assign exp[13] = i2s_sd;
 
     // Signals that have no "prefix" are for the processor, eg. data_in, data_out
     maxicore32 maxicore32 (
@@ -316,6 +363,7 @@ module ice40hxdevboard
         .bus_error(bus_error),
         .halted(halted)
     );
+
 endmodule
 
 module pll #(
@@ -348,4 +396,6 @@ module pll #(
         .PLLOUTCORE(out_clock)
     );
 `endif
+
 endmodule
+
