@@ -1,85 +1,64 @@
-// Claude :/
-
-`timescale 1ns / 1ps
-
 module i2s_tb;
     reg clock;
     reg reset;
-    reg [15:0] data;
-    reg trigger;
+    reg [31:0] data;
 
-    wire ws;
+    wire lrclk;
     wire bclk;
     wire sd;
-    wire running;
+    wire done;
 
     // Instantiate the i2s module
-    i2s uut (
+    i2s dut (
         .reset(reset),
         .clock(clock),
+
         .data(data),
-        .trigger(trigger),
-        .ws(ws),
+        .done(done),
+
+        .lrclk(lrclk),
         .bclk(bclk),
-        .sd(sd),
-        .running(running)
+        .sd(sd)
     );
 
     // Clock generation
     always begin
         clock = 1'b0;
-        #1 clock = 1'b1;
+        #1;
+        clock = 1'b1;
         #1;
     end
 
     initial begin
         // Initialize VCD file for gtkwave
-        $dumpfile("i2s_waveform.vcd");
+        $dumpfile("i2s_tb.vcd");
         $dumpvars(0, i2s_tb);
 
         // Initialize signals
         reset = 1'b1;
-        data = 16'h0000;
-        trigger = 1'b0;
+        data  = 32'h0;
 
-        // Hold reset for 100 ns
+        // Hold reset for 100
         #100;
         reset = 1'b0;
-        #20;
+        #10;
 
-        // Send first 16-bit value: 0xAA55
-        data = 16'hAA55;
-        trigger = 1'b1;
-        #20;
-        trigger = 1'b0;
+        data = 32'hdeadbeef;
+        wait(done);
+        #10;
 
-        // Wait for transmission to complete (approx. 32 clock cycles + margin)
-        //#(256*64 + 500);
-        wait (running == 1'b0);
-        #200;
+        data = 32'h55555555;
+        wait(done);
+        #10;
 
-        // Send second 16-bit value: 0x5555
-        data = 16'h5555;
-        trigger = 1'b1;
-        #20;
-        trigger = 1'b0;
+        data = 32'hffff0000;
+        wait(done);
+        #10;
 
-        // Wait for transmission to complete
-        wait (running == 1'b0);
-        #200;
-
-        // Send third 16-bit value: 0xFFFF
-        data = 16'hFFFF;
-        trigger = 1'b1;
-        #20;
-        trigger = 1'b0;
-
-        // Wait for transmission to complete
-        wait (running == 1'b0);
-        #200;
+        wait(done);
+        #10;
 
         // End simulation
         $finish;
     end
-
 endmodule

@@ -13,7 +13,8 @@ ICEPROG = iceprog
 VERILATOR_LINT = verilator --lint-only --timing
 
 ALL_TESTBENCHES = registers-register_file_tb registers-program_counter_tb alu_tb businterface_tb \
-	maxicore32_tb tonegen_tb i2c_controller_tb uart_tb
+	maxicore32_tb tonegen_tb i2c_controller_tb \
+	uart_tb ps2_tb i2s_tb i2s_interface_tb
 
 CORE_V_SRC = maxicore32.v businterface.v registers.v alu.v agu.v \
 	memorystage1.v registersstage2.v \
@@ -53,6 +54,15 @@ i2c_controller_tb: i2c/i2c_controller.v tb/i2c_controller/i2c_controller_tb.v
 uart_tb: uart/uart.v tb/uart/uart_tb.v
 	$(VERILATOR_LINT) --top uart_tb $^
 	$(IVERILOG) -s uart_tb -o $@ $^
+ps2_tb: ps2/ps2.v tb/ps2/ps2_tb.v
+	$(VERILATOR_LINT) --top ps2_tb $^
+	$(IVERILOG) -s ps2_tb -o $@ $^
+i2s_tb: i2s/i2s.v tb/i2s/i2s_tb.v
+	$(VERILATOR_LINT) --top i2s_tb $^
+	$(IVERILOG) -s i2s_tb -o $@ $^
+i2s_interface_tb: i2s/i2s.v i2s/i2s_interface.v tb/i2s/i2s_interface_tb.v
+	$(VERILATOR_LINT) --top i2s_interface_tb $^
+	$(IVERILOG) -s i2s_interface_tb -o $@ $^
 
 maxicore32-ram-contents.txt: asm/test.asm asm/maxicore32def.inc
 	(cd asm && \

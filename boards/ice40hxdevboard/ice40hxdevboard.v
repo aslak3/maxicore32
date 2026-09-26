@@ -87,8 +87,9 @@ module ice40hxdevboard
     wire i2c_control_cs;
     wire uart_data_cs;
     wire uart_status_cs;
-    wire i2s_data_cs;
     wire i2s_status_cs;
+    wire [3:0] i2s_data_cs;
+    wire [3:0] i2s_rate_cs;
 
     addr_decode addr_decode (
         .address(address),
@@ -110,8 +111,9 @@ module ice40hxdevboard
         .i2c_control_cs(i2c_control_cs),
         .uart_data_cs(uart_data_cs),
         .uart_status_cs(uart_status_cs),
+        .i2s_status_cs(i2s_status_cs),
         .i2s_data_cs(i2s_data_cs),
-        .i2s_status_cs(i2s_status_cs)
+        .i2s_rate_cs(i2s_rate_cs)
     );
 
     // Outputs (egress) from various modules
@@ -331,8 +333,9 @@ module ice40hxdevboard
         .read(read),
         .write(write),
 
-        .data_cs(i2s_data_cs),
         .status_cs(i2s_status_cs),
+        .data_cs(i2s_data_cs),
+        .rate_cs(i2s_rate_cs),
         .data_in(data_out),
         .data_out(i2s_data_out),
         .data_out_valid(i2s_data_out_valid),

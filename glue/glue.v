@@ -23,8 +23,9 @@ module addr_decode
         output reg i2c_control_cs,
         output reg uart_status_cs,
         output reg uart_data_cs,
-        output reg i2s_data_cs,
-        output reg i2s_status_cs
+        output reg i2s_status_cs,
+        output reg [3:0] i2s_data_cs,
+        output reg [3:0] i2s_rate_cs
     );
 
     // High byte: the device "class", Low byte: used to select IO device registers
@@ -50,8 +51,9 @@ module addr_decode
         i2c_control_cs = 1'b0;
         uart_status_cs = 1'b0;
         uart_data_cs = 1'b0;
-        i2s_data_cs = 1'b0;
         i2s_status_cs = 1'b0;
+        i2s_data_cs = 4'b0000;
+        i2s_rate_cs = 4'b0000;
 
         case (high_byte_address)
             8'h00: memory_cs = 1'b1;    // Program RAM
@@ -75,8 +77,15 @@ module addr_decode
                     8'h28: i2c_control_cs = 1'b1;
                     8'h2c: uart_status_cs = 1'b1;
                     8'h30: uart_data_cs = 1'b1;
-                    8'h34: i2s_data_cs = 1'b1;
-                    8'h38: i2s_status_cs = 1'b1;
+                    8'h34: i2s_status_cs = 1'b1;
+                    8'h38: i2s_data_cs = 4'b0001;
+                    8'h3c: i2s_data_cs = 4'b0010;
+                    8'h40: i2s_data_cs = 4'b0100;
+                    8'h44: i2s_data_cs = 4'b1000;
+                    8'h48: i2s_rate_cs = 4'b0001;
+                    8'h4c: i2s_rate_cs = 4'b0010;
+                    8'h50: i2s_rate_cs = 4'b0100;
+                    8'h54: i2s_rate_cs = 4'b1000;
                     default: begin
                     end
                 endcase

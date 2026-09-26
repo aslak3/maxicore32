@@ -10,8 +10,8 @@ module i2c_controller_tb;
 	reg [7:0] i2c_read_data;
 	reg i2c_ack_error;
 	reg i2c_busy;
-	wire i2c_scl;
-	wire i2c_sda;
+	reg i2c_scl;
+	reg i2c_sda;
 
     i2c_controller dut (
 		.clock(i2c_clock),
@@ -41,7 +41,7 @@ module i2c_controller_tb;
 		i2c_reset = 1'b1;
 		i2c_trigger = 1'b0;
 		i2c_restart = 1'b0;
-
+		
         #2;
 
 		// Write two bytes
